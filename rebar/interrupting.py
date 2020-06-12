@@ -29,4 +29,5 @@ def interrupter():
     try:
         yield _INTERRUPTER
     finally:
+        _INTERRUPTER.reset()
         signal.signal(signal.SIGINT, old)

@@ -21,10 +21,8 @@ def stored(run_name=-1):
     ps = paths.subdirectory(run_name, 'storing').glob('*.pkl')
     infos = []
     for p in ps:
-        info = paths.parse(p)
         infos.append({
-            'procname': info.procname,
-            'pid': info.pid,
+            **paths.parse(p),
             'path': p})
 
     return pd.DataFrame(infos)

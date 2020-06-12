@@ -11,15 +11,6 @@ from torch import nn
 
 log = aljpy.logger()
 
-
-def clone(x):
-    if isinstance(x, torch.Tensor):
-        return x.clone()
-    elif isinstance(x, dict):
-        return type(x)({k: clone(v) for k, v in x.items()})
-    else:
-        raise ValueError(f'Can\'t clone a {type(x)}')
-
 class SerialQueue:
 
     def __init__(self):
@@ -37,7 +28,6 @@ class SerialQueue:
                 self._got_end = True
                 return None
             else:
-                item = clone(item)
                 return item
         else:
             return None
@@ -90,7 +80,6 @@ class MultiprocessQueue:
                 self.queue.task_done()
                 return None
             else:
-                item = clone(item)
                 self.queue.task_done()
                 return item
         except queue.Empty:
