@@ -13,8 +13,9 @@ from shapely.ops import cascaded_union
 import multiprocessing
 from tqdm.auto import tqdm
 import rebar
+import logging
 
-log = rebar.logger()
+log = logging.getLogger(__name__)
 
 URL = "https://zenodo.org/record/2613548/files/cubicasa5k.zip?download=1"
 CLOUD_CACHE = 'tmp/cubicasa5k.zip'

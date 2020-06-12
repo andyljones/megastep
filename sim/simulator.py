@@ -4,10 +4,10 @@ from ..common import tensorify, numpyify, arrdict, profiling
 from ..common.plotting import array
 from ..designs import DesignError
 import torch
-from rebar.logging import logger
+import logging
 from rebar import dotdict
 
-log = logger()
+log = logging.getLogger(__name__)
 
 # 1 SS, 2.6s/chunk
 # 2 SS, 2.65s/chunk

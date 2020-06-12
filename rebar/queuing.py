@@ -7,10 +7,10 @@ import traceback
 import asyncio
 from functools import wraps
 from torch import nn
-from .logging import logger
+import logging
 from .dotdict import dotdict
 
-log = logger()
+log = logging.getLogger(__name__)
 
 class SerialQueue:
 

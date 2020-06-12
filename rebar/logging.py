@@ -24,13 +24,7 @@ FORMAT = '%(asctime)s %(levelname)s %(process)s %(processName)s - %(name)s: %(me
 #             datefmt=r'%Y-%m-%d %H:%M:%S')
 # logging.getLogger('parso').setLevel('WARN')  # Jupyter's autocomplete spams the output if this isn't set
 
-def logger(**kwargs):
-    """A logger named after the module it's called in."""
-    caller = inspect.stack()[1]
-    name = caller.frame.f_globals.get('__name__', 'UNKNOWN')
-    return logging.getLogger(name, **kwargs)
-
-log = logger()
+log = logging.getLogger(__name__)
 
 def in_ipython():
     try:

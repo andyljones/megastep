@@ -9,8 +9,9 @@ import inspect
 from pathlib import Path
 from functools import wraps
 import rebar
+import logging
 
-log = logger()
+log = logging.getLogger(__name__)
 
 def download(url):
     bs = BytesIO()

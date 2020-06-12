@@ -3,9 +3,9 @@ import time
 import torch
 import matplotlib.pyplot as plt
 import pandas as pd
-from .logging import logger
+import logging
 
-log = logger()
+log = logging.getLogger(__name__)
 
 CATEGORIES = {}
 def category(M):

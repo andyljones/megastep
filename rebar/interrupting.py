@@ -1,8 +1,8 @@
 import signal
 from .contextlib import maybeasynccontextmanager
-from .logging import logger
+import logging
 
-log = logger()
+log = logging.getLogger(__name__)
 
 class Interrupter:
 

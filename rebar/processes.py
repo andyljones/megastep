@@ -9,11 +9,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from contextlib import contextmanager, asynccontextmanager
 from torch.nn.parallel.distributed import _find_tensors
 from .contextlib import maybeasynccontextmanager
-from .logging import logger
+import logging
 import inspect
 import time
 
-log = logger()
+log = logging.getLogger(__name__)
 
 def initialize(device, devices):
     if dist.is_initialized():

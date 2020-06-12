@@ -15,12 +15,12 @@ import re
 import _thread
 from torch import nn
 from .arrdict import arrdict
-from .logging import logger
+import logging
 
 _max = max
 _time = time
 
-log = logger()
+log = logging.getLogger(__name__)
 
 WRITER = None
 

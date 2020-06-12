@@ -5,7 +5,7 @@ import types
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future, _base, as_completed
 import rebar
 
-log = rebar.logger()
+log = rebar.logging.getLogger(__name__)
 
 class SerialExecutor(_base.Executor):
     """An executor that runs things on the main process/thread - meaning stack traces are interpretable
