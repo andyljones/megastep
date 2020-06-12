@@ -1,11 +1,11 @@
 import numpy as np
 import time
 import torch
-import aljpy 
 import matplotlib.pyplot as plt
 import pandas as pd
+from .logging import logger
 
-log = aljpy.logger()
+log = logger()
 
 CATEGORIES = {}
 def category(M):

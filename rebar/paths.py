@@ -1,10 +1,10 @@
-import aljpy
 import os
 from pathlib import Path
 import shutil
 import multiprocessing as mp
 import pandas as pd
 import re
+from .dotdict import dotdict
 
 ROOT = 'output/traces'
 
@@ -52,7 +52,7 @@ def path(run_name, group, channel=''):
 def parse(path):
     parts = path.relative_to(ROOT).with_suffix('').parts
     procname, pid = re.match(r'^(.*)-(.*)$', parts[-1]).groups()
-    return aljpy.dotdict(
+    return dotdict(
         run_name=parts[0], 
         group=parts[1], 
         channel='/'.join(parts[2:-1]),

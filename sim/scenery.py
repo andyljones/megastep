@@ -1,9 +1,9 @@
-import aljpy
 import matplotlib as mpl
 import numpy as np
 import torch
 from . import common
-from ..common import tensorify
+from rebar.arrdict import tensorify
+from rebar import dotdict
 
 def lengths(lines):
     return ((lines[..., 0, :] - lines[..., 1, :])**2).sum(-1)**.5
@@ -56,7 +56,7 @@ def init_scene(cuda, designs, random=np.random):
     dronelines = np.tile(drone_frame(), (n_drones, 1, 1))
     dronecolors = np.tile(drone_colors(), (n_drones, 1))
 
-    data = aljpy.dotdict(frame=drone_frame())
+    data = dotdict(frame=drone_frame())
     lights, lightwidths, lines, linewidths, colors, isdrone  = [], [], [], [], [], []
     for d in designs:
         lights.extend([d.lights])

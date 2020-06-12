@@ -4,9 +4,10 @@ from ..common import tensorify, numpyify, arrdict, profiling
 from ..common.plotting import array
 from ..designs import DesignError
 import torch
-import aljpy
+from rebar.logging import logger
+from rebar import dotdict
 
-log = aljpy.logger()
+log = logger()
 
 # 1 SS, 2.6s/chunk
 # 2 SS, 2.65s/chunk
@@ -54,7 +55,7 @@ class Simulator:
 
     def __init__(self, designs, **kwargs):
         self._designs = designs 
-        self.options = aljpy.dotdict({**DEFAULTS, **kwargs, 'n_designs': len(self._designs)})
+        self.options = dotdict({**DEFAULTS, **kwargs, 'n_designs': len(self._designs)})
 
         self._cuda = common.cuda(**self.options)
         self._respawns = init_respawns(self._cuda, self._designs)

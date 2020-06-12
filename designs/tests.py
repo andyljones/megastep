@@ -1,4 +1,3 @@
-import aljpy
 import numpy as np
 from . import common
 from itertools import cycle, islice

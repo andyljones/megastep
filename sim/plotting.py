@@ -2,7 +2,6 @@ import torch
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import aljpy
 from itertools import chain
 from matplotlib.animation import FuncAnimation
 from . import common
@@ -117,34 +116,6 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         ax.plot(*line.T, color=color)
     return ax
 
-
-# def plot(state, fig=None):
-#     """Obsolete I think"""
-#     fig = fig or plt.figure()
-
-#     gs = fig.add_gridspec(1, 3)
-#     diagram = plt.subplot(gs[0, :2])
-
-#     images = gs[:, 2].subgridspec(state.rgb.shape[0], 1)
-#     images = tuple([plt.subplot(sgs) for sgs in images])
-
-#     graphic = aljpy.dotdict(diagram=diagram, images=images)
-
-#     plot_lights(diagram, state)
-#     plot_lines(diagram, state, cull=False)
-#     plot_fov(diagram, state, 1000) # suitably large number
-#     adjust_view(diagram, state, cull=False)
-
-#     plot_images(graphic, {'rgb': state.rgb})
-
-#     for ax in [diagram]:
-#         ax.set_xticks([])
-#         ax.set_yticks([])
-
-#     fig.set_size_inches(18, 15)
-#     plt.subplots_adjust(hspace=.05)
-
-#     return fig
 
 def plot(state, fig=None):
     fig = fig or plt.figure()

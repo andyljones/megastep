@@ -1,4 +1,3 @@
-import aljpy
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +8,7 @@ from collections import namedtuple
 import scipy as sp
 import scipy.ndimage
 import logging
+from rebar import dotdict
 
 logging.getLogger('rasterio.env').setLevel('WARN')
 import rasterio
@@ -115,7 +115,7 @@ def subzones(n_drones, centers, radii, lowers=None, uppers=None, subradii=1.):
     else:
         raise ValueError('Either both of lowers/uppers must be None, or neither are')
 
-    return aljpy.dotdict(centers=new_centers, radii=new_radii, lowers=new_lowers, uppers=new_uppers)
+    return dotdict(centers=new_centers, radii=new_radii, lowers=new_lowers, uppers=new_uppers)
 
 class Mask:
 
@@ -175,7 +175,7 @@ class Design:
     def __init__(self, 
             id, centers, radii, lights, walls, 
             colormap=None, lowers=None, uppers=None, mask=None, 
-            meta=aljpy.dotdict()):
+            meta=dotdict()):
         self.id = id
         self.centers = np.array(centers, dtype=float)
         self.radii = np.array(radii, dtype=float)

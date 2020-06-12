@@ -1,7 +1,6 @@
 from torch import distributed as dist
 import torch
 import os
-import aljpy
 import signal
 import asyncio
 from functools import wraps
@@ -10,10 +9,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from contextlib import contextmanager, asynccontextmanager
 from torch.nn.parallel.distributed import _find_tensors
 from .contextlib import maybeasynccontextmanager
+from .logging import logger
 import inspect
 import time
 
-log = aljpy.logger()
+log = logger()
 
 def initialize(device, devices):
     if dist.is_initialized():

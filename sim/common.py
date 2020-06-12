@@ -1,10 +1,9 @@
-import aljpy
 import re
 from functools import wraps
 from pkg_resources import resource_filename
 import torch.utils.cpp_extension
 import torch
-from ..common import arrdict
+from rebar import dotdict, arrdict
 
 MOVEMENTS = 7
 DRONE_WIDTH = .15
@@ -46,7 +45,7 @@ def stack(ds):
 
 def split(ds):
     exemplar = next(iter(ds.values()))
-    return [aljpy.dotdict({k: v[i] for k, v in ds.items()}) for i in range(len(exemplar))]
+    return [dotdict({k: v[i] for k, v in ds.items()}) for i in range(len(exemplar))]
 
 def unpack(d):
     if isinstance(d, torch.Tensor):

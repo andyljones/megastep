@@ -1,6 +1,5 @@
 import copy
 import logging
-import aljpy
 import time
 from pathlib import Path
 from collections import defaultdict, deque
@@ -18,8 +17,20 @@ import threading
 
 FORMAT = '%(asctime)s %(levelname)s %(process)s %(processName)s - %(name)s: %(message)s'
 
-log = aljpy.logger()
-logging.getLogger('visdom').setLevel('ERROR')
+# logging.basicConfig(
+#             stream=sys.stdout, 
+#             level=logging.INFO, 
+#             format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
+#             datefmt=r'%Y-%m-%d %H:%M:%S')
+# logging.getLogger('parso').setLevel('WARN')  # Jupyter's autocomplete spams the output if this isn't set
+
+def logger(**kwargs):
+    """A logger named after the module it's called in."""
+    caller = inspect.stack()[1]
+    name = caller.frame.f_globals.get('__name__', 'UNKNOWN')
+    return logging.getLogger(name, **kwargs)
+
+log = logger()
 
 def in_ipython():
     try:

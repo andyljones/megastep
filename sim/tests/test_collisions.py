@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from ..simulator import Simulator
 from ...designs.common import Design
-import aljpy 
+from rebar import dotdict
 
 def mock_design(center):
     return Design(
@@ -18,8 +18,8 @@ def run():
     sim = Simulator(lambda: mock_design([1., 2]), n_designs=1)
     sim.reset()
 
-    nothing = aljpy.dotdict(movement=aljpy.dotdict(general=torch.tensor([[0]]).int().cuda()))
-    forward = aljpy.dotdict(movement=aljpy.dotdict(general=torch.tensor([[3]]).int().cuda()))
+    nothing = dotdict(movement=dotdict(general=torch.tensor([[0]]).int().cuda()))
+    forward = dotdict(movement=dotdict(general=torch.tensor([[3]]).int().cuda()))
 
     sim._drones.positions[:] = torch.tensor([[[1.85, 2]]])
     sim._drones.momenta[:] = torch.tensor([[[2., 0.]]])

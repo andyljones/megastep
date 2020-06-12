@@ -2,14 +2,15 @@ import time
 import torch
 from torch import multiprocessing as mp
 import queue
-import aljpy
 from contextlib import contextmanager, asynccontextmanager
 import traceback
 import asyncio
 from functools import wraps
 from torch import nn
+from .logging import logger
+from .dotdict import dotdict
 
-log = aljpy.logger()
+log = logger()
 
 class SerialQueue:
 
@@ -169,9 +170,9 @@ async def close(intakes, outputs, timeout=5):
 
 def create(x, serial=False):
     if isinstance(x, dict):
-        return aljpy.dotdict({n: create(v, serial) for n, v in x.items()})
+        return dotdict({n: create(v, serial) for n, v in x.items()})
     elif isinstance(x, (list, tuple)):
-        return aljpy.dotdict({n: create(n, serial) for n in x})
+        return dotdict({n: create(n, serial) for n in x})
     elif isinstance(x, str):
         return SerialQueue() if serial else MultiprocessQueue()
     raise ValueError(f'Can\'t handle {type(x)}')

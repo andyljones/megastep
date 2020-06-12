@@ -1,20 +1,20 @@
 import pandas as pd
-import aljpy 
 from pathlib import Path
 from zipfile import ZipFile
 from contextlib import contextmanager
 from IPython.display import HTML, display
 from bs4 import BeautifulSoup
 import numpy as np
-from . import common 
+from . import common, cache, parallel
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import cascaded_union
 import multiprocessing
 from tqdm.auto import tqdm
+import rebar
 
-log = aljpy.logger()
+log = rebar.logger()
 
 URL = "https://zenodo.org/record/2613548/files/cubicasa5k.zip?download=1"
 CLOUD_CACHE = 'tmp/cubicasa5k.zip'
@@ -29,20 +29,20 @@ def zipfile(zf=None):
     # if not cache.exists():
     #     cloud_cache = storage.Path(CLOUD_CACHE)
     #     if not cloud_cache.exists():
-    #         raw = aljpy.download(URL)
+    #         raw = cache.download(URL)
     #         cloud_cache.write_bytes_multipart(raw)
     #     cache.parent.mkdir(exist_ok=True, parents=True)
     #     cache.write_bytes(cloud_cache.read_bytes())
     if zf:
         yield zf
     else:
-        cache = Path('.cache/cubicasa.zip')
-        if not cache.exists():
-            raw = aljpy.download(URL)
-            cache.parent.mkdir(exist_ok=True, parents=True)
-            cache.write_bytes(raw)
+        c = Path('.cache/cubicasa.zip')
+        if not c.exists():
+            raw = cache.download(URL)
+            c.parent.mkdir(exist_ok=True, parents=True)
+            c.write_bytes(raw)
 
-        with ZipFile(str(cache)) as zf:
+        with ZipFile(str(c)) as zf:
             yield zf
 
 def files(zf=None):
@@ -53,7 +53,7 @@ def files(zf=None):
                     .str.extract(pattern)
                     .assign(id=lambda df: pd.to_numeric(df.id)))
 
-@aljpy.memcache('{split}')
+@cache.memcache('{split}')
 def ids(split=None, zf=None):
     ids = (files(zf)
                 .query('category == "high_quality_architectural" & filename == "model"')
@@ -69,7 +69,7 @@ def ids(split=None, zf=None):
         ids = ids[ids % 10 == 0]
     return ids
 
-@aljpy.autocache('{category}-{index}')
+@cache.autocache('{category}-{index}')
 def svgfile(index, category='high_quality_architectural', zf=None):
     with zipfile(zf) as zf:
         id = ids()[index]
@@ -160,7 +160,7 @@ def colormap(walls, spaces):
     else:
         return np.zeros(len(walls), dtype=int)
 
-@aljpy.autocache('{index}-{n_drones}')
+@cache.autocache('{index}-{n_drones}')
 def _cubicasa(index, n_drones, error=False):
     """This will fail on about 10% of designs because my generation scheme isn't totally robust
 
@@ -210,5 +210,5 @@ def n_cubicasa():
     return len(ids())
 
 def cubicache(n_drones):
-    with aljpy.parallel(_cubicasa) as p:
+    with parallel.parallel(_cubicasa) as p:
         p.wait([p(i, n_drones, error=False) for i in range(n_cubicasa())])

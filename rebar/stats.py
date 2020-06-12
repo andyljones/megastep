@@ -5,7 +5,6 @@ from . import widgets, logging, statscategories, numpy, paths
 from .contextlib import maybeasynccontextmanager
 from contextlib import contextmanager
 import threading
-import aljpy
 import inspect
 from functools import partial
 import pandas as pd
@@ -13,14 +12,15 @@ from collections import defaultdict
 import numpy as np
 import urllib
 import re
-from aljpy import arrdict
 import _thread
 from torch import nn
+from .arrdict import arrdict
+from .logging import logger
 
 _max = max
 _time = time
 
-log = aljpy.logger()
+log = logger()
 
 WRITER = None
 
@@ -85,7 +85,7 @@ class Reader:
             if field.startswith(self._prefix):
                 current = [self._arrs[category, field]] if (category, field) in self._arrs else []
                 self._arrs[category, field] = np.concatenate(current + new)
-        return arrdict.arrdict(self._arrs)
+        return arrdict(self._arrs)
 
     def pandas(self):
         arrs = self.arrays()
@@ -95,7 +95,7 @@ class Reader:
             df = pd.DataFrame.from_records(arr, index='_time')
             df.index.name = 'time'
             dfs[category, field] = df
-        return arrdict.arrdict(dfs)
+        return arrdict(dfs)
         
     def resample(self, rule='60s', **kwargs):
         kwargs = {'rule': rule, **kwargs}
@@ -234,9 +234,9 @@ def rel_gradient_norm(name, agent):
 def funcduty(name):
     def factory(f):
         def g(self, *args, **kwargs):
-            with aljpy.timer() as timer:
-                result = f(self, *args, **kwargs)
-                record('duty', f'duty/{name}', timer.time())
+            start = time.time()
+            result = f(self, *args, **kwargs)
+            record('duty', f'duty/{name}', time.time() - start)
             return result
         return g
     return factory
