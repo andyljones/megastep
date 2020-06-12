@@ -1,0 +1,56 @@
+from .simulator import Simulator
+from ..common import spaces, arrdict
+import torch
+
+def obs_space(n_drones, res):
+    return spaces.Collect(
+        rgb=spaces.MultiImage((n_drones, 3, 1, res), innate_scale=2))
+
+def action_space(n_drones):
+    return spaces.Distribute(
+                movement=spaces.Distribute(
+                    general=spaces.Discrete((n_drones, 7)))) # What's a better name for the opposite of lateral
+
+
+class Environment(Simulator):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.observation_space = obs_space(self.options.n_drones, self.options.res)
+        self.action_space = action_space(self.options.n_drones)
+
+        self._gen = 0
+
+    def _observe(self):
+        render = self._render()
+        return arrdict(
+            rgb=self._downsample(render.screen))
+    
+    @torch.no_grad()
+    def reset(self):
+        reset = torch.ones((self.options.n_designs,), dtype=torch.bool, device='cuda')
+        self._respawn(reset)
+        return arrdict(obs=self._observe())
+
+    @torch.no_grad()
+    def step(self, aug=None, actions=None):
+        actions = torch.zeros((self.options.n_designs, self.options.n_drones), dtype=torch.int, device='cuda') if actions is None else actions
+        self._act(arrdict(movement=arrdict(general=actions)))
+
+        reset = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
+        terminal = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
+
+        obs = self._observe()
+        reward = torch.zeros(self.options.n_designs, device='cuda')
+        return arrdict(reset=reset, terminal=terminal, obs=obs, reward=reward)
+
+def example():
+    from drones.designs.toy import collision_test
+
+    forward = torch.tensor([[3]], dtype=torch.int, device='cuda')
+    env = Environment(designer=lambda r: collision_test(), n_designs=1)
+    env.reset()
+    for _ in range(10):
+        env.step(actions=forward)
+    env.render()

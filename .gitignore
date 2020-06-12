@@ -1,0 +1,8 @@
+.vscode
+output
+__pycache__
+.cache
+.~lock*
+.ipynb_checkpoints
+.*.ipynb
+workspace.code-workspace

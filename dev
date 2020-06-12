@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# export DOCKER_HOST="ssh://ajones@aj-server.local"
+
+export dirname=${PWD##*/} 
+
+case $1 in
+    code )
+        uri=$(python -c "import json; desc = json.dumps({'containerName': '/$dirname', 'settings': {'host':'ssh://aj-server.local'}}); print(f'vscode-remote://attached-container+{desc.encode().hex()}/code')")
+        code --folder-uri "$uri" ;;
+    notebook )
+        open "http://localhost:5000/noterminal" ;; 
+    notebooks )
+        notebooks="$(docker exec -i $dirname find . -maxdepth 1 -name '.*.ipynb' -printf '%f\n')"
+        echo "$notebooks" | xargs -I % open "http://localhost:5000/notebooks/%" ;;
+    build ) 
+        docker build docker -t $dirname ;;
+    run )
+        # shm of 8G because: https://github.com/pytorch/pytorch/issues/2244
+        docker run -td --name $dirname --shm-size="16g" -v /home/ajones/code/$dirname:/code $dirname:latest;;
+    logs )
+        docker logs $dirname ;;
+    stop )
+        docker stop $dirname ;;
+    start )
+        docker start $dirname ;;
+    restart )
+        docker restart $dirname ;;
+    rm )
+        docker stop $dirname
+        docker rm $dirname ;;
+    * ) 
+        echo "No command matching '$1'"
+esac

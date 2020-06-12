@@ -1,0 +1,12 @@
+{
+  "NotebookApp": {
+    "nbserver_extensions": {
+      "jupyter_nbextensions_configurator": true,
+      "noterminal": true
+    }
+  },
+  "MappingKernelManager": {
+    "buffer_offline_messages": false
+  }
+}
+  
