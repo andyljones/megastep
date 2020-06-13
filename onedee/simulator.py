@@ -1,6 +1,5 @@
 import numpy as np
 from . import common, scenery, plotting
-from designs import DesignError
 import torch
 import logging
 from rebar import dotdict, arrdict

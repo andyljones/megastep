@@ -2,13 +2,14 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from . import acting, learning, intakes
-from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing
-import aljpy
+from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
 import gym
-from aljpy import arrdict
 import pandas as pd
+from onedee import Environment
+import designs
+import logging
 
-log = aljpy.logger()
+log = logging.getLogger(__name__)
 
 def categorical_sample(l):
     samples = torch.distributions.Categorical(logits=l.float().reshape(-1, l.shape[-1])).sample()
@@ -41,9 +42,8 @@ class Agent(nn.Module):
         return outputs
 
 def envfunc(n_envs=1024):
-    # return CartPoleEnv(n_envs)
-    # return statemachines.encode(statemachines.double_random_chain(4), n_envs)
-    return atari.ImageEnv('PongNoFrameskip-v4', n_envs, frameskip=4)
+    ds = designs.cubicasa(n_envs)
+    return Environment(ds)
 
 def agentfunc():
     env = envfunc(n_envs=1)
