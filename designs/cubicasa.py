@@ -24,16 +24,6 @@ SCALE = 100
 
 @contextmanager
 def zipfile(zf=None):
-    # # Caches in Google Storage first, then in a local dir
-    # from ..cloud import storage
-    # cache = Path('.cache/cubicasa.zip')
-    # if not cache.exists():
-    #     cloud_cache = storage.Path(CLOUD_CACHE)
-    #     if not cloud_cache.exists():
-    #         raw = cache.download(URL)
-    #         cloud_cache.write_bytes_multipart(raw)
-    #     cache.parent.mkdir(exist_ok=True, parents=True)
-    #     cache.write_bytes(cloud_cache.read_bytes())
     if zf:
         yield zf
     else:
@@ -55,7 +45,7 @@ def files(zf=None):
                     .assign(id=lambda df: pd.to_numeric(df.id)))
 
 @cache.memcache('{split}')
-def ids(split=None, zf=None):
+def ids(split='all', zf=None):
     ids = (files(zf)
                 .query('category == "high_quality_architectural" & filename == "model"')
                 .id
@@ -66,8 +56,12 @@ def ids(split=None, zf=None):
     # Take 90% for the training set, 10% for the test
     if split == 'train':
         ids = ids[ids % 10 != 0]
-    if split == 'test':
+    elif split == 'test':
         ids = ids[ids % 10 == 0]
+    elif split == 'all':
+        ids = ids
+    else:
+        raise ValueError("Split must be one of {'train', 'test', 'all'}")
     return ids
 
 @cache.autocache('{category}-{index}')
@@ -207,9 +201,6 @@ def cubicasa(n_designs=1, n_drones=1, split='train', rank=0):
             raise ValueError(f'Too many designs requested - max available is {len(designs)}')
     return designs[start:]
 
-def n_cubicasa():
-    return len(ids())
-
 def cubicache(n_drones):
     with parallel.parallel(_cubicasa) as p:
-        p.wait([p(i, n_drones, error=False) for i in range(n_cubicasa())])
+        p.wait([p(i, n_drones, error=False) for i in range(len(ids('all')))])

@@ -1,4 +1,4 @@
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from contextlib import contextmanager
 import multiprocessing
 import types
