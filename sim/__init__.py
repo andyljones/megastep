@@ -3,23 +3,13 @@ import torch
 import gym
 from rebar import arrdict
 
-def obs_space(n_drones, res):
-    return spaces.Collect(
-        rgb=spaces.MultiImage((n_drones, 3, 1, res), innate_scale=2))
-
-def action_space(n_drones):
-    return spaces.Distribute(
-                movement=spaces.Distribute(
-                    general=spaces.Discrete((n_drones, 7)))) # What's a better name for the opposite of lateral
-
-
 class Environment(Simulator):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.observation_space = arrdict(
-            rgb=gym.spaces.Box((self.options.n_drones, 3, 1, self.options.res)))
+            rgb=gym.spaces.Box(0, 1, (self.options.n_drones, 3, 1, self.options.res)))
         self.action_space = arrdict(
             move=gym.spaces.MultiDiscrete((7,)*self.options.n_drones))
 
