@@ -11,6 +11,15 @@ from IPython.display import clear_output
 
 bop.output_notebook(hide_banner=True)
 
+def array(fig):
+    fig.canvas.draw_idle()
+    renderer = fig.canvas.get_renderer()
+    w, h = int(renderer.width), int(renderer.height)
+    return (np.frombuffer(renderer.buffer_rgba(), np.uint8)
+                        .reshape((h, w, 4))
+                        [:, :, :3]
+                        .copy())
+
 def timedelta_xaxis(f):
     f.xaxis.ticker = bom.tickers.DatetimeTicker()
     f.xaxis.formatter = bom.FuncTickFormatter(code="""

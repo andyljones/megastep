@@ -48,7 +48,8 @@ ADD .ipython /root/.ipython
 RUN conda install -y numpy pytorch torchvision pandas -c pytorch && \
     conda clean -ya && \
     # Install Jupyter 7.5 because 7.6.1 has a bunch of lag with autoreload 
-    pip install scipy psutil jupyter tqdm seaborn bokeh matplotlib setproctitle wurlitzer ipython==7.5 av flake8 
+    pip install scipy psutil jupyter tqdm seaborn bokeh matplotlib setproctitle wurlitzer ipython==7.5 av flake8 \
+        beautifulsoup4 shapely rasterio gym
 
 # Install my backend Jupyter extensions
 # aljpy needs to be before noterminal

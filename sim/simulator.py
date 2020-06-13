@@ -1,11 +1,11 @@
 import numpy as np
 from . import common, scenery, plotting
-from ..common import tensorify, numpyify, arrdict, profiling
-from ..common.plotting import array
-from ..designs import DesignError
+from designs import DesignError
 import torch
 import logging
-from rebar import dotdict
+from rebar import dotdict, arrdict
+from rebar.arrdict import tensorify, numpyify
+from rebar.plots import array
 
 log = logging.getLogger(__name__)
 
@@ -65,15 +65,12 @@ class Simulator:
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
 
-    @profiling.nvtx
     def _act(self, actions):
         self._cuda.physics(self._cuda.Movement(**actions.movement), self._scene, self._drones)
 
-    @profiling.nvtx
     def _respawn(self, reset):
         self._cuda.respawn(reset, self._respawns, self._drones)
 
-    @profiling.nvtx
     def _downsample(self, screen, agg='mean'):
         view = screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample)
         if agg == 'mean':
@@ -83,14 +80,12 @@ class Simulator:
         elif agg == 'first':
             return view[..., 0]
 
-    @profiling.nvtx
     def _upsample(self, screen):
         return screen.unsqueeze(-1).repeat(1, 1, 1, 1, 1, self.options.supersample).view(*screen.shape[:-1], screen.shape[-1]*self.options.supersample)
 
     def _compress(self, distances):
         return (1 - distances/self.options.max_dist).clamp(0, 1) 
 
-    @profiling.nvtx
     def _render(self):
         render = common.unpack(self._cuda.render(self._drones, self._scene))
         render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})

@@ -1,6 +1,7 @@
 from .simulator import Simulator
-from ..common import spaces, arrdict
 import torch
+import gym
+from rebar import arrdict
 
 def obs_space(n_drones, res):
     return spaces.Collect(
@@ -17,10 +18,10 @@ class Environment(Simulator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.observation_space = obs_space(self.options.n_drones, self.options.res)
-        self.action_space = action_space(self.options.n_drones)
-
-        self._gen = 0
+        self.observation_space = arrdict(
+            rgb=gym.spaces.Box((self.options.n_drones, 3, 1, self.options.res)))
+        self.action_space = arrdict(
+            move=gym.spaces.MultiDiscrete((7,)*self.options.n_drones))
 
     def _observe(self):
         render = self._render()
