@@ -4,9 +4,8 @@ from torch import nn
 
 class FlatIntake(nn.Module):
 
-    def __init__(self, space, width):
+    def __init__(self, shape, width):
         super().__init__()
-        shape = space.shape if isinstance(space, gym.spaces.Space) else space
         self.core = nn.Sequential(
             nn.Linear(shape[0], width), nn.ReLU(),
             nn.Linear(width, width))
@@ -16,27 +15,33 @@ class FlatIntake(nn.Module):
 
 class MultiImageIntake(nn.Module):
 
-    def __init__(self, space, width):
+    def __init__(self, shape, width):
         super().__init__()
-        self.core = nn.Sequential(
-                        nn.Conv2d(space.shape[1], 16, 8, stride=4), nn.ReLU(),
-                        nn.Conv2d(16, 32, 4, stride=2), nn.ReLU(),
-                        nn.Conv2d(32, 32, 3, stride=1), nn.ReLU())
+        D, C, H, W = space.shape
+
+        self.conv = nn.Sequential(
+                        nn.Conv2d(C, 16, (1, 8), stride=(1, 4)), nn.ReLU(),
+                        nn.Conv2d(16, 32, (1, 4), stride=(1, 2)), nn.ReLU(),
+                        nn.Conv2d(32, 32, (1, 3), stride=(1, 2)), nn.ReLU())
+
+        zeros = torch.zeros((D, C, H, W))
+        convwidth = self.conv(zeros).nelement()
+
         self.proj = nn.Sequential(
-                        nn.Linear(32*7*7, width), nn.ReLU())
+                        nn.Linear(convwidth, width), nn.ReLU())
 
     def forward(self, obs):
         T, B, D, C, H, W = obs.shape
-        obs = obs.permute(0, 1, 4, 2, 3).contiguous()
         if obs.dtype == torch.uint8:
             obs = obs/255.
-        x = self.core(obs.reshape(T*B, C, H, W)).reshape(T, B, -1)
+        x = self.core(obs.reshape(T*B*D, C, H, W)).reshape(T, B, -1)
         return self.proj(x)
-
 
 class ConcatIntake(nn.Module):
 
     def __init__(self, subintakes, width):
+        super().__init__()
+
         self.core = nn.Linear(len(subintakes)*width, width)
         self.subintakes = subintakes
 
@@ -50,9 +55,7 @@ def intake(space, width):
         return ConcatIntake(subintakes, width)
     elif isinstance(space, gym.spaces.Box):
         if len(space.shape) == 1:
-            return FlatIntake(space, width)
-        elif len(space.shape) == 3:
-            return ImageIntake(space, width)
+            return FlatIntake(space.shape, width)
         elif len(space.shape) == 4:
-            return MultiImageIntake(space, width)
+            return MultiImageIntake(space.shape, width)
     raise ValueError(f'Can\'t handle {space}')
