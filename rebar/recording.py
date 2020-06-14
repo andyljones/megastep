@@ -76,18 +76,18 @@ class Encoder:
             self.value = self._content.getvalue()
         return False
         
-def html_tag(video, **kwargs):
-    if isinstance(video, Encoder):
-        video = video.value
+def html_tag(video, height=None, **kwargs):
+    video = video.value if isinstance(video, Encoder) else video
+    style = f'style="height: {height}px"' if height else ''
     b64 = base64.b64encode(video).decode('utf-8')
     return f"""
-<video controls autoplay loop>
+<video controls autoplay loop {style}>
     <source type="video/mp4" src="data:video/mp4;base64,{b64}">
     Your browser does not support the video tag.
 </video>"""
 
-def notebook(video):
-    return display(HTML(html_tag(video)))
+def notebook(video, height=960):
+    return display(HTML(html_tag(video, height)))
 
 def save(video, path):
     if isinstance(video, Encoder):

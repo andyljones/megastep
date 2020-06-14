@@ -118,8 +118,7 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
 
 def plot(state, fig=None):
     fig = fig or plt.figure()
-
-    fig, diagram = plt.subplots()
+    diagram = fig.subplots()
 
     plot_lights(diagram, state)
     plot_lines(diagram, state, cull=False)

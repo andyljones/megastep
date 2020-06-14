@@ -22,11 +22,11 @@ def _array(plot, state):
     plt.close(fig)
     return arr
 
-def _encode(tasker, env, states):
+def _encode(tasker, env, states, fps):
     log.info('Started encoding recording')
     states = numpyify(stack(states))
     futures = [tasker(env._plot, states[i]) for i in range(length(states))]
-    with recording.Encoder(env.options.fps) as encoder:
+    with recording.Encoder(fps or env.options.fps) as encoder:
         for future in futures:
             while not future.done():
                 yield
@@ -34,7 +34,7 @@ def _encode(tasker, env, states):
     log.info('Finished encoding recording')
     return encoder.value
 
-def parasite(run_name, env, env_idx=0, length=64, period=60):
+def parasite(run_name, env, env_idx=0, length=256, period=60, fps=None):
     start = time.time()
     states = []
     path = paths.path(run_name, 'recording').with_suffix('.mp4')
@@ -45,7 +45,7 @@ def parasite(run_name, env, env_idx=0, length=64, period=60):
                 yield
 
             if len(states) == length:
-                video = yield from _encode(tasker, env, states)
+                video = yield from _encode(tasker, env, states, fps)
                 path.write_bytes(video)
 
                 states = []
