@@ -7,7 +7,6 @@
 // COMMON
 
 // Max speed is ACCEL/DECAY
-const float FPS = 10.;
 
 const float AMBIENT = .1;
 const uint BLOCK = 128;
@@ -15,13 +14,16 @@ const uint BLOCK = 128;
 int RES;
 __constant__ float DRONE_RADIUS;
 __constant__ float HALF_SCREEN_WIDTH;
+__constant__ float FPS;
 
-__host__ void initialize(float drone_radius, int res, float fov) {
+__host__ void initialize(float drone_radius, int res, float fov, float fps) {
     RES = res;
     cudaMemcpyToSymbol(DRONE_RADIUS, &drone_radius, sizeof(float));
 
     const auto half_screen = tanf(CUDART_PI_F/180.f*fov/2.);
     cudaMemcpyToSymbol(HALF_SCREEN_WIDTH, &half_screen, sizeof(float));
+
+    cudaMemcpyToSymbol(FPS, &fps, sizeof(float))
 }
 
 

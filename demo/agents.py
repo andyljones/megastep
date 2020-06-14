@@ -109,8 +109,8 @@ class Agent(nn.Module):
             gen=self.gen.new_full(x.shape[:2], self.gen),
             logits=self.policy(x))
         if sample:
-            outputs['action'] = self.policy.sample(outputs.logits)
+            outputs['actions'] = self.policy.sample(outputs.logits)
         if value:
-            outputs['value'] = self.value(x).squeeze(-1)
+            outputs['values'] = self.value(x).squeeze(-1)
         return outputs
 

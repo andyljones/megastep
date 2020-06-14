@@ -195,7 +195,7 @@ struct Render {
     const TT screen;
 };
 
-void initialize(float, int, float);
+void initialize(float, int, float, float);
 void bake(Scene& scene, int D);
 void respawn(const TT reset, const Respawns& respawns, Drones& drones);
 void physics(const Scene& scene, Drones& drones);

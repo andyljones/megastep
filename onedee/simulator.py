@@ -18,7 +18,8 @@ DEFAULTS = {
     'random': np.random.RandomState(12041955),
     'fov': 130, # widest FOV among common FPV drones
     'radius': common.DRONE_RADIUS,
-    'max_dist': 10,
+    'max_depth': 10,
+    'fps': 10,
 }
 
 @torch.no_grad()
@@ -63,8 +64,14 @@ class Simulator:
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
 
-    def _move(self, move):
-        self._cuda.physics(self._cuda.Movement(**move), self._scene, self._drones)
+    def _to_global_frame(self, p):
+        a = np.pi/180*self._drones.angles
+        c, s = torch.cos(a), torch.sin(a)
+        x, y = p[..., 0], p[..., 1]
+        return torch.stack([c*x - s*y, s*x + c*y], -1)
+
+    def _physics(self):
+        self._cuda.physics(self._scene, self._drones)
 
     def _respawn(self, reset):
         self._cuda.respawn(reset, self._respawns, self._drones)
@@ -82,7 +89,7 @@ class Simulator:
         return screen.unsqueeze(-1).repeat(1, 1, 1, 1, 1, self.options.supersample).view(*screen.shape[:-1], screen.shape[-1]*self.options.supersample)
 
     def _compress(self, distances):
-        return (1 - distances/self.options.max_dist).clamp(0, 1) 
+        return (1 - distances/self.options.max_depth).clamp(0, 1) 
 
     def _render(self):
         render = common.unpack(self._cuda.render(self._drones, self._scene))

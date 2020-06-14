@@ -3,6 +3,9 @@ from . import spaces
 import torch
 from rebar import arrdict
 
+ACCEL = 5
+ANG_ACCEL = 100
+
 class Environment(Simulator):
 
     def __init__(self, *args, **kwargs):
@@ -12,6 +15,14 @@ class Environment(Simulator):
             rgb=spaces.MultiImage(self.options.n_drones, 3, 1, self.options.res))
         self.action_space = arrdict(
             move=spaces.MultiDiscrete(self.options.n_drones, 7))
+            
+        # noop, forward/backward, strafe left/right, turn left/right
+        momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
+        angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
+        self._actionset = arrdict(
+            momenta=ACCEL/self.options.fps*momenta
+            angmomenta=ANG_ACCEL/self.options.fps*angmomenta
+        ).to('cuda')
 
     def _observe(self):
         render = self._render()
@@ -25,8 +36,11 @@ class Environment(Simulator):
         return arrdict(obs=self._observe())
 
     @torch.no_grad()
-    def step(self, decision):
-        self._act(arrdict(movement=arrdict(general=actions)))
+    def step(self, decisions):
+        delta = self._actionset[decisions.actions.move]
+        self._drones.angmomenta[:] = (1 - DECAY)*self._drones.angmomenta + delta.angmomenta
+        self._drones.momenta[:] = (1 - DECAY)*self._drones.momenta + self._to_global_frame(delta.momenta)
+        self._physics()
 
         reset = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
         terminal = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
