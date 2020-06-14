@@ -6,6 +6,7 @@ from rebar import paths, parallel, plots, recording
 import logging
 import threading
 import matplotlib.pyplot as plt
+import os
 
 log = logging.getLogger(__name__)
 
@@ -21,40 +22,36 @@ def _array(plot, state):
     plt.close(fig)
     return arr
 
-def _encode(plot, states, fps):
-    with parallel.parallel(_array, progress=False) as p, \
-            recording.Encoder(fps) as encoder:
-
-        futures = [p(plot, states[i]) for i in range(length(states))]
+def _encode(tasker, env, states):
+    log.info('Started encoding recording')
+    states = numpyify(stack(states))
+    futures = [tasker(env._plot, states[i]) for i in range(length(states))]
+    with recording.Encoder(env.options.fps) as encoder:
         for future in futures:
             while not future.done():
                 yield
             encoder(future.result())
-
+    log.info('Finished encoding recording')
     return encoder.value
 
 def parasite(run_name, env, env_idx=0, length=64, period=60):
-
     start = time.time()
     states = []
     path = paths.path(run_name, 'recording').with_suffix('.mp4')
-    while True:
-        if time.time() > start:
-            states.append(env.state(env_idx))
-            yield
+    with parallel.parallel(_array, progress=False, N=os.cpu_count()//4) as tasker:
+        while True:
+            if time.time() > start:
+                states.append(env.state(env_idx))
+                yield
 
-        if len(states) == length:
-            log.info('Starting encoding')
-            states = numpyify(stack(states))
-            content = yield from _encode(env._plot, states, env.options.fps)
-            path.write_bytes(content)
+            if len(states) == length:
+                video = yield from _encode(tasker, env, states)
+                path.write_bytes(video)
 
-            states = []
-            start = start + period
+                states = []
+                start = start + period
         
-def render(run_name=-1):
-    path = paths.path(run_name, 'recording')
-    if not path.exists():
-        raise ValueError(f'No recording for "{run_name}"')
-    pickle.loads(path.read_bytes())
+def notebook(run_name=-1, idx=-1):
+    path = list(paths.subdirectory('test', 'recording').glob('*.mp4'))[idx]
+    return recording.notebook(path.read_bytes())
 

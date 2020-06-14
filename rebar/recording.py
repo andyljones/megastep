@@ -76,22 +76,23 @@ class Encoder:
             self.value = self._content.getvalue()
         return False
         
-def html_tag(encoder, height=960, **kwargs):
-    width = encoder.width/encoder.height*height
-    style = f"height: {height}px;" if height else ""
-    b64 = base64.b64encode(encoder.value).decode('utf-8')
-    tag = f"""
-        <video controls autoplay loop style="{style}">
-            <source type="video/{encoder.mimetype}" src="data:video/{encoder.mimetype};base64,{b64}">
-            Your browser does not support the video tag.
-        </video>"""
-    return tag, (height, width)
+def html_tag(video, **kwargs):
+    if isinstance(video, Encoder):
+        video = video.value
+    b64 = base64.b64encode(video).decode('utf-8')
+    return f"""
+<video controls autoplay loop>
+    <source type="video/mp4" src="data:video/mp4;base64,{b64}">
+    Your browser does not support the video tag.
+</video>"""
 
-def notebook(encoder, **kwargs):
-    return display(HTML(html_tag(encoder, **kwargs)[0]))
+def notebook(video):
+    return display(HTML(html_tag(video)))
 
-def save(encoder, path):
-    Path(path).write_text(html_tag(encoder)[0])
+def save(video, path):
+    if isinstance(video, Encoder):
+        video = video.value
+    Path(path).write_text(video)
 
 def parallel_encode(f, *indexable, canceller=None, fps=20, N=0, n_frames=None, **kwargs):
     """To use this with N > 0, you need to return an array and - if it's a new figure each time - 
