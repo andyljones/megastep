@@ -8,9 +8,9 @@ from multiprocessing import cpu_count
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 from .parallel import parallel
-from .log import logger
+import logging
 
-log = logger()
+log = logging.getLogger(__name__)
 
 def array(fig):
     fig.canvas.draw_idle()
