@@ -1,6 +1,6 @@
 from .simulator import Simulator
+from . import spaces
 import torch
-import gym
 from rebar import arrdict
 
 class Environment(Simulator):
@@ -9,9 +9,9 @@ class Environment(Simulator):
         super().__init__(*args, **kwargs)
 
         self.observation_space = arrdict(
-            rgb=gym.spaces.Box(0, 1, (self.options.n_drones, 3, 1, self.options.res)))
+            rgb=spaces.MultiImage(self.options.n_drones, 3, 1, self.options.res))
         self.action_space = arrdict(
-            move=gym.spaces.MultiDiscrete((7,)*self.options.n_drones))
+            move=spaces.MultiDiscrete(self.options.n_drones, 7))
 
     def _observe(self):
         render = self._render()
