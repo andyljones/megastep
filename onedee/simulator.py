@@ -106,7 +106,7 @@ class Simulator:
         textures = scene.textures.vals[textures_s:textures_e]
         baked = scene.baked.vals[textures_s:textures_e]
 
-        return numpyify(arrdict(
+        return arrdict(
                     options=arrdict({k: v for k, v in self.options.items() if k != 'random'}),
                     scene=arrdict(
                             frame=self._scene.frame,
@@ -115,12 +115,12 @@ class Simulator:
                             start=textures_s,
                             widths=scene.textures.widths[lines_s:lines_e],
                             textures=textures,
-                            baked=baked),
+                            baked=baked).clone(),
                     drones=arrdict(
                             angles=self._drones.angles[d], 
-                            positions=self._drones.positions[d]),))
+                            positions=self._drones.positions[d]).clone(),)
 
-    def render(self, mode='human', d=0):
+    def display(self, mode='human', d=0):
         fig = self._plot(self.state(d))
         if mode == 'human':
             return

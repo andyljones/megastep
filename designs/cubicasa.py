@@ -5,14 +5,14 @@ from contextlib import contextmanager
 from IPython.display import HTML, display
 from bs4 import BeautifulSoup
 import numpy as np
-from . import common, cache, parallel
+from . import common, cache
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import cascaded_union
 import multiprocessing
 from tqdm.auto import tqdm
-import rebar
+from rebar import parallel
 import logging
 
 log = logging.getLogger(__name__)

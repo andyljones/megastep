@@ -3,9 +3,9 @@ from contextlib import contextmanager
 import multiprocessing
 import types
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future, _base, as_completed
-import rebar
+import logging
 
-log = rebar.logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 class SerialExecutor(_base.Executor):
     """An executor that runs things on the main process/thread - meaning stack traces are interpretable

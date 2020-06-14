@@ -118,9 +118,10 @@ def to_dir(run_name):
 
 class Reader:
 
-    def __init__(self, run_name):
+    def __init__(self, run_name, renderer=None):
         self._dir = paths.subdirectory(run_name, 'logs')
         self._files = {}
+        self._renderer = renderer
 
     def read(self):
         for path in self._dir.glob('*.txt'):
@@ -131,23 +132,9 @@ class Reader:
             for line in f.readlines():
                 yield path, line.rstrip('\n')
 
-def __from_dir(canceller, renderer, reader):
-    while True:
-        for path, line in reader.read():
-            renderer.emit(path, line)
-
-        if canceller.is_set():
-            break
-
-        time.sleep(.001)
-
-def _from_dir(canceller, renderer, reader):
-    try:
-        __from_dir(canceller, renderer, reader)
-    except KeyboardInterrupt:
-        log.info('Interrupting main')
-        _thread.interrupt_main()
-        __from_dir(canceller, renderer, reader)
+    def update(self):
+        for path, line in self.read():
+            self.renderer.emit(path, line)
 
 @contextmanager
 def from_dir(run_name, compositor=None):
@@ -158,20 +145,9 @@ def from_dir(run_name, compositor=None):
 
     with to_dir(run_name):
         try:
-            reader = Reader(run_name)
-            canceller = threading.Event()
-            thread = threading.Thread(target=_from_dir, args=(canceller, renderer, reader))
-            thread.start()
-            yield
+            yield Reader(run_name, renderer)
         finally:
-            log.info('Cancelling log forwarding thread')
-            time.sleep(.25)
-            canceller.set()
-            thread.join(1)
-            if thread.is_alive():
-                log.error('Logging thread won\'t die')
-            else:
-                log.info('Log forwarding thread cancelled')
+            reader.update()
 
 
 ### TESTS

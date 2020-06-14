@@ -17,6 +17,7 @@ from torch import nn
 from .arrdict import arrdict
 import logging
 
+# Will be shadowed by the functions pulled in from statscategories
 _max = max
 _time = time
 
