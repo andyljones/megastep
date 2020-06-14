@@ -23,7 +23,7 @@ def run():
     processes.set_start_method()
     torch.set_num_threads(1)
 
-    run = f'{pd.Timestamp.now():%Y-%m-%d %H-%M-%S} impala-pong'
+    run = f'{pd.Timestamp.now():%Y-%m-%d %H-%M-%S} demo'
     compositor = widgets.Compositor()
     with logging.from_dir(run, compositor), \
             stats.from_dir(run, compositor), \

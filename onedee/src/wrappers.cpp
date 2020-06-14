@@ -10,7 +10,7 @@ using namespace std::string_literals;
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 // TODO: Is this still needed?
-void _physics(const Movement movement, const Scene& scene, Drones& drones) { return physics(movement, scene, drones); }
+void _physics(const Scene& scene, Drones& drones) { return physics(scene, drones); }
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
@@ -60,9 +60,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("locations", [](Render r) { return variable(r.locations); })
         .def_property_readonly("dots", [](Render r) { return variable(r.dots); })
         .def_property_readonly("distances", [](Render r) { return variable(r.distances); });
-
-    py::class_<Movement>(m, "Movement", py::module_local())
-        .def(py::init<TT, TT, TT>(), "mesial"_a, "lateral"_a, "yaw"_a);
 
     m.def("initialize", &initialize);
     m.def("bake", &bake, py::call_guard<py::gil_scoped_release>());

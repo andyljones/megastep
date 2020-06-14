@@ -51,7 +51,6 @@ def select(x, d):
 
 class Simulator: 
 
-
     def __init__(self, designs, **kwargs):
         self._designs = designs 
         self.options = dotdict({**DEFAULTS, **kwargs, 'n_designs': len(self._designs)})
@@ -64,8 +63,8 @@ class Simulator:
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
 
-    def _act(self, actions):
-        self._cuda.physics(self._cuda.Movement(**actions.movement), self._scene, self._drones)
+    def _move(self, move):
+        self._cuda.physics(self._cuda.Movement(**move), self._scene, self._drones)
 
     def _respawn(self, reset):
         self._cuda.respawn(reset, self._respawns, self._drones)

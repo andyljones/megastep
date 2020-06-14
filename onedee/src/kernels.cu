@@ -7,9 +7,6 @@
 // COMMON
 
 // Max speed is ACCEL/DECAY
-const float ACCEL = 5;
-const float ANGULAR_ACCEL = 100;
-const float DECAY = .125; 
 const float FPS = 10.;
 
 const float AMBIENT = .1;
@@ -91,67 +88,6 @@ __host__ void respawn(const TT reset, const Respawns& respawns, Drones& drones) 
             respawns.centers.pta(), respawns.radii.pta(), respawns.lowers.pta(), respawns.uppers.pta(),
             drones.angles.pta(), drones.positions.pta(), 
             drones.angmomenta.pta(), drones.momenta.pta());
-    }
-}
-
-// SIMULATOR - ACTIONS
-
-__global__ void movement_kernel(
-    Submovement::PTA mesial, Submovement::PTA lateral, Submovement::PTA yaw,
-    Angles::PTA angles, AngMomenta::PTA angmomenta, Momenta::PTA momenta) {
-
-    const auto n = blockIdx.x*blockDim.y + threadIdx.y;
-    if (n < angles.size(0)) {
-        const auto d = threadIdx.x;
-        
-        const auto a = angles[n][d]; 
-
-        float du = 0.f;  // mesial
-        switch (mesial[n][d]) {
-            case 0 : break;        
-            case 1 : du = +    ACCEL/FPS; break;
-            case 2 : du = +.50*ACCEL/FPS; break;
-            case 3 : du = +.25*ACCEL/FPS; break;
-            case 4 : du = -.25*ACCEL/FPS; break;
-            case 5 : du = -.50*ACCEL/FPS; break;
-            case 6 : du = -    ACCEL/FPS; break;
-            default: assert(false);
-        }
-        
-        float dv = 0.f;  // lateral
-        switch (lateral[n][d]) {
-            case 0 : break;        
-            case 1 : dv = -    ACCEL/FPS; break;
-            case 2 : dv = -.50*ACCEL/FPS; break;
-            case 3 : dv = -.25*ACCEL/FPS; break;
-            case 4 : dv = +.25*ACCEL/FPS; break;
-            case 5 : dv = +.50*ACCEL/FPS; break;
-            case 6 : dv = +    ACCEL/FPS; break;
-            default: assert(false);
-        } 
-
-        float da = 0.f;  // yaw
-        switch (yaw[n][d]) {
-            case 0 : break;
-            case 1 : da = +    ANGULAR_ACCEL/FPS; break;   
-            case 2 : da = +.50*ANGULAR_ACCEL/FPS; break;   
-            case 3 : da = +.25*ANGULAR_ACCEL/FPS; break;   
-            case 4 : da = -.25*ANGULAR_ACCEL/FPS; break;
-            case 5 : da = -.50*ANGULAR_ACCEL/FPS; break;
-            case 6 : da = -    ANGULAR_ACCEL/FPS; break;
-            default: assert(false);
-        }
-
-        const auto c = cospif(a/180.f);
-        const auto s = sinpif(a/180.f);
-
-        auto ma = (1 - DECAY)*angmomenta[n][d] + da;
-        angmomenta[n][d] = ma;
-
-        auto mx = (1 - DECAY)*momenta[n][d][0] + c*du - s*dv;
-        auto my = (1 - DECAY)*momenta[n][d][1] + s*du + c*dv;
-        momenta[n][d][0] = mx;
-        momenta[n][d][1] = my;
     }
 }
 
@@ -333,15 +269,10 @@ __global__ void collision_kernel(
     }
 }
 
-__host__ void physics(const Movement movement, const Scene& scene, Drones& drones) {
+__host__ void physics(const Scene& scene, Drones& drones) {
     const uint N = drones.angles.size(0);
     const uint D = drones.angles.size(1);
     const uint F = scene.frame.size(0);
-
-    const uint integrate_blocks = (N + BLOCK - 1)/BLOCK;
-    movement_kernel<<<integrate_blocks, {D, BLOCK}, 0, stream()>>>(
-        movement.mesial.pta(), movement.lateral.pta(), movement.yaw.pta(),
-        drones.angles.pta(), drones.angmomenta.pta(), drones.momenta.pta());
 
     const auto progress(Progress::ones({N, D}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;

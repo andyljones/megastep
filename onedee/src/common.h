@@ -195,16 +195,8 @@ struct Render {
     const TT screen;
 };
 
-using Submovement = TensorProxy<int, 2>;
-
-struct Movement {
-    const Submovement mesial;
-    const Submovement lateral;
-    const Submovement yaw;
-};
-
 void initialize(float, int, float);
 void bake(Scene& scene, int D);
 void respawn(const TT reset, const Respawns& respawns, Drones& drones);
-void physics(const Movement movement, const Scene& scene, Drones& drones);
+void physics(const Scene& scene, Drones& drones);
 Render render(const Drones& drones, Scene& scene);

@@ -25,8 +25,7 @@ class Environment(Simulator):
         return arrdict(obs=self._observe())
 
     @torch.no_grad()
-    def step(self, aug=None, actions=None):
-        actions = torch.zeros((self.options.n_designs, self.options.n_drones), dtype=torch.int, device='cuda') if actions is None else actions
+    def step(self, decision):
         self._act(arrdict(movement=arrdict(general=actions)))
 
         reset = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
