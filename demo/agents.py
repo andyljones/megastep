@@ -6,22 +6,11 @@ from onedee import spaces
 from rebar import arrdict
 from torch.nn import functional as F
 
-class FlatIntake(nn.Module):
-
-    def __init__(self, shape, width):
-        super().__init__()
-        self.core = nn.Sequential(
-            nn.Linear(shape[0], width), nn.ReLU(),
-            nn.Linear(width, width))
-
-    def forward(self, obs):
-        return self.core(obs)
-
 class MultiImageIntake(nn.Module):
 
-    def __init__(self, shape, width):
+    def __init__(self, space, width):
         super().__init__()
-        D, C, H, W = shape
+        D, C, H, W = space.shape
 
         self.conv = nn.Sequential(
                         nn.Conv2d(C, 16, (1, 8), stride=(1, 4)), nn.ReLU(),
@@ -43,9 +32,10 @@ class MultiImageIntake(nn.Module):
 
 class ConcatIntake(nn.Module):
 
-    def __init__(self, intakes, width):
+    def __init__(self, space, width):
         super().__init__()
 
+        intakes = type(space)({k: intake(v, width) for k, v in space.items()})
         self.core = nn.Linear(len(intakes)*width, width)
         self.intakes = nn.ModuleDict(intakes)
 
@@ -55,20 +45,19 @@ class ConcatIntake(nn.Module):
 
 def intake(space, width):
     if isinstance(space, dict):
-        intakes = type(space)({k: intake(v, width) for k, v in space.items()})
-        return ConcatIntake(intakes, width)
+        return ConcatIntake(space, width)
     elif isinstance(space, spaces.MultiImage):
-        return MultiImageIntake(space.shape, width)
+        return MultiImageIntake(space, width)
     raise ValueError(f'Can\'t handle {space}')
 
 class DictOutput(nn.Module):
 
-    def __init__(self, outputs, width):
+    def __init__(self, space, width):
         super().__init__()
+        self.core = nn.Linear(width, width*len(space))
 
-        self.core = nn.Linear(width, width*len(outputs))
-        self.outputs = nn.ModuleDict(outputs)
-        self._dtype = type(outputs)
+        self._dtype = type(space)
+        self.outputs = nn.ModuleDict({k: output(v, width) for k, v in space.items()})
 
     def forward(self, x):
         ys = torch.chunk(self.core(x), len(self.outputs), -1)
@@ -77,11 +66,11 @@ class DictOutput(nn.Module):
     def sample(self, l):
         return self._dtype({k: v.sample(l[k]) for k, v in self.outputs.items()})
 
-
 class DiscreteOutput(nn.Module):
 
-    def __init__(self, shape, width):
+    def __init__(self, space, width):
         super().__init__()
+        shape = space.shape
         self.core = nn.Linear(width, np.prod(shape))
         self.shape = shape
     
@@ -94,10 +83,9 @@ class DiscreteOutput(nn.Module):
 
 def output(space, width):
     if isinstance(space, dict):
-        outputs = type(space)({k: output(v, width) for k, v in space.items()})
-        return DictOutput(outputs, width)
+        return DictOutput(space, width)
     if isinstance(space, spaces.MultiDiscrete):
-        return DiscreteOutput(space.shape, width)
+        return DiscreteOutput(space, width)
     raise ValueError(f'Can\'t handle {space}')
 
 class Agent(nn.Module):
