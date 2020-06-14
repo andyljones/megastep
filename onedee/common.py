@@ -21,7 +21,7 @@ def gamma_decode(x):
     """Converts to interpolatable values"""
     return x**2.2
 
-def cuda(res, supersample, fov, **kwargs):
+def cuda(res, supersample, fov, fps, **kwargs):
     files = [resource_filename(__package__, f'src/{fn}') for fn in ('wrappers.cpp', 'kernels.cu')]
     includes = [resource_filename(__package__, 'include')]
     cflags = ['-std=c++17'] + (['-g'] if DEBUG else [])
@@ -35,7 +35,7 @@ def cuda(res, supersample, fov, **kwargs):
                             extra_cflags=cflags, extra_cuda_cflags=cudaflags,
                             extra_ldflags=ldflags)
 
-    cuda.initialize(DRONE_RADIUS, supersample*res, fov)
+    cuda.initialize(float(DRONE_RADIUS), int(supersample*res), float(fov), float(fps))
     return cuda
 
 

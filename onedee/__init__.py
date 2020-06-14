@@ -5,6 +5,7 @@ from rebar import arrdict
 
 ACCEL = 5
 ANG_ACCEL = 100
+DECAY = .125
 
 class Environment(Simulator):
 
@@ -20,9 +21,9 @@ class Environment(Simulator):
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict(
-            momenta=ACCEL/self.options.fps*momenta
+            momenta=ACCEL/self.options.fps*momenta,
             angmomenta=ANG_ACCEL/self.options.fps*angmomenta
-        ).to('cuda')
+        ).cuda()
 
     def _observe(self):
         render = self._render()

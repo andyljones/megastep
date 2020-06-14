@@ -12,9 +12,10 @@ const float AMBIENT = .1;
 const uint BLOCK = 128;
 
 int RES;
+float FPS;
+__constant__ float FPS_;
 __constant__ float DRONE_RADIUS;
 __constant__ float HALF_SCREEN_WIDTH;
-__constant__ float FPS;
 
 __host__ void initialize(float drone_radius, int res, float fov, float fps) {
     RES = res;
@@ -23,7 +24,8 @@ __host__ void initialize(float drone_radius, int res, float fov, float fps) {
     const auto half_screen = tanf(CUDART_PI_F/180.f*fov/2.);
     cudaMemcpyToSymbol(HALF_SCREEN_WIDTH, &half_screen, sizeof(float));
 
-    cudaMemcpyToSymbol(FPS, &fps, sizeof(float))
+    FPS = fps;
+    cudaMemcpyToSymbol(FPS_, &fps, sizeof(float));
 }
 
 
@@ -257,13 +259,13 @@ __global__ void collision_kernel(
                     const Point p1(positions[n][d1]);
                     const Point m1(momenta[n][d1]);
 
-                    x = fminf(x, collision(p0, m0/FPS, p1, m1/FPS));
+                    x = fminf(x, collision(p0, m0/FPS_, p1, m1/FPS_));
                 }
             }
 
             // Check whether it's collided with any walls
             for (int l=DF; l < L; l++) {
-                x = fminf(x, collision(p0, m0/FPS, lines[n][l]));
+                x = fminf(x, collision(p0, m0/FPS_, lines[n][l]));
             }
 
             progress[n][d0] = x;
