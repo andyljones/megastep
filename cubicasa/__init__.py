@@ -121,3 +121,22 @@ def geometrydata(regenerate=False):
     with ZipFile(BytesIO(raw)) as zf:
         flat = dotdict({n[:-4]: fastload(zf.read(n)) for n in zf.namelist()})
     return unflatten(flat)
+
+_cache = None
+def sample(n_designs, split='training'):
+    global _cache
+    if _cache is None:
+        _cache = geometrydata()
+    
+    cutoff = int(.9*len(_cache))
+    order = np.random.RandomState(1).permutation(sorted(_cache))
+    if split == 'training':
+        order = order[:cutoff]
+    elif split == 'test':
+        order = order[cutoff:]
+    elif split == 'all':
+        order = order
+    else:
+        raise ValueError('Split must be train/test/all')
+
+    return type(_cache)({order[i]: _cache[order[i]] for i in range(n_designs)})
