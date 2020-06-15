@@ -33,7 +33,7 @@ def cubicasa5k():
 
 def svgdata(regenerate=False):
     p = Path('.cache/cubicasa-svgs.json.gz')
-    if not p.exists():
+    if not p.exists() or regenerate:
         p.parent.mkdir(exist_ok=True, parents=True)
         if regenerate:
             log.info('Regenerating SVG cache from cubicasa dataset. This will require a 5G download.')
@@ -63,20 +63,38 @@ def flatten(tree):
             flat[k] = v
     return flat
 
+def unflatten(d):
+    tree = {}
+    for k, v in d.items():
+        parts = k.split('/')
+        node = tree
+        for p in parts[:-1]:
+            node = node.setdefault(p, {})
+        node[parts[-1]] = v
+    return tree
+        
+
+def safe_geometry(id, svg):
+    try: 
+        # Hide the import since it uses a fair number of libraries not used elsewhere.
+        from . import geometry
+        return geometry.geometry(svg)
+    except:
+        # We'll lose ~8 SVGs to them not having any spaces
+        log.info(f'Geometry generation failed on on #{id}')
+
 def geometrydata(regenerate=False):
     # Why .npz.gz? Because applying gzip manually manages x10 better compression than
     # np.savez_compressed. They use the same compression alg, so I assume the difference
     # is in the default compression setting.
     p = Path('.cache/cubicasa-geometry.npz.gz')
-    if not p.exists():
+    if not p.exists() or regenerate:
         p.parent.mkdir(exist_ok=True, parents=True)
         if regenerate:
             log.info('Regenerating geometry cache from SVG cache.')
-            # Hide the import since it uses a fair number of libraries.
-            from . import geometry
-            with parallel.parallel(geometry.geometry) as pool:
-                gs = pool.wait({str(row.id): pool(row.id, row.svg) for _, row in svgdata(regenerate).iterrows()})
-            gs = flatten(gs)
+            with parallel.parallel(safe_geometry) as pool:
+                gs = pool.wait({str(row.id): pool(row.id, row.svg) for _, row in svgdata().iterrows()})
+            gs = flatten({k: v for k, v in gs.items() if v is not None})
 
             bs = BytesIO()
             np.savez(bs, **gs)

@@ -15,16 +15,20 @@ import traceback
 import _thread
 import threading
 
-FORMAT = '%(asctime)s %(levelname)s %(process)s %(processName)s - %(name)s: %(message)s'
-
-# logging.basicConfig(
-#             stream=sys.stdout, 
-#             level=logging.INFO, 
-#             format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
-#             datefmt=r'%Y-%m-%d %H:%M:%S')
-# logging.getLogger('parso').setLevel('WARN')  # Jupyter's autocomplete spams the output if this isn't set
 
 log = logging.getLogger(__name__)
+
+#TODO: This shouldn't be at the top level
+FORMAT = '%(asctime)s %(levelname)s %(process)s %(processName)s - %(name)s: %(message)s'
+
+logging.basicConfig(
+            stream=sys.stdout, 
+            level=logging.INFO, 
+            format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
+            datefmt=r'%Y-%m-%d %H:%M:%S')
+logging.getLogger('parso').setLevel('WARN')  # Jupyter's autocomplete spams the output if this isn't set
+
+log.info('Set log params')
 
 def in_ipython():
     try:

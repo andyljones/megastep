@@ -72,7 +72,7 @@ class Mask:
 
     def __init__(self, f, points, right_top, res=RES):
         assert np.concatenate(points).min() > 0, 'Masker currently requires the points to be in the top-right quadrant'
-        r, t = np.concatenate(points).max(0) + MARGIN
+        r, t = right_top
         
         self.res = res
         self.h, self.w = int(t/res), int(r/res)
@@ -102,7 +102,11 @@ def geometry(svg):
     wall_mask, space_mask = masks(walls, spaces)
     return dict(
         walls=walls,
-        spaces=spaces,
+        spaces={i: s for i, s in enumerate(spaces)},
         masks=dict(
-            walls=wall_mask,
-            spaces=space_mask))
+            walls=dict(
+                values=wall_mask.values, 
+                transform=np.array(wall_mask.transform)),
+            spaces=dict(
+                values=space_mask.values, 
+                transform=np.array(space_mask.transform))))
