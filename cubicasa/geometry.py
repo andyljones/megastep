@@ -89,6 +89,10 @@ def masks(walls, spaces):
         spaces=mask_array([Polygon(p).buffer(0) for p in spaces], transform, shape),
         res=RES)
 
+def centroids(spaces):
+    # Reshape needed for the case there are no lights
+    return np.array([Polygon(ps).centroid.coords[0] for ps in spaces]).reshape(-1, 2)
+
 def geometry(svg):
     soup = BeautifulSoup(svg, features='lxml')
     walls = unique(svg_walls(soup))
@@ -97,4 +101,5 @@ def geometry(svg):
     return dict(
         walls=walls,
         spaces={i: s for i, s in enumerate(spaces)},
+        centroids=centroids(spaces),
         masks=masks(walls, spaces))
