@@ -1,18 +1,12 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from . import common, scenery, plotting
 import torch
 import logging
 from rebar import dotdict, arrdict
 from rebar.arrdict import tensorify, numpyify
-from rebar.plots import array
 
 log = logging.getLogger(__name__)
 
-# 1 SS, 2.6s/chunk
-# 2 SS, 2.65s/chunk
-# 4 SS, 2.85s/chunk
-# 8 SS, 3.20s/chunk
 DEFAULTS = {
     'res': 64,
     'supersample': 8,
@@ -23,15 +17,13 @@ DEFAULTS = {
     'fps': 10,
 }
 
-@torch.no_grad()
-def init_respawns(cuda, designs):
+def init_respawns(cuda, designs, device='cuda'):
     fields = ('centers', 'radii', 'lowers', 'uppers')
     data = arrdict({n: torch.cat([tensorify(getattr(d, n)) for d in designs]) for n in fields})
     data['widths'] = tensorify([d.respawns for d in designs]) 
-    return cuda.Respawns(**data)
+    return cuda.Respawns(**data.to(device))
 
-@torch.no_grad()
-def init_drones(cuda, designs):
+def init_drones(cuda, designs, device='cuda'):
     n_designs = len(designs)
     (n_drones,) = {d.n_drones for d in designs}
     data = arrdict(
@@ -39,7 +31,7 @@ def init_drones(cuda, designs):
             positions=tensorify(np.full((n_designs, n_drones, 2), np.nan)),
             angmomenta=tensorify(np.full((n_designs, n_drones), np.nan)),
             momenta=tensorify(np.full((n_designs, n_drones, 2), np.nan)))
-    return cuda.Drones(**data), n_drones
+    return cuda.Drones(**data.to(device)), n_drones
 
 def select(x, d):
     if isinstance(x, dict):
@@ -53,17 +45,26 @@ def select(x, d):
 
 class Simulator: 
 
+    @torch.no_grad()
     def __init__(self, designs, **kwargs):
         self._designs = designs 
         self.options = dotdict({**DEFAULTS, **kwargs, 'n_designs': len(self._designs)})
 
+        # TODO: This needs to be propagated to the C++ side
+        self._device = torch.device('cuda')
+
         self._cuda = common.cuda(**self.options)
-        self._respawns = init_respawns(self._cuda, self._designs)
-        self._drones, self.options['n_drones'] = init_drones(self._cuda, self._designs)
-        self._scene = scenery.init_scene(self._cuda, self._designs, random=self.options.random)
+        self._respawns = init_respawns(self._cuda, self._designs, self.device)
+        self._drones, self.options['n_drones'] = init_drones(self._cuda, self._designs, self.device)
+        self._scene = scenery.init_scene(self._cuda, self._designs, self.device, random=self.options.random)
 
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
+
+    @property
+    def device(self):
+        """The device that the sim sits on. For now this is fixed to the default 'cuda' device"""
+        return self._device
 
     def _to_global_frame(self, p):
         a = np.pi/180*self._drones.angles
@@ -121,13 +122,5 @@ class Simulator:
                             angles=self._drones.angles[d], 
                             positions=self._drones.positions[d]).clone(),)
 
-    def display(self, mode='human', d=0):
-        fig = self._plot(numpyify(self.state(d)))
-        if mode == 'human':
-            return fig
-        elif mode == 'rgb_array':
-            arr = array(fig)
-            plt.close(fig)
-            return arr
-        else:
-            raise ValueError(f'Don\'t support mode {mode}')
+    def display(self, d=0):
+        return self._plot(numpyify(self.state(d)))

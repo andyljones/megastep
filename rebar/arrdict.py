@@ -16,7 +16,7 @@ def tensorify(a):
         dtype = torch.int
     if np.issubdtype(a.dtype, np.bool_):
         dtype = torch.bool
-    return torch.as_tensor(np.array(a), dtype=dtype, device=torch.device('cuda'))
+    return torch.as_tensor(np.array(a), dtype=dtype)
 
 @mapping
 def numpyify(tensors):
@@ -74,10 +74,6 @@ def _arrdict_factory():
                 return self.starmap(name, rhs)
             else:
                 return super().__getattr__(name)(rhs)
-
-        def to(self, dtype):
-            """Stop AMP from converting tensors on the way in/way out; I'm handling that myself"""
-            return self
 
     # Add binary methods
     # https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types

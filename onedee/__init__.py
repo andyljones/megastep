@@ -2,6 +2,7 @@ from .simulator import Simulator
 from . import spaces
 import torch
 from rebar import arrdict
+from functools import wraps
 
 ACCEL = 5
 ANG_ACCEL = 100
@@ -9,6 +10,7 @@ DECAY = .125
 
 class Environment(Simulator):
 
+    @wraps(Simulator.__init__)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -23,7 +25,7 @@ class Environment(Simulator):
         self._actionset = arrdict(
             momenta=ACCEL/self.options.fps*momenta,
             angmomenta=ANG_ACCEL/self.options.fps*angmomenta
-        ).cuda()
+        ).to(self.device)
 
     def _observe(self):
         render = self._render()
@@ -32,9 +34,13 @@ class Environment(Simulator):
     
     @torch.no_grad()
     def reset(self):
-        reset = torch.ones((self.options.n_designs,), dtype=torch.bool, device='cuda')
+        reset = torch.ones((self.options.n_designs,), dtype=torch.bool, device=self.device)
         self._respawn(reset)
-        return arrdict(obs=self._observe())
+        return arrdict(
+            obs=self._observe(), 
+            reset=reset, 
+            terminal=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
+            reward=torch.zeros(self.options.n_designs, device=self.device))
 
     @torch.no_grad()
     def step(self, decisions):
@@ -42,20 +48,18 @@ class Environment(Simulator):
         self._drones.angmomenta[:] = (1 - DECAY)*self._drones.angmomenta + delta.angmomenta
         self._drones.momenta[:] = (1 - DECAY)*self._drones.momenta + self._to_global_frame(delta.momenta)
         self._physics()
-
-        reset = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
-        terminal = torch.zeros(self.options.n_designs, dtype=torch.bool, device='cuda')
-
-        obs = self._observe()
-        reward = torch.zeros(self.options.n_designs, device='cuda')
-        return arrdict(reset=reset, terminal=terminal, obs=obs, reward=reward)
+        return arrdict(
+            obs=self._observe(), 
+            reset=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
+            terminal=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
+            reward=torch.zeros(self.options.n_designs, device=self.device))
 
 def example():
-    from drones.designs.toy import collision_test
+    import designs
 
-    forward = torch.tensor([[3]], dtype=torch.int, device='cuda')
-    env = Environment(designer=lambda r: collision_test(), n_designs=1)
+    env = Environment([designs.box()])
     env.reset()
+    forward = torch.tensor([[3]], device=env.device)
     for _ in range(10):
-        env.step(actions=forward)
+        env.step(arrdict(actions=arrdict(move=forward)))
     env.render()

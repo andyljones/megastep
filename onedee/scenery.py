@@ -50,7 +50,7 @@ def init_colors(lines, colors, isdrone, random=np.random):
     return textures, texwidths
 
 @torch.no_grad()
-def init_scene(cuda, designs, random=np.random): 
+def init_scene(cuda, designs, device='cuda', random=np.random): 
     n_drones = designs[0].n_drones
 
     dronelines = np.tile(drone_frame(), (n_drones, 1, 1))
@@ -74,7 +74,7 @@ def init_scene(cuda, designs, random=np.random):
 
     data['textures'], data['texwidths'] = init_colors(data['lines'], colors, isdrone, random)
 
-    scene = cuda.Scene(**{k: tensorify(v) for k, v in data.items()})
+    scene = cuda.Scene(**tensorify(data).to(device))
     cuda.bake(scene, n_drones)
 
     return scene

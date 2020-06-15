@@ -115,7 +115,6 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         ax.plot(*line.T, color=color)
     return ax
 
-
 def plot(state, fig=None):
     fig = fig or plt.figure()
     diagram = fig.add_axes([0, 0, 1, 1])
