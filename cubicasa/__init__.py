@@ -85,7 +85,10 @@ def safe_geometry(id, svg):
 
 def fastload(raw):
     """Most of the time when loading a numpy array is spent parsing the header, since
-    it could have a giant mess of record types in it. But we know here that it doesn't!"""
+    it could have a giant mess of record types in it. But we know here that it doesn't!
+    
+    Can push x3 faster than this by writing a regex for the descr and shape, but 
+    that's going a bit too far"""
     headerlen = np.frombuffer(raw[8:9], dtype=np.uint8)[0]
     header = ast.literal_eval(raw[10:10+headerlen].decode())
     return np.frombuffer(raw[10+headerlen:], dtype=header['descr']).reshape(header['shape'])
@@ -110,6 +113,9 @@ def geometrydata(regenerate=False):
             #TODO: Shift this to Github 
             url = ''
             p.write_bytes(download(url))
-    d = np.load(BytesIO(gzip.decompress(p.read_bytes())))
-    flat = {n[:-4]: fastload(d.zip.read(n)) for n in d.zip.namelist()}
+
+    # np.load is kinda slow. 
+    raw = gzip.decompress(p.read_bytes())
+    with ZipFile(BytesIO(raw)) as zf:
+        flat = {n[:-4]: fastload(zf.read(n)) for n in zf.namelist()}
     return unflatten(flat)

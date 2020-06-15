@@ -99,7 +99,7 @@ def mask_array(points, transform, shape):
 def masks(walls, spaces):
     transform, shape = mask_transform(walls, spaces)
     return dict(
-        wall=mask_array([LineString(p).buffer(RES) for p in walls], transform, shape),
+        walls=mask_array([LineString(p).buffer(RES) for p in walls], transform, shape),
         spaces=mask_array([Polygon(p).buffer(0) for p in spaces], transform, shape),
         transform=np.array(transform))
 
