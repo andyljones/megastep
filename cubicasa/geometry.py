@@ -79,7 +79,8 @@ def masks(walls, spaces):
     transform, shape = mask_transform(walls, spaces)
     wall_shapes = [(cascaded_union([LineString(p).buffer(.01) for p in walls]), -1)]
     space_shapes = [(Polygon(p).buffer(0), i) for i, p in enumerate(spaces)]
-    return rasterio.features.rasterize(space_shapes + wall_shapes, shape, transform=transform, all_touched=True)
+    shapes = [(s, v) for (s, v) in space_shapes + wall_shapes if not s.is_empty]
+    return rasterio.features.rasterize(shapes, shape, transform=transform, all_touched=True, dtype=np.int16)
 
 def centroids(spaces):
     # Reshape needed for the case there are no lights
@@ -92,7 +93,6 @@ def geometry(svg):
     walls, spaces = transform(walls, spaces)
     return dict(
         walls=walls,
-        spaces={i: s for i, s in enumerate(spaces)},
         centroids=centroids(spaces),
         masks=masks(walls, spaces),
         res=RES)
