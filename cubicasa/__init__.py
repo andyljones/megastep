@@ -8,10 +8,11 @@ from pathlib import Path
 from IPython.display import HTML
 import gzip
 import numpy as np
-from . import tools
+from . import tools, geometry
 from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 from bs4 import BeautifulSoup
+from rebar import parallel
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def svgdata(regenerate=False):
     if not p.exists():
         p.parent.mkdir(exist_ok=True, parents=True)
         if regenerate:
-            log.info('Regenerating SVG data from scratch. This will require a 5G download.')
+            log.info('Regenerating SVG cache from cubicasa dataset. This will require a 5G download.')
             with ZipFile(cubicasa5k()) as zf:
                 pattern = r'cubicasa5k/(?P<category>[^/]*)/(?P<id>\d+)/(?P<filename>[^.]*)\.svg'
                 svgs = (pd.Series(zf.namelist(), name='path')
@@ -57,3 +58,43 @@ def svgdata(regenerate=False):
             p.write_bytes(download(url))
     return pd.read_json(gzip.decompress(p.read_bytes()))
 
+def flatten(tree):
+    flat = {}
+    for k, v in tree.items():
+        if isinstance(v, dict):
+            for kk, vv in flatten(v).items():
+                flat[f'{k}/{kk}'] = vv
+        else:
+            flat[k] = v
+    return flat
+
+def safe_geometry(id, svg):
+    try: 
+        return geometry.geometry(svg)
+    except:
+        log.info(f'Geometry generation failed on on #{id}')
+
+def geometrydata(regenerate=False):
+    p = Path('.cache/cubicasa-geometry.zip')
+    if not p.exists():
+        p.parent.mkdir(exist_ok=True, parents=True)
+        if True:
+            log.info('Regenerating geometry cache from SVG cache.')
+            with parallel.parallel(safe_geometry) as p:
+                gs = p.wait({row.id: p(row.id, row.svg) for _, row in svgdata(regenerate).iterrows()})
+
+            bs = BytesIO()
+            with ZipFile(bs, 'w') as zf:
+                for id, g in gs.items():
+                    if g is None:
+                        continue
+
+                    for k, v in flatten(g).items():
+                        vbs = BytesIO()
+                        np.save(vbs, v)
+                        zf.writestr(f'{id}/{k}.npy', vbs.getvalue())
+            p.write_bytes(bs.getvalue())
+        else:
+            url = ''
+            p.write_bytes(download(url))
+    return str(p)
