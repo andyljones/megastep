@@ -77,7 +77,7 @@ def plot_lines(diagram, state, cull=True):
     mask = (l < xs) & (xs < r) & (b < ys) & (ys < t)
     mask = mask.any(-1)
 
-    seen = mpl.collections.LineCollection(lines[mask], colors=colors[mask], linestyle='solid', linewidth=3)
+    seen = mpl.collections.LineCollection(lines[mask], colors=colors[mask], linestyle='solid', linewidth=2)
     diagram.add_collection(seen)
 
 def adjust_view(diagram, state, cull=True):
@@ -128,8 +128,5 @@ def plot(state, fig=None):
     for ax in [diagram]:
         ax.set_xticks([])
         ax.set_yticks([])
-
-    fig.set_size_inches(18, 15)
-    plt.subplots_adjust(hspace=.05)
 
     return fig

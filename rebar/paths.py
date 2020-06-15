@@ -21,8 +21,11 @@ def run_dir(run_name):
     run_name = resolve(run_name)
     return Path(ROOT) / run_name
 
-def subdirectory(run_name, group):
-    return run_dir(run_name) / group
+def subdirectory(run_name, group, channel=''):
+    if channel:
+        return run_dir(run_name) / group / channel
+    else:
+        return run_dir(run_name) / group 
 
 def clear(run_name, group=None):
     if group is None:
@@ -41,13 +44,14 @@ def path(run_name, group, channel=''):
         for c in ['_', os.sep]:
             assert c not in x, f'Can\'t have "{c}" in the file path'
 
-    if channel:
-        path = subdirectory(run_name, group) / channel / f'{proc.name}-{proc.pid}'
-    else:
-        path = subdirectory(run_name, group) / f'{proc.name}-{proc.pid}'
+    path = subdirectory(run_name, group, channel) / f'{proc.name}-{proc.pid}'
 
     path.parent.mkdir(exist_ok=True, parents=True)
     return path
+
+def glob(run_name, group, channel='', pattern='*'):
+    paths = subdirectory(run_name, group, channel).glob(pattern)
+    return sorted(paths, key=lambda p: p.stat().st_mtime)
 
 def parse(path):
     parts = path.relative_to(ROOT).with_suffix('').parts
