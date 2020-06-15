@@ -5,13 +5,8 @@ from tqdm.auto import tqdm
 from zipfile import ZipFile
 import pandas as pd
 from pathlib import Path
-from IPython.display import HTML
 import gzip
 import numpy as np
-from . import tools, geometry
-from shapely.geometry import Polygon
-from shapely.ops import cascaded_union
-from bs4 import BeautifulSoup
 from rebar import parallel
 
 log = logging.getLogger(__name__)
@@ -37,7 +32,7 @@ def cubicasa5k():
     return str(p)
 
 def svgdata(regenerate=False):
-    p = Path('.cache/cubicasa-svgs.json.gzip')
+    p = Path('.cache/cubicasa-svgs.json.gz')
     if not p.exists():
         p.parent.mkdir(exist_ok=True, parents=True)
         if regenerate:
@@ -68,33 +63,26 @@ def flatten(tree):
             flat[k] = v
     return flat
 
-def safe_geometry(id, svg):
-    try: 
-        return geometry.geometry(svg)
-    except:
-        log.info(f'Geometry generation failed on on #{id}')
-
 def geometrydata(regenerate=False):
-    p = Path('.cache/cubicasa-geometry.zip')
+    # Why .npz.gz? Because applying gzip manually manages x10 better compression than
+    # np.savez_compressed. They use the same compression alg, so I assume the difference
+    # is in the default compression setting.
+    p = Path('.cache/cubicasa-geometry.npz.gz')
     if not p.exists():
         p.parent.mkdir(exist_ok=True, parents=True)
-        if True:
+        if regenerate:
             log.info('Regenerating geometry cache from SVG cache.')
-            with parallel.parallel(safe_geometry) as p:
-                gs = p.wait({row.id: p(row.id, row.svg) for _, row in svgdata(regenerate).iterrows()})
+            # Hide the import since it uses a fair number of libraries.
+            from . import geometry
+            with parallel.parallel(geometry.geometry) as pool:
+                gs = pool.wait({str(row.id): pool(row.id, row.svg) for _, row in svgdata(regenerate).iterrows()})
+            gs = flatten(gs)
 
             bs = BytesIO()
-            with ZipFile(bs, 'w') as zf:
-                for id, g in gs.items():
-                    if g is None:
-                        continue
-
-                    for k, v in flatten(g).items():
-                        vbs = BytesIO()
-                        np.save(vbs, v)
-                        zf.writestr(f'{id}/{k}.npy', vbs.getvalue())
-            p.write_bytes(bs.getvalue())
+            np.savez(bs, **gs)
+            p.write_bytes(gzip.compress(bs.getvalue()))
         else:
+            #TODO: Shift this to Github 
             url = ''
             p.write_bytes(download(url))
-    return str(p)
+    return np.load(BytesIO(gzip.decompress(p.read_bytes())))
