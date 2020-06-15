@@ -74,20 +74,12 @@ def mask_transform(*args):
     r, t = points.max(0) + MARGIN
     h, w = int(t/RES)+1, int(r/RES)+1
     return rasterio.transform.Affine(RES, 0, 0, 0, -RES, h*RES), (h, w)
-    return rasterio.transform.Affine(r/w, 0, 0, 0, -t/h, t), (h, w)
-
-def mask_array(points, transform, shape):
-    return rasterio.features.rasterize(
-                        [cascaded_union(points)], 
-                        out_shape=shape, 
-                        transform=transform).astype(np.bool)
 
 def masks(walls, spaces):
     transform, shape = mask_transform(walls, spaces)
-    return dict(
-        walls=mask_array([LineString(p).buffer(RES) for p in walls], transform, shape),
-        spaces=mask_array([Polygon(p).buffer(0) for p in spaces], transform, shape),
-        res=RES)
+    wall_shapes = [(cascaded_union([LineString(p).buffer(.01) for p in walls]), -1)]
+    space_shapes = [(Polygon(p).buffer(0), i) for i, p in enumerate(spaces)]
+    return rasterio.features.rasterize(space_shapes + wall_shapes, shape, transform=transform, all_touched=True)
 
 def centroids(spaces):
     # Reshape needed for the case there are no lights
@@ -102,4 +94,5 @@ def geometry(svg):
         walls=walls,
         spaces={i: s for i, s in enumerate(spaces)},
         centroids=centroids(spaces),
-        masks=masks(walls, spaces))
+        masks=masks(walls, spaces),
+        res=RES)
