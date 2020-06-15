@@ -21,7 +21,7 @@ class SerialExecutor(_base.Executor):
         return future
 
 @contextmanager
-def VariableExecutor(N=None, processes=True):
+def VariableExecutor(N=None, processes=True, **kwargs):
     """An executor that can be easily switched between serial, thread and parallel execution.
     If N=0, a serial executor will be used.
     """
@@ -36,7 +36,7 @@ def VariableExecutor(N=None, processes=True):
         executor = ThreadPoolExecutor
     
     log.debug('Launching a {} with {} processes'.format(executor.__name__, N))    
-    with executor(N) as pool:
+    with executor(N, **kwargs) as pool:
         yield pool
         
 @contextmanager

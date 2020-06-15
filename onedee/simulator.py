@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from . import common, scenery, plotting
 import torch
@@ -121,10 +122,12 @@ class Simulator:
                             positions=self._drones.positions[d]).clone(),)
 
     def display(self, mode='human', d=0):
-        fig = self._plot(self.state(d))
+        fig = self._plot(numpyify(self.state(d)))
         if mode == 'human':
-            return
+            return fig
         elif mode == 'rgb_array':
-            return array(fig)
+            arr = array(fig)
+            plt.close(fig)
+            return arr
         else:
             raise ValueError(f'Don\'t support mode {mode}')

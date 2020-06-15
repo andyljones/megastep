@@ -16,6 +16,10 @@ def length(d):
         return l
     return d.shape[0]
 
+def _init():
+    import signal
+    signal.signal(signal.SIGINT, lambda h, f: None)
+
 def _array(plot, state):
     fig = plot(state)
     arr = plots.array(fig)
@@ -38,7 +42,7 @@ def parasite(run_name, env, env_idx=0, length=256, period=60, fps=None):
     start = time.time()
     states = []
     path = paths.path(run_name, 'recording').with_suffix('.mp4')
-    with parallel.parallel(_array, progress=False, N=os.cpu_count()//4) as tasker:
+    with parallel.parallel(_array, progress=False, N=os.cpu_count()//4, initializer=_init) as tasker:
         while True:
             if time.time() > start:
                 states.append(env.state(env_idx))
