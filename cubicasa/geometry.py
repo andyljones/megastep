@@ -71,7 +71,6 @@ def transform(walls, spaces):
 class Mask:
 
     def __init__(self, f, points, right_top, res=RES):
-        assert np.concatenate(points).min() > 0, 'Masker currently requires the points to be in the top-right quadrant'
         r, t = right_top
         
         self.res = res
@@ -84,29 +83,32 @@ class Mask:
                             out_shape=(self.h, self.w), 
                             transform=self.transform).astype(np.bool)
 
-def mask_walls(*args, **kwargs):
-    return Mask(lambda ps: LineString(ps).buffer(RES), *args, **kwargs)
+def mask_transform(*args):
+    points = np.concatenate([np.concatenate(a) for a in args])
+    assert np.concatenate(points).min() > 0, 'Masker currently requires the points to be in the top-right quadrant'
+    r, t = points.max(0) + MARGIN
+    h, w = int(t/RES), int(r/RES)
+    return rasterio.transform.Affine(r/w, 0, 0, 0, -t/h, t), (h, w)
 
-def mask_spaces(*args, **kwargs):
-    return Mask(lambda ps: Polygon(ps).buffer(0), *args, **kwargs)
+def mask_array(points, transform, shape):
+    return rasterio.features.rasterize(
+                        [cascaded_union(points)], 
+                        out_shape=shape, 
+                        transform=transform).astype(np.bool)
 
 def masks(walls, spaces):
-    right_top = np.concatenate([np.concatenate(walls), np.concatenate(spaces)]).max(0)
-    return mask_walls(walls, right_top), mask_spaces(spaces, right_top)
+    transform, shape = mask_transform(walls, spaces)
+    return dict(
+        wall=mask_array([LineString(p).buffer(RES) for p in walls], transform, shape),
+        spaces=mask_array([Polygon(p).buffer(0) for p in spaces], transform, shape),
+        transform=np.array(transform))
 
 def geometry(svg):
     soup = BeautifulSoup(svg, features='lxml')
     walls = unique(svg_walls(soup))
     spaces = svg_spaces(soup)
     walls, spaces = transform(walls, spaces)
-    wall_mask, space_mask = masks(walls, spaces)
     return dict(
         walls=walls,
         spaces={i: s for i, s in enumerate(spaces)},
-        masks=dict(
-            walls=dict(
-                values=wall_mask.values, 
-                transform=np.array(wall_mask.transform)),
-            spaces=dict(
-                values=space_mask.values, 
-                transform=np.array(space_mask.transform))))
+        masks=masks(walls, spaces))

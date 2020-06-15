@@ -8,6 +8,7 @@ from pathlib import Path
 import gzip
 import numpy as np
 from rebar import parallel
+import ast
 
 log = logging.getLogger(__name__)
 
@@ -73,7 +74,6 @@ def unflatten(d):
         node[parts[-1]] = v
     return tree
         
-
 def safe_geometry(id, svg):
     try: 
         # Hide the import since it uses a fair number of libraries not used elsewhere.
@@ -82,6 +82,13 @@ def safe_geometry(id, svg):
     except:
         # We'll lose ~8 SVGs to them not having any spaces
         log.info(f'Geometry generation failed on on #{id}')
+
+def fastload(raw):
+    """Most of the time when loading a numpy array is spent parsing the header, since
+    it could have a giant mess of record types in it. But we know here that it doesn't!"""
+    headerlen = np.frombuffer(raw[8:9], dtype=np.uint8)[0]
+    header = ast.literal_eval(raw[10:10+headerlen].decode())
+    return np.frombuffer(raw[10+headerlen:], dtype=header['descr']).reshape(header['shape'])
 
 def geometrydata(regenerate=False):
     # Why .npz.gz? Because applying gzip manually manages x10 better compression than
@@ -103,4 +110,6 @@ def geometrydata(regenerate=False):
             #TODO: Shift this to Github 
             url = ''
             p.write_bytes(download(url))
-    return np.load(BytesIO(gzip.decompress(p.read_bytes())))
+    d = np.load(BytesIO(gzip.decompress(p.read_bytes())))
+    flat = {n[:-4]: fastload(d.zip.read(n)) for n in d.zip.namelist()}
+    return unflatten(flat)
