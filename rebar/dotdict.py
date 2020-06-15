@@ -2,6 +2,7 @@ from collections import OrderedDict
 from functools import wraps
 
 SCREEN_WIDTH = 119
+SCREEN_HEIGHT = 200
 
 def treestr(t):
     """Stringifies a tree structure. These turn up all over the place in my code, so it's worth factoring out"""
@@ -30,6 +31,9 @@ def treestr(t):
         s.append(str(k) + ' '*(max_spaces - len(str(k))) + lines[0])
         for l in lines[1:]:
             s.append(' '*max_spaces + l)
+        if len(s) >= SCREEN_HEIGHT-1:
+            s.append('...')
+            break
 
     return '\n'.join(s)
 

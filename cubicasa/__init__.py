@@ -7,7 +7,7 @@ import pandas as pd
 from pathlib import Path
 import gzip
 import numpy as np
-from rebar import parallel
+from rebar import parallel, dotdict
 import ast
 
 log = logging.getLogger(__name__)
@@ -65,12 +65,12 @@ def flatten(tree):
     return flat
 
 def unflatten(d):
-    tree = {}
+    tree = type(d)()
     for k, v in d.items():
         parts = k.split('/')
         node = tree
         for p in parts[:-1]:
-            node = node.setdefault(p, {})
+            node = node.setdefault(p, type(d)())
         node[parts[-1]] = v
     return tree
         
@@ -88,7 +88,9 @@ def fastload(raw):
     it could have a giant mess of record types in it. But we know here that it doesn't!
     
     Can push x3 faster than this by writing a regex for the descr and shape, but 
-    that's going a bit too far"""
+    that's going a bit too far
+    
+    Credit to @pag for pointing this out to me once upon a time"""
     headerlen = np.frombuffer(raw[8:9], dtype=np.uint8)[0]
     header = ast.literal_eval(raw[10:10+headerlen].decode())
     return np.frombuffer(raw[10+headerlen:], dtype=header['descr']).reshape(header['shape'])
@@ -117,5 +119,5 @@ def geometrydata(regenerate=False):
     # np.load is kinda slow. 
     raw = gzip.decompress(p.read_bytes())
     with ZipFile(BytesIO(raw)) as zf:
-        flat = {n[:-4]: fastload(zf.read(n)) for n in zf.namelist()}
+        flat = dotdict({n[:-4]: fastload(zf.read(n)) for n in zf.namelist()})
     return unflatten(flat)

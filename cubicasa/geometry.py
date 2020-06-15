@@ -68,26 +68,12 @@ def transform(walls, spaces):
     
     return tr(walls), [tr(s) for s in spaces]
 
-class Mask:
-
-    def __init__(self, f, points, right_top, res=RES):
-        r, t = right_top
-        
-        self.res = res
-        self.h, self.w = int(t/res), int(r/res)
-        self.transform = rasterio.transform.Affine(r/self.w, 0, 0, 0, -t/self.h, t)
-
-        polys = cascaded_union([f(ps) for ps in points])
-        self.values = rasterio.features.rasterize(
-                            [polys], 
-                            out_shape=(self.h, self.w), 
-                            transform=self.transform).astype(np.bool)
-
 def mask_transform(*args):
     points = np.concatenate([np.concatenate(a) for a in args])
     assert np.concatenate(points).min() > 0, 'Masker currently requires the points to be in the top-right quadrant'
     r, t = points.max(0) + MARGIN
-    h, w = int(t/RES), int(r/RES)
+    h, w = int(t/RES)+1, int(r/RES)+1
+    return rasterio.transform.Affine(RES, 0, 0, 0, -RES, h*RES), (h, w)
     return rasterio.transform.Affine(r/w, 0, 0, 0, -t/h, t), (h, w)
 
 def mask_array(points, transform, shape):
@@ -101,7 +87,7 @@ def masks(walls, spaces):
     return dict(
         walls=mask_array([LineString(p).buffer(RES) for p in walls], transform, shape),
         spaces=mask_array([Polygon(p).buffer(0) for p in spaces], transform, shape),
-        transform=np.array(transform))
+        res=RES)
 
 def geometry(svg):
     soup = BeautifulSoup(svg, features='lxml')
