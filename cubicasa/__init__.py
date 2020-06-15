@@ -1,4 +1,4 @@
-from io import BytesIO, StringIO
+from io import BytesIO
 import logging
 import requests
 from tqdm.auto import tqdm
@@ -7,6 +7,11 @@ import pandas as pd
 from pathlib import Path
 from IPython.display import HTML
 import gzip
+import numpy as np
+from . import tools
+from shapely.geometry import Polygon
+from shapely.ops import cascaded_union
+from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
 
@@ -30,16 +35,12 @@ def cubicasa5k():
         p.write_bytes(download(url))
     return str(p)
 
-def view_svg(path):
-    with ZipFile(cubicasa5k()) as zf:
-        svg = zf.read(path)
-    return HTML(svg.decode())
-
 def svgdata(regenerate=False):
     p = Path('.cache/cubicasa-svgs.json.gzip')
     if not p.exists():
         p.parent.mkdir(exist_ok=True, parents=True)
         if regenerate:
+            log.info('Regenerating SVG data from scratch. This will require a 5G download.')
             with ZipFile(cubicasa5k()) as zf:
                 pattern = r'cubicasa5k/(?P<category>[^/]*)/(?P<id>\d+)/(?P<filename>[^.]*)\.svg'
                 svgs = (pd.Series(zf.namelist(), name='path')
@@ -55,3 +56,4 @@ def svgdata(regenerate=False):
             url = 'https://www.dropbox.com/s/iblduqobhqomz4g/cubicasa-svgs.json.gzip?raw=1'
             p.write_bytes(download(url))
     return pd.read_json(gzip.decompress(p.read_bytes()))
+
