@@ -21,8 +21,8 @@ def run():
     nothing = dotdict(movement=dotdict(general=torch.tensor([[0]]).int().cuda()))
     forward = dotdict(movement=dotdict(general=torch.tensor([[3]]).int().cuda()))
 
-    sim._drones.positions[:] = torch.tensor([[[1.85, 2]]])
-    sim._drones.momenta[:] = torch.tensor([[[2., 0.]]])
+    sim._agents.positions[:] = torch.tensor([[[1.85, 2]]])
+    sim._agents.momenta[:] = torch.tensor([[[2., 0.]]])
     sim.step(nothing)
 
-    torch.stack([sim._drones.positions[0, 0, 0], sim._drones.momenta[0, 0, 0]])
+    torch.stack([sim._agents.positions[0, 0, 0], sim._agents.momenta[0, 0, 0]])

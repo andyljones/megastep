@@ -153,7 +153,7 @@ using Positions = TensorProxy<float, 3>;
 using AngMomenta = TensorProxy<float, 2>;
 using Momenta = TensorProxy<float, 3>;
 
-struct Drones {
+struct Agents {
     Angles angles;
     Positions positions; 
     AngMomenta angmomenta;
@@ -197,6 +197,6 @@ struct Render {
 
 void initialize(float, int, float, float);
 void bake(Scene& scene, int D);
-void respawn(const TT reset, const Respawns& respawns, Drones& drones);
-void physics(const Scene& scene, Drones& drones);
-Render render(const Drones& drones, Scene& scene);
+void respawn(const TT reset, const Respawns& respawns, Agents& agents);
+void physics(const Scene& scene, Agents& agents);
+Render render(const Agents& agents, Scene& scene);

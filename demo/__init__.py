@@ -5,15 +5,15 @@ from . import acting, learning, agents
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
 import gym
 import pandas as pd
-from onedee import Environment
+from onedee import MinimalEnv
 import designs
 import logging
 
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    ds = designs.cubicasa(n_envs)
-    return Environment(ds)
+    ds = [designs.box()]
+    return MinimalEnv(ds)
 
 def agentfunc():
     env = envfunc(n_envs=1)

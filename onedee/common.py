@@ -6,12 +6,12 @@ import torch
 from rebar import dotdict, arrdict
 
 MOVEMENTS = 7
-DRONE_WIDTH = .15
+AGENT_WIDTH = .15
 TEXTURE_RES = .05
 DEBUG = False
 
 # Used for collision radius and near camera plane
-DRONE_RADIUS = 1/2**.5*DRONE_WIDTH
+AGENT_RADIUS = 1/2**.5*AGENT_WIDTH
 
 def gamma_encode(x): 
     """Converts to viewable values"""
@@ -35,7 +35,7 @@ def cuda(res, supersample, fov, fps, **kwargs):
                             extra_cflags=cflags, extra_cuda_cflags=cudaflags,
                             extra_ldflags=ldflags)
 
-    cuda.initialize(float(DRONE_RADIUS), int(supersample*res), float(fov), float(fps))
+    cuda.initialize(float(AGENT_RADIUS), int(supersample*res), float(fov), float(fps))
     return cuda
 
 

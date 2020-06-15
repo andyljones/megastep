@@ -42,10 +42,6 @@ def cyclic_pairs(xs):
     ys = islice(cycle(xs), 1, None)
     return list(zip(xs, ys))
 
-def names(drones):
-    potential =  ['ella', 'zoe', 'liz', 'mike'] + [f'drone-{i}' for i in range(5, 100)]
-    return potential[:drones]
-
 def sample(poly):
     """Rejection sampling to pick points at random from inside a design"""
     poly = Polygon(poly) if isinstance(poly, np.ndarray) else poly
@@ -84,34 +80,34 @@ def cyclic_triples(ys):
 def erode(points, dist=.25):
     return Polygon(points).buffer(-dist)
 
-def subzones(n_drones, centers, radii, lowers=None, uppers=None, subradii=1.):
+def subzones(n_agents, centers, radii, lowers=None, uppers=None, subradii=1.):
     centers = np.array(centers)
     radii = np.array(radii)
 
-    # This is a regular circle packing. It's optimal up until 6 drones:
+    # This is a regular circle packing. It's optimal up until 6 agents:
     # https://en.wikipedia.org/wiki/Circle_packing_in_a_circle
-    if n_drones > 1:
-        st = np.sin(np.pi/n_drones) 
+    if n_agents > 1:
+        st = np.sin(np.pi/n_agents) 
         offset_radius = radii*1/(1 + st)
         sub_radius = radii*subradii*st/(1 + st)
     else:
         offset_radius, sub_radius = radii*0., radii*subradii
 
-    angles = np.linspace(0, 2*np.pi, n_drones, endpoint=False)
+    angles = np.linspace(0, 2*np.pi, n_agents, endpoint=False)
     offsets = offset_radius[:, None, None]*np.stack([np.cos(angles), np.sin(angles)]).T[None, :, :]
     new_centers = offsets + centers[:, None, :]
-    new_radii = np.repeat(sub_radius[:, None], n_drones, 1)
+    new_radii = np.repeat(sub_radius[:, None], n_agents, 1)
 
     if (lowers is None) and (uppers is None):
-        if n_drones > 1:
-            # Drones that point at eachother
+        if n_agents > 1:
+            # Agents that point at eachother
             mids = np.repeat((180/np.pi*angles + 180)[None, :], len(centers), 0)
             new_lowers, new_uppers = mids, mids
         else:
             new_lowers, new_uppers = np.full_like(new_radii, -179), np.full_like(new_radii, +179)
     elif (lowers is not None) and (uppers is not None):
         new_lowers, new_uppers = np.array(lowers), np.array(uppers)
-        new_lowers, new_uppers = np.repeat(new_lowers[:, None], n_drones, 1), np.repeat(new_uppers[:, None], n_drones, 1)
+        new_lowers, new_uppers = np.repeat(new_lowers[:, None], n_agents, 1), np.repeat(new_uppers[:, None], n_agents, 1)
     else:
         raise ValueError('Either both of lowers/uppers must be None, or neither are')
 
@@ -197,7 +193,7 @@ class Design:
         colormap = np.arange(len(self.walls)) if colormap is None else colormap
         self.colors = np.array([mpl.colors.to_rgb(COLORS[i % len(COLORS)]) for i in colormap])
 
-        self.n_drones = self.centers.shape[1]
+        self.n_agents = self.centers.shape[1]
 
         assert self.centers.shape[:2] == self.radii.shape
         assert self.centers.shape[:2] == self.lowers.shape
@@ -251,9 +247,9 @@ def box_walls(x, y):
     corners = np.array([x, y])[None, :]*corners/2.
     return wall_cycle(corners)
 
-def point_start(angle, position, n_drones=1):
+def point_start(angle, position, n_agents=1):
     return subzones(
-                n_drones=n_drones,
+                n_agents=n_agents,
                 centers=[position],
                 radii=[0.],
                 lowers=[angle],

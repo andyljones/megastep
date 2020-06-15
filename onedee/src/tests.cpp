@@ -11,18 +11,18 @@ Respawns mock_respawn() {
     return Respawns(centers, radii, lowers, uppers, widths);
 }
 
-Drones mock_drones() {
+Agents mock_agents() {
     auto options = at::device(at::kCUDA).dtype(at::kFloat);
     auto angles = at::range(0, 1, options).reshape({2, 1});
     auto positions = at::range(1, 4, options).reshape({2, 1, 2});
-    return Drones(angles, positions);
+    return Agents(angles, positions);
 }
 
 void test_respawn() {
     auto respawns = mock_respawn();
     auto reset = at::tensor({1, 1}, at::dtype(at::kByte).device(at::kCUDA));
-    auto drones = mock_drones();
-    respawn(respawns, reset, drones);
+    auto agents = mock_agents();
+    respawn(respawns, reset, agents);
     c10::cuda::getDefaultCUDAStream().synchronize();
 }
 

@@ -15,17 +15,17 @@ def plot_images(axes, arrs):
     H, W = ims[0].shape[:2]
     
     aspect = 2*W/(D*H)  # TODO: Reverse this
-    for d in range(D):
-        ax = axes[d]
-        ax.imshow(ims[d], aspect=aspect)
+    for a in range(D):
+        ax = axes[a]
+        ax.imshow(ims[a], aspect=aspect)
         ax.set_yticks(np.arange(H))
         ax.set_ylim(H-.5, -.5)
         ax.set_yticklabels(arrs.keys())
         ax.set_xticks([])
-        ax.set_title(f'drone #{d}', fontdict={'color': f'C{d}', 'weight': 'bold'})
+        ax.set_title(f'agent #{a}', fontdict={'color': f'C{a}', 'weight': 'bold'})
 
-def n_drone_texels(state):
-    D = state.drones.angles.shape[0]
+def n_agent_texels(state):
+    D = state.agents.angles.shape[0]
     F = len(state.scene.frame)
     return state.scene.widths[:D*F].sum()
 
@@ -47,7 +47,7 @@ def line_arrays(state):
     lines = np.stack([seg_starts, seg_ends]).transpose(1, 0, 2)
 
     baked = scene.baked.copy()
-    baked[:n_drone_texels(state)] = 1.
+    baked[:n_agent_texels(state)] = 1.
 
     colors = common.gamma_encode(scene.textures*baked[:, None])
     return lines, colors
@@ -58,8 +58,8 @@ def plot_lights(diagram, state):
 
 def extent(state, cull, radius=VIEW_RADIUS):
     if cull:
-        r, t = state.drones.positions.max(0) + radius 
-        l, b = state.drones.positions.min(0) - radius
+        r, t = state.agents.positions.max(0) + radius 
+        l, b = state.agents.positions.min(0) - radius
     else:
         r, t = state.scene.lines.max(0).max(0) + 1
         l, b = state.scene.lines.min(0).min(0) - 1
@@ -93,24 +93,24 @@ def plot_wedge(ax, pose, distance, fov, radians=False, **kwargs):
     scale = 180/np.pi if radians else 1
     left = scale*pose.angles - fov/2
     right = scale*pose.angles + fov/2
-    width = distance - common.DRONE_RADIUS 
+    width = distance - common.AGENT_RADIUS 
     wedge = mpl.patches.Wedge(
                     pose.positions, distance, left, right, width=width, **kwargs)
     ax.add_patch(wedge)
 
-def plot_fov(diagram, state, distance=1, field='drones'):
-    d = len(getattr(state, field).angles)
-    for i in range(d):
+def plot_fov(diagram, state, distance=1, field='agents'):
+    a = len(getattr(state, field).angles)
+    for i in range(a):
         plot_wedge(diagram, getattr(state, field)[i], distance, state.options.fov, color=f'C{i}', alpha=.1)
 
 def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
     """Not used directly here, but often useful for code using this module"""
     ax = ax or plt.subplot()
     for angle, position in zip(poses.angles, poses.positions):
-        ax.add_patch(mpl.patches.Circle(position, radius=common.DRONE_RADIUS, edgecolor=color, facecolor=[0,0,0,0]))
+        ax.add_patch(mpl.patches.Circle(position, radius=common.AGENT_RADIUS, edgecolor=color, facecolor=[0,0,0,0]))
 
         scale = 1 if radians else np.pi/180
-        offset = common.DRONE_RADIUS*np.array([np.cos(scale*angle), np.sin(scale*angle)])
+        offset = common.AGENT_RADIUS*np.array([np.cos(scale*angle), np.sin(scale*angle)])
         line = np.stack([position, position + offset])
         ax.plot(*line.T, color=color)
     return ax

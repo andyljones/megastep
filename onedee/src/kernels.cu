@@ -14,12 +14,12 @@ const uint BLOCK = 128;
 int RES;
 float FPS;
 __constant__ float FPS_;
-__constant__ float DRONE_RADIUS;
+__constant__ float AGENT_RADIUS;
 __constant__ float HALF_SCREEN_WIDTH;
 
-__host__ void initialize(float drone_radius, int res, float fov, float fps) {
+__host__ void initialize(float agent_radius, int res, float fov, float fps) {
     RES = res;
-    cudaMemcpyToSymbol(DRONE_RADIUS, &drone_radius, sizeof(float));
+    cudaMemcpyToSymbol(AGENT_RADIUS, &agent_radius, sizeof(float));
 
     const auto half_screen = tanf(CUDART_PI_F/180.f*fov/2.);
     cudaMemcpyToSymbol(HALF_SCREEN_WIDTH, &half_screen, sizeof(float));
@@ -57,7 +57,7 @@ __global__ void respawn_kernel(
             const auto cy = centers[n][z][d][1];
             
             const auto t = 360.f*randoms[r][d][0];
-            const auto rad = fmaxf(radii[n][z][d] - DRONE_RADIUS, 0.f)*randoms[r][d][1];
+            const auto rad = fmaxf(radii[n][z][d] - AGENT_RADIUS, 0.f)*randoms[r][d][1];
             
             const auto x = cx + rad*cospif(t/180.f);
             const auto y = cy + rad*sinpif(t/180.f);
@@ -76,9 +76,9 @@ __global__ void respawn_kernel(
     }
 }
 
-__host__ void respawn(const TT reset, const Respawns& respawns, Drones& drones) {
-    const uint N = drones.angles.size(0);
-    const uint D = drones.angles.size(1);
+__host__ void respawn(const TT reset, const Respawns& respawns, Agents& agents) {
+    const uint N = agents.angles.size(0);
+    const uint D = agents.angles.size(1);
 
     Required required(reset.nonzero().select(1, 0).toType(at::kInt));
     const uint R = required.size(0);
@@ -90,8 +90,8 @@ __host__ void respawn(const TT reset, const Respawns& respawns, Drones& drones) 
         respawn_kernel<<<blocks, BLOCK, 0, stream()>>>(
             required.pta(), choices.pta(), randoms.pta(),
             respawns.centers.pta(), respawns.radii.pta(), respawns.lowers.pta(), respawns.uppers.pta(),
-            drones.angles.pta(), drones.positions.pta(), 
-            drones.angmomenta.pta(), drones.momenta.pta());
+            agents.angles.pta(), agents.positions.pta(), 
+            agents.angmomenta.pta(), agents.momenta.pta());
     }
 }
 
@@ -183,8 +183,8 @@ __device__ float sensibilize(float p) {
 __device__ float collision(Point p0, Point v0, Point p1, Point v1) {
     //Follows http://ericleong.me/research/circle-circle/#dynamic-circle-circle-collision
 
-    // Make the drone a bit bigger so that the near vision plane doesn't go through walls
-    const auto r = 1.1f*2.f*DRONE_RADIUS;
+    // Make the agent a bit bigger so that the near vision plane doesn't go through walls
+    const auto r = 1.1f*2.f*AGENT_RADIUS;
     auto x = 1.f;
 
     const auto a = project(p0, v0 - v1, p1);
@@ -199,8 +199,8 @@ __device__ float collision(Point p0, Point v0, Point p1, Point v1) {
 __device__ float collision(Point p, Point v, Line l) {
     // Follows http://ericleong.me/research/circle-line/#moving-circle-and-static-line-segment
 
-    // Make the drone a bit bigger so that the near vision plane doesn't go through walls
-    const auto r = 1.1f*DRONE_RADIUS;
+    // Make the agent a bit bigger so that the near vision plane doesn't go through walls
+    const auto r = 1.1f*AGENT_RADIUS;
     auto x = 1.f;
 
     // Test for passing through `l`
@@ -273,22 +273,22 @@ __global__ void collision_kernel(
     }
 }
 
-__host__ void physics(const Scene& scene, Drones& drones) {
-    const uint N = drones.angles.size(0);
-    const uint D = drones.angles.size(1);
+__host__ void physics(const Scene& scene, Agents& agents) {
+    const uint N = agents.angles.size(0);
+    const uint D = agents.angles.size(1);
     const uint F = scene.frame.size(0);
 
     const auto progress(Progress::ones({N, D}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
-        D*F, drones.positions.pta(), drones.momenta.pta(), scene.lines.pta(), progress.pta());
+        D*F, agents.positions.pta(), agents.momenta.pta(), scene.lines.pta(), progress.pta());
 
     //TODO: Collisions should only kill the normal component of momentum
     at::AutoNonVariableTypeMode nonvar{true};
-    drones.positions.t.set_(drones.positions.t + progress.t.unsqueeze(-1)*drones.momenta.t/FPS);
-    drones.momenta.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
-    drones.angles.t.set_(normalize_degrees(drones.angles.t + progress.t*drones.angmomenta.t/FPS));
-    drones.angmomenta.t.masked_fill_(progress.t < 1, 0.f);
+    agents.positions.t.set_(agents.positions.t + progress.t.unsqueeze(-1)*agents.momenta.t/FPS);
+    agents.momenta.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
+    agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angmomenta.t/FPS));
+    agents.angmomenta.t.masked_fill_(progress.t < 1, 0.f);
 }
 
 // RENDERING - BAKING
@@ -425,10 +425,10 @@ __global__ void raycast_kernel(
         const auto dbot = rlen*v.len();
         const auto dot = dtop/(dbot + 1.e-6f);
 
-        // Use the drone radius as the near plane
+        // Use the agent radius as the near plane
         const bool hit = (0 <= q.t) & (q.t <= 1);
         // 1e-3 offset here is to suppress z fighting
-        const bool better = (DRONE_RADIUS/rlen < q.s) & (q.s < nearest_s - 1.e-3f);
+        const bool better = (AGENT_RADIUS/rlen < q.s) & (q.s < nearest_s - 1.e-3f);
         if (hit & better) {
             nearest_s = q.s;
 
@@ -511,21 +511,21 @@ __global__ void shader_kernel(
     screen[n][d][r][2] = s2;
 }
 
-__host__ Render render(const Drones& drones, Scene& scene) {
-    const uint N = drones.angles.size(0);
-    const uint D = drones.angles.size(1);
+__host__ Render render(const Agents& agents, Scene& scene) {
+    const uint N = agents.angles.size(0);
+    const uint D = agents.angles.size(1);
     const uint F = scene.frame.size(0);
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
     draw_kernel<<<N, {2, F, D}, 0, stream()>>>(
-        drones.angles.pta(), drones.positions.pta(), scene.frame.pta(), scene.lines.pta()); 
+        agents.angles.pta(), agents.positions.pta(), scene.frame.pta(), scene.lines.pta()); 
 
     auto indices(Indices::empty({N, D, RES}));
     auto locations(Locations::empty({N, D, RES}));
     auto dots(Dots::empty({N, D, RES}));
     auto distances(Distances::empty({N, D, RES}));
     raycast_kernel<<<N, {(uint) RES, D}, 0, stream()>>>(
-        drones.angles.pta(), drones.positions.pta(), scene.lines.pta(), 
+        agents.angles.pta(), agents.positions.pta(), scene.lines.pta(), 
         indices.pta(), locations.pta(), dots.pta(), distances.pta());
 
     auto screen(Screen::empty({N, D, RES, 3}));

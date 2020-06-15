@@ -11,8 +11,8 @@ DEFAULTS = {
     'res': 64,
     'supersample': 8,
     'random': np.random.RandomState(12041955),
-    'fov': 130, # widest FOV among common FPV drones
-    'radius': common.DRONE_RADIUS,
+    'fov': 130, # widest FOV among common FPV agents
+    'radius': common.AGENT_RADIUS,
     'max_depth': 10,
     'fps': 10,
 }
@@ -23,15 +23,15 @@ def init_respawns(cuda, designs, device='cuda'):
     data['widths'] = tensorify([d.respawns for d in designs]) 
     return cuda.Respawns(**data.to(device))
 
-def init_drones(cuda, designs, device='cuda'):
+def init_agents(cuda, designs, device='cuda'):
     n_designs = len(designs)
-    (n_drones,) = {d.n_drones for d in designs}
+    (n_agents,) = {d.n_agents for d in designs}
     data = arrdict(
-            angles=tensorify(np.full((n_designs, n_drones), np.nan)),
-            positions=tensorify(np.full((n_designs, n_drones, 2), np.nan)),
-            angmomenta=tensorify(np.full((n_designs, n_drones), np.nan)),
-            momenta=tensorify(np.full((n_designs, n_drones, 2), np.nan)))
-    return cuda.Drones(**data.to(device)), n_drones
+            angles=tensorify(np.full((n_designs, n_agents), np.nan)),
+            positions=tensorify(np.full((n_designs, n_agents, 2), np.nan)),
+            angmomenta=tensorify(np.full((n_designs, n_agents), np.nan)),
+            momenta=tensorify(np.full((n_designs, n_agents, 2), np.nan)))
+    return cuda.Agents(**data.to(device)), n_agents
 
 def select(x, d):
     if isinstance(x, dict):
@@ -55,7 +55,7 @@ class Simulator:
 
         self._cuda = common.cuda(**self.options)
         self._respawns = init_respawns(self._cuda, self._designs, self.device)
-        self._drones, self.options['n_drones'] = init_drones(self._cuda, self._designs, self.device)
+        self._agents, self.options['n_agents'] = init_agents(self._cuda, self._designs, self.device)
         self._scene = scenery.init_scene(self._cuda, self._designs, self.device, random=self.options.random)
 
         # Defined here for easy overriding in subclasses
@@ -67,16 +67,16 @@ class Simulator:
         return self._device
 
     def _to_global_frame(self, p):
-        a = np.pi/180*self._drones.angles
+        a = np.pi/180*self._agents.angles
         c, s = torch.cos(a), torch.sin(a)
         x, y = p[..., 0], p[..., 1]
         return torch.stack([c*x - s*y, s*x + c*y], -1)
 
     def _physics(self):
-        self._cuda.physics(self._scene, self._drones)
+        self._cuda.physics(self._scene, self._agents)
 
     def _respawn(self, reset):
-        self._cuda.respawn(reset, self._respawns, self._drones)
+        self._cuda.respawn(reset, self._respawns, self._agents)
 
     def _downsample(self, screen, agg='mean'):
         view = screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample)
@@ -94,7 +94,7 @@ class Simulator:
         return (1 - distances/self.options.max_depth).clamp(0, 1) 
 
     def _render(self):
-        render = common.unpack(self._cuda.render(self._drones, self._scene))
+        render = common.unpack(self._cuda.render(self._agents, self._scene))
         render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
         render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return render
@@ -118,9 +118,9 @@ class Simulator:
                             widths=scene.textures.widths[lines_s:lines_e],
                             textures=textures,
                             baked=baked).clone(),
-                    drones=arrdict(
-                            angles=self._drones.angles[d], 
-                            positions=self._drones.positions[d]).clone(),)
+                    agents=arrdict(
+                            angles=self._agents.angles[d], 
+                            positions=self._agents.positions[d]).clone(),)
 
     def display(self, d=0):
-        return self._plot(numpyify(self.state(d)))
+        self._plot(numpyify(self.state(d)))

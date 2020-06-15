@@ -71,6 +71,6 @@ def recorder(run_name, plot, env_idx=0, length=256, period=60, fps=20):
                 start = start + period
         
 def notebook(run_name=-1, idx=-1):
-    path = list(paths.subdirectory('test', 'recording').glob('*.mp4'))[idx]
+    path = list(paths.glob('test', 'recording', pattern='*.mp4'))[idx]
     return recording.notebook(path.read_bytes())
 

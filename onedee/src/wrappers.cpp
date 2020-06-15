@@ -10,7 +10,7 @@ using namespace std::string_literals;
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 // TODO: Is this still needed?
-void _physics(const Scene& scene, Drones& drones) { return physics(scene, drones); }
+void _physics(const Scene& scene, Agents& agents) { return physics(scene, agents); }
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
@@ -31,16 +31,16 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def(py::init<TT, TT, TT, TT, TT>(), 
             "centers"_a, "radii"_a, "lowers"_a, "uppers"_a, "widths"_a);
 
-    //TODO: Swap out this DroneData/SceneData stuff for direct access to the arrays.
+    //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 
     // avoid all this indirection.
-    py::class_<Drones>(m, "Drones", py::module_local())
+    py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
             "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a)
-        .def_property_readonly("angles", [](Drones d) { return d.angles.t; })
-        .def_property_readonly("positions", [](Drones d) { return d.positions.t; })
-        .def_property_readonly("angmomenta", [](Drones d) { return d.angmomenta.t; })
-        .def_property_readonly("momenta", [](Drones d) { return d.momenta.t; });
+        .def_property_readonly("angles", [](Agents a) { return a.angles.t; })
+        .def_property_readonly("positions", [](Agents a) { return a.positions.t; })
+        .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; })
+        .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; });
 
     py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<TT, TT, TT, TT, TT, TT, TT>(),

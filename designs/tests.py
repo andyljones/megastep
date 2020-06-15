@@ -4,7 +4,6 @@ from itertools import cycle, islice
 
 def wall_collision_test(**kwargs):
     walls = [[[.5, 0.], [.5, 1.]]]
-    # Offset the color cycle so the posts don't have the same color as the drones
     return common.Design(
             id='box',
             lights=np.array([[0., 0., 1.]]),
@@ -15,8 +14,7 @@ def wall_collision_test(**kwargs):
             uppers=[[0.]],
             **kwargs) 
 
-def drone_collision_test(**kwargs):
-    # Offset the color cycle so the posts don't have the same color as the drones
+def agent_collision_test(**kwargs):
     walls = [[[2., 2.], [2., 3.]]]
     return common.Design(
             id='box',
@@ -27,7 +25,7 @@ def drone_collision_test(**kwargs):
             lowers=[[0., 180.]],
             uppers=[[0., 180.]])
 
-def drone_frame_test(**kwargs):
+def agent_frame_test(**kwargs):
     walls = [[[2., 2.], [2., 3.]]]
     return common.Design(
             id='box',

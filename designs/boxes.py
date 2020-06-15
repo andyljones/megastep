@@ -1,7 +1,7 @@
 import numpy as np
 from .common import box_walls, point_start, Design
             
-def gallery(n_drones=1, x=20, y=2):
+def gallery(n_agents=1, x=20, y=2):
     assert x > 4
     walls = box_walls(x, y)
     lights = np.linspace(-x/2+2, x/2-2, int(x//4))
@@ -12,7 +12,7 @@ def gallery(n_drones=1, x=20, y=2):
             walls=walls,
             **point_start(90., [0., 0.]))
 
-def corridor(n_drones=1, x=20, y=2):
+def corridor(n_agents=1, x=20, y=2):
     assert x > 4
     walls = box_walls(x, y)
     lights = np.linspace(-x/2+2, x/2-2, int(x//4))
@@ -23,7 +23,7 @@ def corridor(n_drones=1, x=20, y=2):
             walls=walls,
             **point_start(0., [0., 0.]))
 
-def box(n_drones=1, x=20, y=20):
+def box(n_agents=1, x=20, y=20):
     assert x > 4
     walls = box_walls(x, y)
     light_xs = np.linspace(-x/2+2, x/2-2, int(x/min(4, x/2)))

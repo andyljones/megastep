@@ -155,8 +155,8 @@ def colormap(walls, spaces):
     else:
         return np.zeros(len(walls), dtype=int)
 
-@cache.autocache('{index}-{n_drones}')
-def _cubicasa(index, n_drones, error=False):
+@cache.autocache('{index}-{n_agents}')
+def _cubicasa(index, n_agents, error=False):
     """This will fail on about 10% of designs because my generation scheme isn't totally robust
 
     Lights: 0-125
@@ -181,19 +181,19 @@ def _cubicasa(index, n_drones, error=False):
                     colormap=colormap(walls, spaces),
                     mask=wall_mask,
                     **common.subzones(
-                        n_drones=n_drones,
+                        n_agents=n_agents,
                         centers=centers,
                         radii=radii))
     except Exception as e:
         log.warn(f'Failed to create design for index #{index}: {e}')
 
-def cubicasa(n_designs=1, n_drones=1, split='train', rank=0):
+def cubicasa(n_designs=1, n_agents=1, split='train', rank=0):
     designs = []
     options = ids(split=split).index
     current = 0
     start = rank*n_designs
     while len(designs) < start + n_designs:
-        d = _cubicasa(options[current], n_drones, error=True)
+        d = _cubicasa(options[current], n_agents, error=True)
         if d:
             designs.append(d)
         current += 1
@@ -201,6 +201,6 @@ def cubicasa(n_designs=1, n_drones=1, split='train', rank=0):
             raise ValueError(f'Too many designs requested - max available is {len(designs)}')
     return designs[start:]
 
-def cubicache(n_drones):
+def cubicache(n_agents):
     with parallel.parallel(_cubicasa) as p:
-        p.wait([p(i, n_drones, error=False) for i in range(len(ids('all')))])
+        p.wait([p(i, n_agents, error=False) for i in range(len(ids('all')))])

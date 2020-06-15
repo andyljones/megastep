@@ -8,16 +8,17 @@ ACCEL = 5
 ANG_ACCEL = 100
 DECAY = .125
 
-class Environment(Simulator):
+class MinimalEnv(Simulator):
 
     @wraps(Simulator.__init__)
     def __init__(self, *args, **kwargs):
+        """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
         super().__init__(*args, **kwargs)
 
         self.observation_space = arrdict(
-            rgb=spaces.MultiImage(self.options.n_drones, 3, 1, self.options.res))
+            rgb=spaces.MultiImage(self.options.n_agents, 3, 1, self.options.res))
         self.action_space = arrdict(
-            move=spaces.MultiDiscrete(self.options.n_drones, 7))
+            move=spaces.MultiDiscrete(self.options.n_agents, 7))
             
         # noop, forward/backward, strafe left/right, turn left/right
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
@@ -45,19 +46,22 @@ class Environment(Simulator):
     @torch.no_grad()
     def step(self, decisions):
         delta = self._actionset[decisions.actions.move]
-        self._drones.angmomenta[:] = (1 - DECAY)*self._drones.angmomenta + delta.angmomenta
-        self._drones.momenta[:] = (1 - DECAY)*self._drones.momenta + self._to_global_frame(delta.momenta)
+        self._agents.angmomenta[:] = (1 - DECAY)*self._agents.angmomenta + delta.angmomenta
+        self._agents.momenta[:] = (1 - DECAY)*self._agents.momenta + self._to_global_frame(delta.momenta)
         self._physics()
+
+        reset = torch.zeros((self.options.n_designs,), dtype=torch.bool, device=self.device)
+        self._respawn(reset)
         return arrdict(
             obs=self._observe(), 
-            reset=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
+            reset=reset, 
             terminal=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
             reward=torch.zeros(self.options.n_designs, device=self.device))
 
 def example():
     import designs
 
-    env = Environment([designs.box()])
+    env = MinimalEnv([designs.box()])
     env.reset()
     forward = torch.tensor([[3]], device=env.device)
     for _ in range(10):
