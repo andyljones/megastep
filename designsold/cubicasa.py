@@ -6,11 +6,8 @@ from IPython.display import HTML, display
 from bs4 import BeautifulSoup
 import numpy as np
 from . import common, cache
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from shapely.geometry import Polygon, LineString, Point
+from shapely.geometry import Polygon, LineString
 from shapely.ops import cascaded_union
-import multiprocessing
 from tqdm.auto import tqdm
 from rebar import parallel
 import logging

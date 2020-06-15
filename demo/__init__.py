@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from . import acting, learning, agents
+from . import acting, learning, agents, recording
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
 import gym
 import pandas as pd
@@ -42,9 +42,14 @@ def run():
             interrupter.check()
 
 def demo():
-    agent = agentfunc()
-    env = envfunc(n_envs=1)
+    env = envfunc(1)
+    reaction = env.reset()
+    agent = agentfunc().cuda()
 
-    agent.load_state_dict(storing.load_one(procname='learn-0')['agent'])
+    reaction = env.reset()
+    recorder = recording.recorder('test', env._plot, length=256, fps=20)
+    while True:
+        decisions = agent(reaction[None], sample=True).squeeze(0)
+        reaction = env.step(decisions)
 
-    acting.record(env, agent, 256)
+        recorder(env.state(0))
