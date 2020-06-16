@@ -2,8 +2,21 @@ import matplotlib as mpl
 import numpy as np
 import torch
 from . import common
-from rebar.arrdict import tensorify
+from rebar.arrdict import tensorify, cat
 from rebar import dotdict
+
+# Ten bland colors from https://medialab.github.io/iwanthue/
+COLORS = [
+    "#c185ae",
+    "#73a171",
+    "#5666a4",
+    "#9f7c4a",
+    "#809cd5",
+    "#566e40",
+    "#8e537b",
+    "#4f9fa4",
+    "#b56d66",
+    "#5a728c"]
 
 def lengths(lines):
     return ((lines[..., 0, :] - lines[..., 1, :])**2).sum(-1)**.5
@@ -80,22 +93,30 @@ def init_scene_old(cuda, designs, device='cuda', random=np.random):
     return scene
 
 def random_lights(centroids, random=np.random):
-    pass
+    return np.concat([
+        centroids,
+        np.ones(len(centroids))], -1)
 
 @torch.no_grad()
-def init_scene(cuda, plans, n_agents, device='cuda', random=np.random): 
+def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random): 
     agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
     agentcolors = np.tile(agent_colors(), (n_agents, 1))
 
+    colormap = mpl.colors.to_rgb(COLORS)
+
     data = []
-    for p in plans:
-        lights = random_lights(p.centroids)
+    for g in geometries:
+        lights = random_lights(g.centroids)
+        lines = np.concatenate([agentlines, g.walls])
+        colors = np.concatenate([agentcolors, colormap[np.arange(len(g.walls)) % len(colormap)]])
+        is_agent = np.concatenate([np.full(len(agentlines), True), np.full(len(g.walls), False)])
         data.append({
             'lights': lights,
             'lightwidths': len(lights),
             'lines': lines,
             'linewidths': len(lines),
             'is_agent': is_agent,
-            'colors': colors })
+            'colors': colors})
+    data = cat(data)
     
 
