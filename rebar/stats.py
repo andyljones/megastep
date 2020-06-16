@@ -15,7 +15,6 @@ import re
 import _thread
 from torch import nn
 from .arrdict import arrdict
-import logging
 
 # Will be shadowed by the functions pulled in from statscategories
 _max = max
@@ -196,6 +195,11 @@ def from_dir(run_name, compositor=None):
             # out.close()
     else:
         log.info('No stats emitted in console mode')
+        yield
+
+@contextmanager
+def via_dir(run_name, compositor=None):
+    with to_dir(run_name), from_dir(run_name, compositor):
         yield
 
 for c in statscategories.CATEGORIES:

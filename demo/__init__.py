@@ -7,7 +7,6 @@ import gym
 import pandas as pd
 import onedee
 import cubicasa
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -28,22 +27,26 @@ def run():
     agent = agentfunc().cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=4.8e-4)
 
-    buffer = []
-    while True:
-        decision = agent(reaction[None], sample=True).squeeze(0)
-        buffer.append(arrdict(
-            reaction=reaction,
-            decision=decision))
-        buffer = buffer[-buffer_size:]
-        reaction = env.step(decision)
+    paths.clear('test')
+    compositor = widgets.Compositor()
+    with logging.via_dir('test', compositor), stats.via_dir('test', compositor):
+        
+        buffer = []
+        while True:
+            decision = agent(reaction[None], sample=True).squeeze(0)
+            buffer.append(arrdict(
+                reaction=reaction,
+                decision=decision))
+            buffer = buffer[-buffer_size:]
+            reaction = env.step(decision)
 
-        if len(buffer) == buffer_size:
-            chunk = arrdict.stack(buffer)
-            batch = learning.sample(chunk, batch_size)
-            learning.step(agent, opt, batch)
-            
-            display.clear_output(wait=True)
-            print(chunk.reaction.reward.mean())
+            if len(buffer) == buffer_size:
+                chunk = arrdict.stack(buffer)
+                batch = learning.sample(chunk, batch_size)
+                learning.step(agent, opt, batch)
+
+                log.info('stepped')
+                stats.mean('reward', chunk.reaction.reward.mean())
 
 
 def demo():
