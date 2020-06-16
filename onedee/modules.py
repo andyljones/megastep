@@ -38,7 +38,6 @@ def unpack(d):
         return d
     return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
 
-
 class RGBObserver(core.Core):
 
     def __init__(self, *args, **kwargs):
@@ -49,10 +48,11 @@ class RGBObserver(core.Core):
     def _downsample(self, screen):
         return screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample).mean(-1)
 
-    def _observe(self):
-        render = unpack(self._cuda.render(self._agents, self._scene))
-        render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
-        render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
+    def _observe(self, render=None):
+        if render is None:
+            render = unpack(self._cuda.render(self._agents, self._scene))
+            render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
+            render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return arrdict(
             rgb=self._downsample(render.screen))
         
