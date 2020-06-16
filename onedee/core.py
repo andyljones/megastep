@@ -16,26 +16,6 @@ DEFAULTS = {
     'fps': 10,
 }
 
-def init_respawns(cuda, geometries, n_agents, device='cuda', random=np.random, n_spawns=100):
-    assert n_agents == 1
-
-    respawns = []
-    for g in geometries:
-        sample = np.stack((g.masks == 0).nonzero(), -1)
-        sample = sample[random.choice(np.arange(len(sample)), n_spawns)]
-        
-        i, j = sample.T + .5
-        xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
-
-        respawns.append(arrdict({
-            'centers': xy[:, None],
-            'widths': len(xy),
-            'radii': np.zeros((len(xy), 1)),
-            'lowers': np.zeros((len(xy), 1)),
-            'uppers': np.zeros((len(xy), 1))}))
-    respawns = tensorify(cat(respawns)).to(device)
-    return cuda.Respawns(**respawns)
-
 def init_agents(cuda, n_envs, n_agents, device='cuda'):
     data = arrdict(
             angles=tensorify(np.full((n_envs, n_agents), np.nan)),
@@ -54,12 +34,7 @@ def select(x, d):
     e = s+x.widths[d]
     return x.vals[s:e]
 
-def unpack(d):
-    if isinstance(d, torch.Tensor):
-        return d
-    return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
-
-class Simulator: 
+class Core: 
 
     def __init__(self, geometries, n_agents=1, **kwargs):
         self._geometries = geometries 
@@ -74,8 +49,6 @@ class Simulator:
 
         self._cuda = common.cuda(**self.options)
         self._cuda.initialize(self.options.radius, self.options.supersample*self.options.res, self.options.fov, self.options.fps)
-
-        self._respawns = init_respawns(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
         self._agents = init_agents(self._cuda, self.options.n_envs, self.options.n_agents, self.device)
         self._scene = scenery.init_scene(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
  
@@ -96,18 +69,6 @@ class Simulator:
         """
         dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
         return torch.full((self.options.n_envs,), obj, device=self.device, dtype=dtypes[type(obj)])
-
-    def _physics(self):
-        self._cuda.physics(self._scene, self._agents)
-
-    def _respawn(self, reset):
-        self._cuda.respawn(reset, self._respawns, self._agents)
-
-    def _render(self):
-        render = unpack(self._cuda.render(self._agents, self._scene))
-        render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
-        render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
-        return render
 
     def state(self, d):
         scene = self._scene

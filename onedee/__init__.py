@@ -1,13 +1,29 @@
-from .simulator import Simulator
+from .core import Core
 from . import modules
 import torch
 from rebar import arrdict
 from functools import wraps
 
-class MinimalEnv(Simulator, modules.SimpleMovement, modules.RGBObserver):
+class MinimalEnv(modules.SimpleMovement, modules.RGBObserver, modules.RandomSpawns):
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
 
-    @wraps(Simulator.__init__)
+    @wraps(Core.__init__)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @torch.no_grad()
+    def reset(self):
+        self._respawn(self._full(True))
+        return arrdict(obs=self._observe())
+
+    @torch.no_grad()
+    def step(self, decisions):
+        self._move(decisions)
+        return arrdict(obs=self._observe())
+    
+class ExplorationEnv(modules.SimpleMovement, modules.RGBObserver, modules.RandomSpawns):
+
+    @wraps(Core.__init__)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -20,7 +36,6 @@ class MinimalEnv(Simulator, modules.SimpleMovement, modules.RGBObserver):
     @torch.no_grad()
     def step(self, decisions):
         self._move(decisions)
-        self._physics()
 
         reset = self._full(False)
         self._respawn(reset)

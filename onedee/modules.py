@@ -1,16 +1,17 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from . import spaces
+from rebar.arrdict import cat, tensorify
+from . import spaces, core
 
 ACCEL = 5
 ANG_ACCEL = 100
 DECAY = .125
 
-class SimpleMovement:
+class SimpleMovement(core.Core):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         # noop, forward/backward, strafe left/right, turn left/right
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
@@ -32,11 +33,17 @@ class SimpleMovement:
         delta = self._actionset[decisions.actions.move]
         self._agents.angmomenta[:] = (1 - DECAY)*self._agents.angmomenta + delta.angmomenta
         self._agents.momenta[:] = (1 - DECAY)*self._agents.momenta + self._to_global_frame(delta.momenta)
+        self._cuda.physics(self._scene, self._agents)
 
-class RGBObserver:
+def unpack(d):
+    if isinstance(d, torch.Tensor):
+        return d
+    return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
 
-    def __init__(self):
-        super().__init__()
+class RGBObserver(core.Core):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.observation_space = arrdict(
             rgb=spaces.MultiImage(self.options.n_agents, 3, 1, self.options.res))
 
@@ -44,7 +51,34 @@ class RGBObserver:
         return screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample).mean(-1)
 
     def _observe(self):
-        render = self._render()
+        render = unpack(self._cuda.render(self._agents, self._scene))
+        render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
+        render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return arrdict(
             rgb=self._downsample(render.screen))
         
+class RandomSpawns(core.Core):
+
+    def __init__(self, *args, n_spawns=100, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        assert self.options.n_agents == 1
+
+        respawns = []
+        for g in self._geometries:
+            sample = np.stack((g.masks == 0).nonzero(), -1)
+            sample = sample[self.options.random.choice(np.arange(len(sample)), n_spawns)]
+            
+            i, j = sample.T + .5
+            xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
+
+            respawns.append(arrdict({
+                'positions': xy[:, None],
+                'angles': self.options.random.uniform(-180, +180, (n_spawns, self.options.n_agents))}))
+
+        respawns = tensorify(cat(respawns)).to(self.device)
+        self._respawns = self._cuda.Respawns(**respawns)
+
+    def _respawn(self, reset):
+        self._cuda.respawn(reset, self._respawns, self._agents)
+
