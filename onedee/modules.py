@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from rebar.arrdict import cat, tensorify
+from rebar.arrdict import cat, stack, tensorify
 from . import spaces, core
 
 ACCEL = 5
@@ -64,7 +64,7 @@ class RandomSpawns(core.Core):
 
         assert self.options.n_agents == 1
 
-        respawns = []
+        spawns = []
         for g in self._geometries:
             sample = np.stack((g.masks == 0).nonzero(), -1)
             sample = sample[self.options.random.choice(np.arange(len(sample)), n_spawns)]
@@ -72,13 +72,13 @@ class RandomSpawns(core.Core):
             i, j = sample.T + .5
             xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
 
-            respawns.append(arrdict({
+            spawns.append(arrdict({
                 'positions': xy[:, None],
                 'angles': self.options.random.uniform(-180, +180, (n_spawns, self.options.n_agents))}))
 
-        respawns = tensorify(cat(respawns)).to(self.device)
-        self._respawns = self._cuda.Respawns(**respawns)
+        spawns = tensorify(stack(spawns)).to(self.device)
+        self._spawns = self._cuda.Spawns(**spawns)
 
     def _respawn(self, reset):
-        self._cuda.respawn(reset, self._respawns, self._agents)
+        self._cuda.respawn(reset, self._spawns, self._agents)
 

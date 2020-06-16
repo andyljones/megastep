@@ -9,7 +9,7 @@ using namespace std::string_literals;
 
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
-// TODO: Is this still needed?
+// TODO: Is this still needed? Can't remember why I added it 
 void _physics(const Scene& scene, Agents& agents) { return physics(scene, agents); }
 
 template<typename T>
@@ -27,9 +27,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ragged<Baked>(m, "Baked");
     // ragged<Lights>(m, "Lights"); // Unneeded as replicates an existing type
 
-    py::class_<Respawns>(m, "Respawns", py::module_local())
-        .def(py::init<TT, TT, TT, TT, TT>(), 
-            "centers"_a, "radii"_a, "lowers"_a, "uppers"_a, "widths"_a);
+    py::class_<Spawns>(m, "Spawns", py::module_local())
+        .def(py::init<TT, TT, TT>(), 
+            "positions"_a, "angles"_a);
 
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 

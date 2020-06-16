@@ -127,24 +127,19 @@ struct Ragged {
     size_t size(const size_t i) const { return vals.size(i); }
 };
 
-using Centers = Ragged<float, 3>;
-using Radii = Ragged<float, 2>;
-using Lowers = Ragged<float, 2>;
-using Uppers = Ragged<float, 2>;
+using SpawnPositions = TensorProxy<float, 4>;
+using SpawnAngles = TensorProxy<float, 3>;
 
-struct Respawns {
-    const Centers centers;
-    const Radii radii;
-    const Lowers lowers;
-    const Uppers uppers;
+struct Spawns {
+    const SpawnPositions positions;
+    const SpawnAngles angles;
 
-    Respawns(TT centers, TT radii, TT lowers, TT uppers, TT widths) :
-        centers(centers, widths), radii(radii, widths), lowers(lowers, widths), uppers(uppers, widths) { 
+    Spawns(TT positions, TT angles) :
+        positions(positions), angles(angles) { 
 
-        AT_ASSERT(centers.size(0) == radii.size(0));
-        AT_ASSERT(centers.size(0) == radii.size(0));
-        AT_ASSERT(centers.size(0) == lowers.size(0));
-        AT_ASSERT(centers.size(0) == uppers.size(0)); 
+        AT_ASSERT(positions.size(0) == angles.size(0));
+        AT_ASSERT(positions.size(1) == angles.size(1));
+        AT_ASSERT(positions.size(2) == angles.size(2));
     }
 };
 
@@ -197,6 +192,6 @@ struct Render {
 
 void initialize(float, int, float, float);
 void bake(Scene& scene, int D);
-void respawn(const TT reset, const Respawns& respawns, Agents& agents);
+void respawn(const TT reset, const Spawns& spawns, Agents& agents);
 void physics(const Scene& scene, Agents& agents);
 Render render(const Agents& agents, Scene& scene);

@@ -6,8 +6,6 @@
 
 // COMMON
 
-// Max speed is ACCEL/DECAY
-
 const float AMBIENT = .1;
 const uint BLOCK = 128;
 
@@ -40,8 +38,8 @@ at::cuda::CUDAStream stream() {
 }
 
 __global__ void respawn_kernel(
-                    Required::PTA required, Choices::PTA choices, Randoms::PTA randoms,
-                    Centers::PTA centers, Radii::PTA radii, Lowers::PTA lowers, Uppers::PTA uppers, 
+                    Required::PTA required, Choices::PTA choices, 
+                    SpawnPositions::PTA spawnpositions, SpawnAngles::PTA spawnangles, 
                     Angles::PTA angles, Positions::PTA positions, 
                     Angles::PTA angmomenta, Positions::PTA momenta) {
     const auto r = blockIdx.x*blockDim.x+threadIdx.x;
@@ -50,25 +48,16 @@ __global__ void respawn_kernel(
 
         const int D = angles.size(1);
 
-        const auto w = centers.widths[n];
+        const auto w = spawnpositions.widths[n];
         const auto z = min(static_cast<int>(w*choices[n]), w-1);
         for (int d=0; d < D; d++) {
-            const auto cx = centers[n][z][d][0];
-            const auto cy = centers[n][z][d][1];
-            
-            const auto t = 360.f*randoms[r][d][0];
-            const auto rad = fmaxf(radii[n][z][d] - AGENT_RADIUS, 0.f)*randoms[r][d][1];
-            
-            const auto x = cx + rad*cospif(t/180.f);
-            const auto y = cy + rad*sinpif(t/180.f);
-
-            const auto al = lowers[n][z][d];
-            const auto au = uppers[n][z][d];
-            const auto a = al + (au-al)*randoms[r][d][2];
+            const auto cx = spawnpositions[n][z][d][0];
+            const auto cy = spawnpositions[n][z][d][1];
+            const auto a = spawnangles[n][z][d];
 
             angles[n][d] = fmod(a, 360.f);
-            positions[n][d][0] = x;
-            positions[n][d][1] = y;
+            positions[n][d][0] = cx;
+            positions[n][d][1] = cy;
             angmomenta[n][d] = 0.f;
             momenta[n][d][0] = 0.f;
             momenta[n][d][1] = 0.f;
@@ -76,7 +65,7 @@ __global__ void respawn_kernel(
     }
 }
 
-__host__ void respawn(const TT reset, const Respawns& respawns, Agents& agents) {
+__host__ void respawn(const TT reset, const Spawns& spawns, Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint D = agents.angles.size(1);
 
@@ -85,11 +74,10 @@ __host__ void respawn(const TT reset, const Respawns& respawns, Agents& agents) 
 
     if (R > 0) {
         Choices choices(at::rand({N}, at::TensorOptions(at::kCUDA).dtype(at::kFloat)));
-        Randoms randoms(at::rand({N, D, 3}, at::TensorOptions(at::kCUDA).dtype(at::kFloat)));
         const auto blocks = (R + BLOCK - 1)/BLOCK;
         respawn_kernel<<<blocks, BLOCK, 0, stream()>>>(
-            required.pta(), choices.pta(), randoms.pta(),
-            respawns.centers.pta(), respawns.radii.pta(), respawns.lowers.pta(), respawns.uppers.pta(),
+            required.pta(), choices.pta(), 
+            spawns.positions.pta(), spawns.angles.pta(),
             agents.angles.pta(), agents.positions.pta(), 
             agents.angmomenta.pta(), agents.momenta.pta());
     }
