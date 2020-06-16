@@ -84,7 +84,7 @@ def safe_geometry(id, svg):
         log.info(f'Geometry generation failed on on #{id}')
 
 def fastload(raw):
-    """Most of the time when loading a numpy array is spent parsing the header, since
+    """Most of the time in np.load is spent parsing the header, since
     it could have a giant mess of record types in it. But we know here that it doesn't!
     
     Can push x3 faster than this by writing a regex for the descr and shape, but 
@@ -98,7 +98,7 @@ def fastload(raw):
 def geometrydata(regenerate=False):
     # Why .npz.gz? Because applying gzip manually manages x10 better compression than
     # np.savez_compressed. They use the same compression alg, so I assume the difference
-    # is in the default compression setting.
+    # is in the default compression setting - which isn't accessible in np.savez_compressec.
     p = Path('.cache/cubicasa-geometry.npz.gz')
     if not p.exists() or regenerate:
         p.parent.mkdir(exist_ok=True, parents=True)
