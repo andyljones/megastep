@@ -27,10 +27,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ragged<Baked>(m, "Baked");
     // ragged<Lights>(m, "Lights"); // Unneeded as replicates an existing type
 
-    py::class_<Spawns>(m, "Spawns", py::module_local())
-        .def(py::init<TT, TT, TT>(), 
-            "positions"_a, "angles"_a);
-
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 
     // avoid all this indirection.
@@ -63,7 +59,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
     m.def("initialize", &initialize);
     m.def("bake", &bake, py::call_guard<py::gil_scoped_release>());
-    m.def("respawn", &respawn, py::call_guard<py::gil_scoped_release>());
     m.def("physics", &_physics, py::call_guard<py::gil_scoped_release>());
     m.def("render", &render, py::call_guard<py::gil_scoped_release>());
     //TODO: This should work. Come back when you're more comfortable with type inference

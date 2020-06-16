@@ -127,22 +127,6 @@ struct Ragged {
     size_t size(const size_t i) const { return vals.size(i); }
 };
 
-using SpawnPositions = TensorProxy<float, 4>;
-using SpawnAngles = TensorProxy<float, 3>;
-
-struct Spawns {
-    const SpawnPositions positions;
-    const SpawnAngles angles;
-
-    Spawns(TT positions, TT angles) :
-        positions(positions), angles(angles) { 
-
-        AT_ASSERT(positions.size(0) == angles.size(0));
-        AT_ASSERT(positions.size(1) == angles.size(1));
-        AT_ASSERT(positions.size(2) == angles.size(2));
-    }
-};
-
 using Angles = TensorProxy<float, 2>;
 using Positions = TensorProxy<float, 3>;
 using AngMomenta = TensorProxy<float, 2>;
@@ -192,6 +176,5 @@ struct Render {
 
 void initialize(float, int, float, float);
 void bake(Scene& scene, int D);
-void respawn(const TT reset, const Spawns& spawns, Agents& agents);
 void physics(const Scene& scene, Agents& agents);
 Render render(const Agents& agents, Scene& scene);

@@ -18,10 +18,10 @@ DEFAULTS = {
 
 def init_agents(cuda, n_envs, n_agents, device='cuda'):
     data = arrdict(
-            angles=tensorify(np.full((n_envs, n_agents), np.nan)),
-            positions=tensorify(np.full((n_envs, n_agents, 2), np.nan)),
-            angmomenta=tensorify(np.full((n_envs, n_agents), np.nan)),
-            momenta=tensorify(np.full((n_envs, n_agents, 2), np.nan)))
+            angles=torch.zeros((n_envs, n_agents)),
+            positions=torch.zeros((n_envs, n_agents, 2)),
+            angmomenta=torch.zeros((n_envs, n_agents)),
+            momenta=torch.zeros((n_envs, n_agents, 2)))
     return cuda.Agents(**data.to(device))
 
 def select(x, d):

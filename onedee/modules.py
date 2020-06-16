@@ -63,6 +63,7 @@ class RandomSpawns(core.Core):
         super().__init__(*args, **kwargs)
 
         assert self.options.n_agents == 1
+        self.options.n_spawns = n_spawns
 
         spawns = []
         for g in self._geometries:
@@ -76,9 +77,13 @@ class RandomSpawns(core.Core):
                 'positions': xy[:, None],
                 'angles': self.options.random.uniform(-180, +180, (n_spawns, self.options.n_agents))}))
 
-        spawns = tensorify(stack(spawns)).to(self.device)
-        self._spawns = self._cuda.Spawns(**spawns)
+        self._spawns = tensorify(stack(spawns)).to(self.device)
 
     def _respawn(self, reset):
-        self._cuda.respawn(reset, self._spawns, self._agents)
+        required = reset.nonzero().squeeze(-1)
+        choices = torch.randint_like(required, 0, self.options.n_spawns)
+        self._agents.angles[required] = self._spawns.angles[required, choices] 
+        self._agents.positions[required] = self._spawns.positions[required, choices] 
+        self._agents.momenta[required] = 0.
+        self._agents.angmomenta[required] = 0.
 

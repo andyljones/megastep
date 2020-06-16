@@ -27,60 +27,8 @@ __host__ void initialize(float agent_radius, int res, float fov, float fps) {
 }
 
 
-// SIMULATOR - RESPAWN
-
-using Required = TensorProxy<int, 1>;
-using Choices = TensorProxy<float, 1>;
-using Randoms = TensorProxy<float, 3>;
-
 at::cuda::CUDAStream stream() { 
     return at::cuda::getCurrentCUDAStream();
-}
-
-__global__ void respawn_kernel(
-                    Required::PTA required, Choices::PTA choices, 
-                    SpawnPositions::PTA spawnpositions, SpawnAngles::PTA spawnangles, 
-                    Angles::PTA angles, Positions::PTA positions, 
-                    Angles::PTA angmomenta, Positions::PTA momenta) {
-    const auto r = blockIdx.x*blockDim.x+threadIdx.x;
-    if (r < required.size(0)) {
-        const auto n = required[r];
-
-        const int D = angles.size(1);
-
-        const auto w = spawnpositions.widths[n];
-        const auto z = min(static_cast<int>(w*choices[n]), w-1);
-        for (int d=0; d < D; d++) {
-            const auto cx = spawnpositions[n][z][d][0];
-            const auto cy = spawnpositions[n][z][d][1];
-            const auto a = spawnangles[n][z][d];
-
-            angles[n][d] = fmod(a, 360.f);
-            positions[n][d][0] = cx;
-            positions[n][d][1] = cy;
-            angmomenta[n][d] = 0.f;
-            momenta[n][d][0] = 0.f;
-            momenta[n][d][1] = 0.f;
-        }
-    }
-}
-
-__host__ void respawn(const TT reset, const Spawns& spawns, Agents& agents) {
-    const uint N = agents.angles.size(0);
-    const uint D = agents.angles.size(1);
-
-    Required required(reset.nonzero().select(1, 0).toType(at::kInt));
-    const uint R = required.size(0);
-
-    if (R > 0) {
-        Choices choices(at::rand({N}, at::TensorOptions(at::kCUDA).dtype(at::kFloat)));
-        const auto blocks = (R + BLOCK - 1)/BLOCK;
-        respawn_kernel<<<blocks, BLOCK, 0, stream()>>>(
-            required.pta(), choices.pta(), 
-            spawns.positions.pta(), spawns.angles.pta(),
-            agents.angles.pta(), agents.positions.pta(), 
-            agents.angmomenta.pta(), agents.momenta.pta());
-    }
 }
 
 // SIMULATOR - COLLISIONS
