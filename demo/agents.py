@@ -111,6 +111,6 @@ class Agent(nn.Module):
         if sample:
             outputs['actions'] = self.policy.sample(outputs.logits)
         if value:
-            outputs['values'] = self.value(x).squeeze(-1)
+            outputs['value'] = self.value(x).squeeze(-1)
         return outputs
 

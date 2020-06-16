@@ -4,21 +4,19 @@ from rebar import arrdict
 from rebar.arrdict import cat, stack, tensorify
 from . import spaces, core
 
-ACCEL = 5
-ANG_ACCEL = 100
-DECAY = .125
-
 class SimpleMovement(core.Core):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, accel=5, ang_accel=100, decay=.125, **kwargs):
         super().__init__(*args, **kwargs)
         # noop, forward/backward, strafe left/right, turn left/right
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict(
-            momenta=ACCEL/self.options.fps*momenta,
-            angmomenta=ANG_ACCEL/self.options.fps*angmomenta
+            momenta=accel/self.options.fps*momenta,
+            angmomenta=ang_accel/self.options.fps*angmomenta
         ).to(self.device)
+
+        self.options.decay = decay
 
         self.action_space = arrdict(
             move=spaces.MultiDiscrete(self.options.n_agents, 7))
@@ -31,14 +29,15 @@ class SimpleMovement(core.Core):
 
     def _move(self, decisions):
         delta = self._actionset[decisions.actions.move]
-        self._agents.angmomenta[:] = (1 - DECAY)*self._agents.angmomenta + delta.angmomenta
-        self._agents.momenta[:] = (1 - DECAY)*self._agents.momenta + self._to_global_frame(delta.momenta)
+        self._agents.angmomenta[:] = (1 - self.options.decay)*self._agents.angmomenta + delta.angmomenta
+        self._agents.momenta[:] = (1 - self.options.decay)*self._agents.momenta + self._to_global_frame(delta.momenta)
         self._cuda.physics(self._scene, self._agents)
 
 def unpack(d):
     if isinstance(d, torch.Tensor):
         return d
     return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
+
 
 class RGBObserver(core.Core):
 
@@ -57,6 +56,7 @@ class RGBObserver(core.Core):
         return arrdict(
             rgb=self._downsample(render.screen))
         
+
 class RandomSpawns(core.Core):
 
     def __init__(self, *args, n_spawns=100, **kwargs):
