@@ -11,19 +11,18 @@ DEFAULTS = {
     'res': 64,
     'supersample': 8,
     'random': np.random.RandomState(12041955),
-    'fov': 130, # widest FOV among common FPV agents
+    'fov': 130, # widest FOV among common FPV drones
     'radius': common.AGENT_RADIUS,
-    'max_depth': 10,
     'fps': 10,
 }
 
-def init_respawns(cuda, geometries, n_agents, device='cuda', random=np.random):
+def init_respawns(cuda, geometries, n_agents, device='cuda', random=np.random, n_spawns=100):
     assert n_agents == 1
 
     respawns = []
     for g in geometries:
         sample = np.stack((g.masks == 0).nonzero(), -1)
-        sample = sample[random.choice(np.arange(len(sample)), 100)]
+        sample = sample[random.choice(np.arange(len(sample)), n_spawns)]
         
         i, j = sample.T + .5
         xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
@@ -55,6 +54,11 @@ def select(x, d):
     e = s+x.widths[d]
     return x.vals[s:e]
 
+def unpack(d):
+    if isinstance(d, torch.Tensor):
+        return d
+    return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
+
 class Simulator: 
 
     def __init__(self, geometries, n_agents=1, **kwargs):
@@ -69,6 +73,8 @@ class Simulator:
         self._device = torch.device('cuda')
 
         self._cuda = common.cuda(**self.options)
+        self._cuda.initialize(self.options.radius, self.options.supersample*self.options.res, self.options.fov, self.options.fps)
+
         self._respawns = init_respawns(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
         self._agents = init_agents(self._cuda, self.options.n_envs, self.options.n_agents, self.device)
         self._scene = scenery.init_scene(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
@@ -78,17 +84,18 @@ class Simulator:
 
         super().__init__()
 
+    @property
+    def device(self):
+        """The device that the sim sits on. For now this is fixed to the default 'cuda' device"""
+        return self._device
+
     def _full(self, obj):
         """Returns a (n_env,) tensor on the device full of `obj`.
         
         This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
         """
-        return torch.full((self.options.n_envs,), obj, device=self.device)
-
-    @property
-    def device(self):
-        """The device that the sim sits on. For now this is fixed to the default 'cuda' device"""
-        return self._device
+        dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
+        return torch.full((self.options.n_envs,), obj, device=self.device, dtype=dtypes[type(obj)])
 
     def _physics(self):
         self._cuda.physics(self._scene, self._agents)
@@ -96,11 +103,8 @@ class Simulator:
     def _respawn(self, reset):
         self._cuda.respawn(reset, self._respawns, self._agents)
 
-    def _compress(self, distances):
-        return (1 - distances/self.options.max_depth).clamp(0, 1) 
-
     def _render(self):
-        render = common.unpack(self._cuda.render(self._agents, self._scene))
+        render = unpack(self._cuda.render(self._agents, self._scene))
         render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
         render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return render

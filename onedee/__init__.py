@@ -15,7 +15,7 @@ class MinimalEnv(Simulator, modules.SimpleMovement, modules.RGBObserver):
     def reset(self):
         reset = self._full(True)
         self._respawn(reset)
-        return arrdict(obs=self._observe(), reset=reset, terminal=self._full(False), reward=self._full(0.).float())
+        return arrdict(obs=self._observe(), reset=reset, terminal=self._full(False), reward=self._full(0.))
 
     @torch.no_grad()
     def step(self, decisions):
@@ -24,4 +24,4 @@ class MinimalEnv(Simulator, modules.SimpleMovement, modules.RGBObserver):
 
         reset = self._full(False)
         self._respawn(reset)
-        return arrdict(obs=self._observe(), reset=reset, terminal=self._full(False), reward=self._full(False))
+        return arrdict(obs=self._observe(), reset=reset, terminal=self._full(False), reward=self._full(0.))
