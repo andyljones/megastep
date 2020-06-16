@@ -140,4 +140,4 @@ def sample(n_designs, split='training'):
     else:
         raise ValueError('Split must be train/test/all')
 
-    return [_cache[order[i]] for i in range(n_designs)]
+    return [_cache[order[i % len(order)]] for i in range(n_designs)]

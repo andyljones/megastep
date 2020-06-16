@@ -76,34 +76,25 @@ class Simulator:
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
 
+        super().__init__()
+
+    def _full(self, obj):
+        """Returns a (n_env,) tensor on the device full of `obj`.
+        
+        This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
+        """
+        return torch.full((self.options.n_envs,), obj, device=self.device)
+
     @property
     def device(self):
         """The device that the sim sits on. For now this is fixed to the default 'cuda' device"""
         return self._device
-
-    def _to_global_frame(self, p):
-        a = np.pi/180*self._agents.angles
-        c, s = torch.cos(a), torch.sin(a)
-        x, y = p[..., 0], p[..., 1]
-        return torch.stack([c*x - s*y, s*x + c*y], -1)
 
     def _physics(self):
         self._cuda.physics(self._scene, self._agents)
 
     def _respawn(self, reset):
         self._cuda.respawn(reset, self._respawns, self._agents)
-
-    def _downsample(self, screen, agg='mean'):
-        view = screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample)
-        if agg == 'mean':
-            return view.mean(-1)
-        elif agg == 'min':
-            return view.min(-1).values
-        elif agg == 'first':
-            return view[..., 0]
-
-    def _upsample(self, screen):
-        return screen.unsqueeze(-1).repeat(1, 1, 1, 1, 1, self.options.supersample).view(*screen.shape[:-1], screen.shape[-1]*self.options.supersample)
 
     def _compress(self, distances):
         return (1 - distances/self.options.max_depth).clamp(0, 1) 
@@ -139,3 +130,4 @@ class Simulator:
 
     def display(self, d=0):
         self._plot(numpyify(self.state(d)))
+
