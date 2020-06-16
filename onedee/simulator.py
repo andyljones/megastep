@@ -28,12 +28,12 @@ def init_respawns(cuda, geometries, n_agents, device='cuda', random=np.random):
         i, j = sample.T + .5
         xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
 
-        respawns.append({
+        respawns.append(arrdict({
             'centers': xy[:, None],
             'widths': len(xy),
             'radii': np.zeros((len(xy), 1)),
             'lowers': np.zeros((len(xy), 1)),
-            'uppers': np.zeros((len(xy), 1))})
+            'uppers': np.zeros((len(xy), 1))}))
     respawns = tensorify(cat(respawns)).to(device)
     return cuda.Respawns(**respawns)
 
@@ -57,7 +57,6 @@ def select(x, d):
 
 class Simulator: 
 
-    @torch.no_grad()
     def __init__(self, geometries, n_agents=1, **kwargs):
         self._geometries = geometries 
         self.options = dotdict({
@@ -70,10 +69,10 @@ class Simulator:
         self._device = torch.device('cuda')
 
         self._cuda = common.cuda(**self.options)
-        self._respawns = init_respawns(self._cuda, self._geometries, self.n_agents, self.device, self.options.random)
-        self._agents = init_agents(self._cuda, self.n_envs, self.n_agents, self.device)
-        self._scene = scenery.init_scene(self._cuda, self._geometries, self.n_agents, self.device, self.options.random)
-
+        self._respawns = init_respawns(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
+        self._agents = init_agents(self._cuda, self.options.n_envs, self.options.n_agents, self.device)
+        self._scene = scenery.init_scene(self._cuda, self._geometries, self.options.n_agents, self.device, self.options.random)
+ 
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot
 

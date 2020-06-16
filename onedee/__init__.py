@@ -35,13 +35,13 @@ class MinimalEnv(Simulator):
     
     @torch.no_grad()
     def reset(self):
-        reset = torch.ones((self.options.n_designs,), dtype=torch.bool, device=self.device)
+        reset = torch.ones((self.options.n_envs,), dtype=torch.bool, device=self.device)
         self._respawn(reset)
         return arrdict(
             obs=self._observe(), 
             reset=reset, 
-            terminal=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
-            reward=torch.zeros(self.options.n_designs, device=self.device))
+            terminal=torch.zeros(self.options.n_envs, dtype=torch.bool, device=self.device), 
+            reward=torch.zeros(self.options.n_envs, device=self.device))
 
     @torch.no_grad()
     def step(self, decisions):
@@ -50,13 +50,13 @@ class MinimalEnv(Simulator):
         self._agents.momenta[:] = (1 - DECAY)*self._agents.momenta + self._to_global_frame(delta.momenta)
         self._physics()
 
-        reset = torch.zeros((self.options.n_designs,), dtype=torch.bool, device=self.device)
+        reset = torch.zeros((self.options.n_envs,), dtype=torch.bool, device=self.device)
         self._respawn(reset)
         return arrdict(
             obs=self._observe(), 
             reset=reset, 
-            terminal=torch.zeros(self.options.n_designs, dtype=torch.bool, device=self.device), 
-            reward=torch.zeros(self.options.n_designs, device=self.device))
+            terminal=torch.zeros(self.options.n_envs, dtype=torch.bool, device=self.device), 
+            reward=torch.zeros(self.options.n_envs, device=self.device))
 
 def example():
     import designs

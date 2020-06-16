@@ -1,17 +1,18 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from . import acting, learning, agents, recording
+from . import acting, learning, agents
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
 import gym
 import pandas as pd
-from onedee import MinimalEnv
+from onedee import MinimalEnv, recording
+import cubicasa
 import logging
 
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    ds = [designs.box()]
+    ds = cubicasa.sample(n_envs)
     return MinimalEnv(ds)
 
 def agentfunc():
