@@ -41,6 +41,10 @@ def run():
             chunk = arrdict.stack(buffer)
             batch = learning.sample(chunk, batch_size)
             learning.step(agent, opt, batch)
+            
+            display.clear_output(wait=True)
+            print(chunk.reaction.reward.mean())
+
 
 def demo():
     env = envfunc(1)

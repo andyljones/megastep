@@ -21,7 +21,7 @@ class MinimalEnv(modules.SimpleMovement, modules.RGBObserver, modules.RandomSpaw
         self._move(decisions)
         return arrdict(obs=self._observe())
     
-class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBObserver):
+class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDObserver):
 
     @wraps(Core.__init__)
     def __init__(self, *args, max_length=512, **kwargs):

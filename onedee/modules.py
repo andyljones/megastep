@@ -56,7 +56,27 @@ class RGBObserver(core.Core):
         return arrdict(
             rgb=self._downsample(render.screen))
         
+class RGBDObserver(core.Core):
 
+    def __init__(self, *args, max_depth=10, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.observation_space = arrdict(
+            rgb=spaces.MultiImage(self.options.n_agents, 3, 1, self.options.res),
+            d=spaces.MultiImage(self.options.n_agents, 1, 1, self.options.res),)
+        self._max_depth = max_depth
+
+    def _downsample(self, screen):
+        return screen.view(*screen.shape[:-1], screen.shape[-1]//self.options.supersample, self.options.supersample).mean(-1)
+
+    def _observe(self, render=None):
+        if render is None:
+            render = unpack(self._cuda.render(self._agents, self._scene))
+            render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
+            render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
+        return arrdict(
+            rgb=self._downsample(render.screen),
+            d=1 - self._downsample(render.distances).div(self._max_depth).clamp(0, 1).unsqueeze(3))
+        
 class RandomSpawns(core.Core):
 
     def __init__(self, *args, n_spawns=100, **kwargs):
