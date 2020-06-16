@@ -6,7 +6,6 @@ from rebar import queuing, processes, logging, interrupting, paths, stats, widge
 import gym
 import pandas as pd
 from onedee import MinimalEnv
-import designs
 import logging
 
 log = logging.getLogger(__name__)

@@ -50,7 +50,7 @@ def init_colors(lines, colors, is_agent, random=np.random):
     return textures, texwidths
 
 @torch.no_grad()
-def init_scene(cuda, designs, device='cuda', random=np.random): 
+def init_scene_old(cuda, designs, device='cuda', random=np.random): 
     n_agents = designs[0].n_agents
 
     agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
@@ -78,5 +78,24 @@ def init_scene(cuda, designs, device='cuda', random=np.random):
     cuda.bake(scene, n_agents)
 
     return scene
+
+def random_lights(centroids, random=np.random):
+    pass
+
+@torch.no_grad()
+def init_scene(cuda, plans, n_agents, device='cuda', random=np.random): 
+    agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
+    agentcolors = np.tile(agent_colors(), (n_agents, 1))
+
+    data = []
+    for p in plans:
+        lights = random_lights(p.centroids)
+        data.append({
+            'lights': lights,
+            'lightwidths': len(lights),
+            'lines': lines,
+            'linewidths': len(lines),
+            'is_agent': is_agent,
+            'colors': colors })
     
 

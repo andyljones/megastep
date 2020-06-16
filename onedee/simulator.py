@@ -3,7 +3,7 @@ from . import common, scenery, plotting
 import torch
 import logging
 from rebar import dotdict, arrdict
-from rebar.arrdict import tensorify, numpyify
+from rebar.arrdict import tensorify, numpyify, cat
 
 log = logging.getLogger(__name__)
 
@@ -17,11 +17,25 @@ DEFAULTS = {
     'fps': 10,
 }
 
-def init_respawns(cuda, designs, device='cuda'):
-    fields = ('centers', 'radii', 'lowers', 'uppers')
-    data = arrdict({n: torch.cat([tensorify(getattr(d, n)) for d in designs]) for n in fields})
-    data['widths'] = tensorify([d.respawns for d in designs]) 
-    return cuda.Respawns(**data.to(device))
+def init_respawns(cuda, geometries, n_agents, device='cuda'):
+    assert n_agents == 1
+
+    respawns = []
+    for g in geometries:
+        sample = np.stack((g.masks == 0).nonzero(), -1)
+        sample = sample[np.random.choice(np.arange(len(sample)), 100)]
+        
+        i, j = sample.T + .5
+        xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
+
+        respawns.append({
+            'centers': xy[:, None],
+            'widths': len(xy),
+            'radii': np.zeros((len(xy), 1)),
+            'lowers': np.zeros((len(xy), 1)),
+            'uppers': np.zeros((len(xy), 1))})
+    respawns = tensorify(cat(respawns)).to(device)
+    return cuda.Respawns(**respawns)
 
 def init_agents(cuda, designs, device='cuda'):
     n_designs = len(designs)
@@ -46,17 +60,21 @@ def select(x, d):
 class Simulator: 
 
     @torch.no_grad()
-    def __init__(self, designs, **kwargs):
-        self._designs = designs 
-        self.options = dotdict({**DEFAULTS, **kwargs, 'n_designs': len(self._designs)})
+    def __init__(self, geometries, n_agents=1, **kwargs):
+        self._geometries = geometries 
+        self.options = dotdict({
+            **DEFAULTS, 
+            **kwargs, 
+            'n_agents': n_agents,
+            'n_designs': len(self._geometries)})
 
         # TODO: This needs to be propagated to the C++ side
         self._device = torch.device('cuda')
 
         self._cuda = common.cuda(**self.options)
-        self._respawns = init_respawns(self._cuda, self._designs, self.device)
-        self._agents, self.options['n_agents'] = init_agents(self._cuda, self._designs, self.device)
-        self._scene = scenery.init_scene(self._cuda, self._designs, self.device, random=self.options.random)
+        self._respawns = init_respawns(self._cuda, self._geometries, self.device)
+        self._agents, self.options['n_agents'] = init_agents(self._cuda, self._geometries, self.device)
+        self._scene = scenery.init_scene(self._cuda, self._geometries, self.device, random=self.options.random)
 
         # Defined here for easy overriding in subclasses
         self._plot = plotting.plot

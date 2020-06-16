@@ -127,6 +127,7 @@ def sample(n_designs, split='training'):
     global _cache
     if _cache is None:
         _cache = geometrydata()
+        _cache = type(_cache)({k: type(v)({'id': k, **v}) for k, v in _cache.items()})
     
     cutoff = int(.9*len(_cache))
     order = np.random.RandomState(1).permutation(sorted(_cache))
@@ -139,4 +140,4 @@ def sample(n_designs, split='training'):
     else:
         raise ValueError('Split must be train/test/all')
 
-    return type(_cache)({order[i]: _cache[order[i]] for i in range(n_designs)})
+    return [_cache[order[i]] for i in range(n_designs)]
