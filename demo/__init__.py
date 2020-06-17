@@ -6,6 +6,7 @@ from rebar import queuing, processes, logging, interrupting, paths, stats, widge
 import gym
 import pandas as pd
 import onedee
+from onedee import recording
 import cubicasa
 
 log = logging.getLogger(__name__)
@@ -61,10 +62,11 @@ def demo():
     reaction = env.reset()
     agent = agentfunc().cuda()
 
+    states = []
     reaction = env.reset()
-    recorder = onedee.recording.recorder('test', env._plot, length=256, fps=20)
-    while True:
+    for _ in range(128):
         decisions = agent(reaction[None], sample=True).squeeze(0)
         reaction = env.step(decisions)
-
-        recorder(env.state(0))
+        states.append(env.state(0))
+    states = arrdict.numpyify(arrdict.stack(states))
+    return recording.replay(env._plot, states)

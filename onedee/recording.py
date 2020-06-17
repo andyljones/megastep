@@ -8,6 +8,7 @@ import threading
 import matplotlib.pyplot as plt
 import os
 from functools import wraps
+from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -73,4 +74,14 @@ def recorder(run_name, plot, env_idx=0, length=256, period=60, fps=20):
 def notebook(run_name=-1, idx=-1):
     path = list(paths.glob('test', 'recording', pattern='*.mp4'))[idx]
     return recording.notebook(path.read_bytes())
+
+def replay(plot, states, fps=20):
+    with parallel.parallel(_array, progress=False, N=os.cpu_count()//4, initializer=_init) as tasker,\
+            recording.Encoder(fps) as encoder:
+        futures = [tasker(plot, numpyify(state)) for state in states]
+        for future in tqdm(futures):
+            encoder(future.result())
+    return recording.notebook(encoder.value)
+        
+
 
