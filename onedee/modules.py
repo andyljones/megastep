@@ -31,9 +31,9 @@ class SimpleMovement:
     def __call__(self, decisions):
         core = self._core
         delta = self._actionset[decisions.actions.move]
-        core.agents.angmomenta[:] = (1 - core.options.decay)*core.agents.angmomenta + delta.angmomenta
-        core.agents.momenta[:] = (1 - core.options.decay)*core.agents.momenta + self._to_global_frame(delta.momenta)
-        core.cuda.physics(core._scene, core._agents)
+        core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
+        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + self._to_global_frame(delta.momenta)
+        core.cuda.physics(core.scene, core.agents)
 
 
 def unpack(d):

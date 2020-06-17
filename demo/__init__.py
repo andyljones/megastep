@@ -62,7 +62,7 @@ def demo():
     agent = agentfunc().cuda()
 
     reaction = env.reset()
-    recorder = recording.recorder('test', env._plot, length=256, fps=20)
+    recorder = onedee.recording.recorder('test', env._plot, length=256, fps=20)
     while True:
         decisions = agent(reaction[None], sample=True).squeeze(0)
         reaction = env.step(decisions)
