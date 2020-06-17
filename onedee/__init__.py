@@ -1,3 +1,4 @@
+import numpy as np
 from .core import Core, env_full_like
 from . import modules, plotting
 import matplotlib.pyplot as plt
@@ -99,11 +100,13 @@ class ExplorationEnv:
             reward=self._reward(render, reset))
 
     def state(self, d=0):
+        seen = self._seen[self._tex_to_env == d]
         return arrdict(
             **self._core.state(d),
             movement=self._mover.state(d),
             obs=self._observer.state(d),
             potential=self._potential[d].clone(),
+            seen=seen.clone(),
             length=self._length[d].clone(),
             max_length=self._max_length[d].clone())
 
@@ -112,6 +115,9 @@ class ExplorationEnv:
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
+        alpha = .1 + .9*state.seen.astype(float)
+        # Modifying this in place will bite me eventually. O for a lens
+        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 

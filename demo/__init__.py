@@ -19,15 +19,21 @@ def agentfunc():
     env = envfunc(n_envs=1)
     return agents.Agent(env.observation_space, env.action_space).cuda()
 
+def chunkstats(chunk):
+    stats.rate('rate/actor', chunk.reaction.reset.nelement())
+    stats.mean('traj-length', chunk.reaction.reset.nelement(), chunk.reaction.reset.sum())
+    stats.mean('step-reward', chunk.reaction.reward.sum(), chunk.reaction.reward.nelement())
+    stats.mean('traj-reward', chunk.reaction.reward.sum(), chunk.reaction.reset.sum())
+
 def run():
     buffer_size = 64
-    batch_size = 64
+    batch_size = 4096
     n_envs = 4096
     gearing = 1
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-4)
+    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-2)
 
     paths.clear('test')
     compositor = widgets.Compositor()
@@ -43,18 +49,15 @@ def run():
                     decision=decision))
                 buffer = buffer[-buffer_size:]
                 reaction = env.step(decision)
-                stats.rate('rate/actor', n_envs)
-                stats.mean('traj-length', n_envs, reaction.reset.sum())
-                stats.mean('step-reward', reaction.reward.sum(), n_envs)
-                stats.mean('traj-reward', reaction.reward.sum(), reaction.reset.sum())
-                
             
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
-                batch = learning.sample(chunk, batch_size)
+                chunkstats(chunk[-gearing:])
+
+                batch = learning.sample(chunk, batch_size//n_envs)
                 learning.step(agent, opt, batch)
                 log.info('stepped')
-                stats.rate('rate/learner', batch_size*buffer_size)
+                stats.rate('rate/learner', buffer_size)
 
 
 def demo():
