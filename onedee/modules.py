@@ -17,6 +17,8 @@ class SimpleMovement:
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
 
+        self._accel = accel
+        self._ang_accel = ang_accel
         self._decay = decay
 
         self.action_space = arrdict(
@@ -30,10 +32,20 @@ class SimpleMovement:
 
     def __call__(self, decisions):
         core = self._core
+        self._last_actions = decisions.actions
         delta = self._actionset[decisions.actions.move]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + self._to_global_frame(delta.momenta)
         core.cuda.physics(core.scene, core.agents)
+
+    def state(self, d):
+        core = self._core
+        return arrdict(
+            actions=self._last_actions, 
+            momenta=core.agents.momenta.clone(),
+            angmomenta=core.agents.angmomenta.clone(),
+            max_momenta=self._accel/self._decay,
+            max_angmomenta=self._ang_accel/self._decay)
 
 
 def unpack(d):
@@ -67,9 +79,9 @@ class RGBDObserver:
             rgb=self._downsample(render.screen),
             d=1 - self._downsample(render.distances).div(self._max_depth).clamp(0, 1).unsqueeze(3))
         return self._last_obs
-
+    
     def state(self, d):
-        return arrdict(obs=self._last_obs[d])
+        return self._last_obs[d].clone()
         
 class RandomSpawns(core.Core):
 

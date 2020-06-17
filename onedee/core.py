@@ -55,7 +55,7 @@ class Core:
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
  
         # Defined here for easy overriding in subclasses
-        self._plot = plotting.plot
+        self.plot_state = plotting.plot
 
         super().__init__()
 
@@ -86,5 +86,5 @@ class Core:
                             positions=self.agents.positions[d]).clone(),)
 
     def display(self, d=0):
-        self._plot(numpyify(self.state(d)))
+        self.plot_state(numpyify(self.state(d)))
 

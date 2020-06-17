@@ -42,8 +42,6 @@ class ExplorationEnv:
         self._length = env_full_like(self._core, 0)
         self._max_length = torch.randint_like(self._length, max_length//2, 2*max_length)
 
-        self._plot = self._core._plot
-
     def _tex_indices(self, aux): 
         scene = self._core.scene 
         mask = aux.indices >= 0
@@ -95,7 +93,13 @@ class ExplorationEnv:
             reward=self._reward(render, reset))
 
     def state(self, d=0):
-        return self._core.state(d)
+        return arrdict(
+            **self._core.state(d),
+            movement=self._mover.state(d),
+            obs=self._observer.state(d),
+            length=self._length[d].clone(),
+            max_length=self._max_length[d].clone())
+
 
     def display(self, d=0):
         self._core.display(d)
