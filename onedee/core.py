@@ -68,7 +68,7 @@ class Core:
         textures = scene.textures.vals[textures_s:textures_e]
         baked = scene.baked.vals[textures_s:textures_e]
 
-        options = ('n_envs', 'n_agents', 'res', 'supersample', 'fov', 'radius', 'fps')
+        options = ('n_envs', 'n_agents', 'res', 'supersample', 'fov', 'agent_radius', 'fps')
         options = {k: getattr(self, k) for k in options}
 
         return arrdict(

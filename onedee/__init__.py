@@ -53,7 +53,7 @@ class ExplorationEnv:
         self._seen[texindices] = True
         reward = (1 - seen.int()).reshape(seen.shape[0], -1).sum(-1)
         reward[reset] = 0
-        reward = reward.float()/self.options.res
+        reward = reward.float()/self._core.res
         return reward
 
     def _reset(self, reset):
@@ -63,13 +63,13 @@ class ExplorationEnv:
 
     @torch.no_grad()
     def reset(self):
-        reset = self._full(True)
+        reset = env_full_like(self._core, True)
         self._reset(reset)
         render = self._observer.render()
         return arrdict(
             obs=self._observer(render), 
             reset=reset, 
-            terminal=self._full(False), 
+            terminal=reset, 
             reward=self._reward(render, reset))
 
     @torch.no_grad()
@@ -85,3 +85,7 @@ class ExplorationEnv:
             reset=reset, 
             terminal=reset, 
             reward=self._reward(render, reset))
+
+    def display(self, d=0):
+        self._core.display(d)
+

@@ -78,7 +78,7 @@ def mask_transform(*args):
 def masks(walls, spaces):
     transform, shape = mask_transform(walls, spaces)
     wall_shapes = [(cascaded_union([LineString(p).buffer(.01) for p in walls]), -1)]
-    space_shapes = [(Polygon(p).buffer(0), i) for i, p in enumerate(spaces)]
+    space_shapes = [(Polygon(p).buffer(0), i+1) for i, p in enumerate(spaces)]
     shapes = [(s, v) for (s, v) in space_shapes + wall_shapes if not s.is_empty]
     return rasterio.features.rasterize(shapes, shape, transform=transform, all_touched=True, dtype=np.int16)
 

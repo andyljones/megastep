@@ -101,7 +101,7 @@ def plot_wedge(ax, pose, distance, fov, radians=False, **kwargs):
 def plot_fov(diagram, state, distance=1, field='agents'):
     a = len(getattr(state, field).angles)
     for i in range(a):
-        plot_wedge(diagram, getattr(state, field)[i], distance, state.options.fov, color=f'C{i}', alpha=.1)
+        plot_wedge(diagram, getattr(state, field)[i], distance, state.fov, color=f'C{i}', alpha=.1)
 
 def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
     """Not used directly here, but often useful for code using this module"""

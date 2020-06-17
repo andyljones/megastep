@@ -81,7 +81,7 @@ class RandomSpawns(core.Core):
 
         spawns = []
         for g in core.geometries:
-            sample = np.stack((g.masks == 0).nonzero(), -1)
+            sample = np.stack((g.masks > 0).nonzero(), -1)
             sample = sample[core.random.choice(np.arange(len(sample)), n_spawns)]
             
             i, j = sample.T + .5
