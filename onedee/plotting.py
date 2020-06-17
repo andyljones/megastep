@@ -9,15 +9,37 @@ from IPython.display import display
 
 VIEW_RADIUS = 5
 
-def plot_images(axes, arrs):
+def imshow_arrays(arrs):
+    """Args:
+        arrs: `{name: D x C x H x W}`
+    """
+    [D] = {v.shape[0] for v in arrs.values()}
+    ims = {}
+    for d in range(D):
+        layers = []
+        for k, v in arrs.items():
+            layer = v[d].astype(float)
+            if layer.shape[0] == 1:
+                layer = layer.repeat(3, 0)
+            else:
+                layer = common.gamma_encode(layer)
+            layers.append(layer)
+        layers = np.concatenate(layers, 1)
+        ims[d] = layers.transpose(1, 2, 0)
+    return ims
+
+def plot_images(arrs, axes=None):
     ims = imshow_arrays(arrs)
     D = len(ims)
     H, W = ims[0].shape[:2]
+
+    axes = plt.subplots(D)[1] if axes is None else axes
     
-    aspect = 2*W/(D*H)  # TODO: Reverse this
+    # Aspect is height/width
+    aspect = 192*H/W  # TODO: Reverse this
     for a in range(D):
         ax = axes[a]
-        ax.imshow(ims[a], aspect=aspect)
+        ax.imshow(ims[a], aspect=aspect, interpolation='none')
         ax.set_yticks(np.arange(H))
         ax.set_ylim(H-.5, -.5)
         ax.set_yticklabels(arrs.keys())
@@ -115,17 +137,15 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         ax.plot(*line.T, color=color)
     return ax
 
-def plot(state, fig=None):
-    fig = fig or plt.figure()
-    diagram = fig.add_axes([0, 0, 1, 1])
+def plot_core(state, ax=None):
+    _, ax = plt.subplots() if ax is None else (None, ax)
 
-    plot_lights(diagram, state)
-    plot_lines(diagram, state, cull=False)
-    plot_fov(diagram, state, 1000) # suitably large number
-    adjust_view(diagram, state, cull=False)
+    plot_lights(ax, state)
+    plot_lines(ax, state, cull=False)
+    plot_fov(ax, state, 1)
+    adjust_view(ax, state, cull=False)
 
-    for ax in [diagram]:
-        ax.set_xticks([])
-        ax.set_yticks([])
+    ax.set_xticks([])
+    ax.set_yticks([])
 
-    return fig
+    return ax

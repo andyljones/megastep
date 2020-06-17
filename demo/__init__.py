@@ -69,4 +69,4 @@ def demo():
         reaction = env.step(decisions)
         states.append(env.state(0))
     states = arrdict.numpyify(arrdict.stack(states))
-    return recording.replay(env._plot, states)
+    return recording.replay(env.plot_state, states)

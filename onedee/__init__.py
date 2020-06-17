@@ -1,5 +1,6 @@
 from .core import Core, env_full_like
-from . import modules
+from . import modules, plotting
+import matplotlib.pyplot as plt
 import torch
 from rebar import arrdict
 
@@ -24,6 +25,7 @@ class MinimalEnv:
     def step(self, decisions):
         self._mover(decisions)
         return arrdict(obs=self._observer())
+
     
 class ExplorationEnv:
 
@@ -40,7 +42,21 @@ class ExplorationEnv:
         self._seen = torch.full_like(self._tex_to_env, False)
 
         self._length = env_full_like(self._core, 0)
-        self._max_length = torch.randint_like(self._length, max_length//2, 2*max_length)
+        self._max_length = torch.randint_like(self._length, max_length//2, max_length)
+
+    @classmethod
+    def plot_state(cls, state):
+        fig = plt.figure()
+        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
+
+        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
+
+        s = (f'Length: {state.length:d}/{state.max_length:d}')
+        ax.annotate(s, (5., 5.), xycoords='axes points')
+        
+
+        return fig
 
     def _tex_indices(self, aux): 
         scene = self._core.scene 
@@ -100,7 +116,7 @@ class ExplorationEnv:
             length=self._length[d].clone(),
             max_length=self._max_length[d].clone())
 
-
     def display(self, d=0):
-        self._core.display(d)
+        return self.plot_state(arrdict.numpyify(self.state(d)))
+
 

@@ -53,9 +53,6 @@ class Core:
         self.cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
         self.agents = init_agents(self.cuda, self.n_envs, self.n_agents, self.device)
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
- 
-        # Defined here for easy overriding in subclasses
-        self.plot_state = plotting.plot
 
         super().__init__()
 
@@ -84,7 +81,3 @@ class Core:
                     agents=arrdict(
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),)
-
-    def display(self, d=0):
-        self.plot_state(numpyify(self.state(d)))
-
