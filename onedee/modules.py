@@ -2,7 +2,8 @@ import numpy as np
 import torch
 from rebar import arrdict
 from rebar.arrdict import cat, stack, tensorify
-from . import spaces, core
+from . import spaces, core, plotting
+import matplotlib.pyplot as plt
 
 class SimpleMovement(core.Core):
 
@@ -53,8 +54,16 @@ class RGBObserver(core.Core):
             render = unpack(self._cuda.render(self._agents, self._scene))
             render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
             render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
-        return arrdict(
+        self._last_obs = arrdict(
             rgb=self._downsample(render.screen))
+        return self._last_obs
+    
+    def state(self, d):
+        return arrdict(**super().state(d), obs=self._last_obs[d])
+    
+    def _display(self, ax=None):
+        ax = ax or plt.subplot()
+
         
 class RGBDObserver(core.Core):
 
@@ -73,9 +82,13 @@ class RGBDObserver(core.Core):
             render = unpack(self._cuda.render(self._agents, self._scene))
             render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
             render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
-        return arrdict(
+        self._last_obs = arrdict(
             rgb=self._downsample(render.screen),
             d=1 - self._downsample(render.distances).div(self._max_depth).clamp(0, 1).unsqueeze(3))
+        return self._last_obs
+
+    def state(self, d):
+        return arrdict(**super().state(d), obs=self._last_obs[d])
         
 class RandomSpawns(core.Core):
 

@@ -43,13 +43,16 @@ def run():
                 buffer = buffer[-buffer_size:]
                 reaction = env.step(decision)
                 stats.rate('rate/actor', n_envs)
+                stats.mean('traj-length', n_envs, reaction.reset.sum())
+                stats.mean('step-reward', reaction.reward.sum(), n_envs)
+                stats.mean('traj-reward', reaction.reward.sum(), reaction.reset.sum())
+                
             
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
                 batch = learning.sample(chunk, batch_size)
                 learning.step(agent, opt, batch)
                 log.info('stepped')
-                stats.mean('reward', chunk.reaction.reward.mean())
                 stats.rate('rate/learner', batch_size*buffer_size)
 
 

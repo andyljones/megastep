@@ -70,6 +70,9 @@ class Core:
         dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
         return torch.full((self.options.n_envs,), obj, device=self.device, dtype=dtypes[type(obj)])
 
+    def _modules(self):
+        return [super(self, t) for t in type(self).__mro__() if t not in (type(self), Core, object)]
+
     def state(self, d):
         scene = self._scene
         lines_s = scene.lines.starts[d]

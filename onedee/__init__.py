@@ -79,7 +79,7 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
         self._length += 1
 
         reset = self._length == self._max_length
-        self._respawn(reset)
+        self._reset(reset)
         render = self._render()
         return arrdict(
             obs=self._observe(render), 

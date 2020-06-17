@@ -83,6 +83,4 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     opt.zero_grad()
     loss.backward()
 
-    torch.nn.utils.clip_grad_norm_(agent.parameters(), 40.)
-
     opt.step()
