@@ -20,6 +20,7 @@ class SimpleMovement:
         self._accel = accel
         self._ang_accel = ang_accel
         self._decay = decay
+        self._last_actions = torch.zeros((core.n_envs, core.n_agents), device=core.device, dtype=torch.int)
 
         self.action_space = arrdict(
             move=spaces.MultiDiscrete(core.n_agents, 7))

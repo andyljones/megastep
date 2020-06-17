@@ -44,19 +44,7 @@ class ExplorationEnv:
         self._length = env_full_like(self._core, 0)
         self._max_length = torch.randint_like(self._length, max_length//2, max_length)
 
-    @classmethod
-    def plot_state(cls, state):
-        fig = plt.figure()
-        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
-
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
-        plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
-
-        s = (f'Length: {state.length:d}/{state.max_length:d}')
-        ax.annotate(s, (5., 5.), xycoords='axes points')
-        
-
-        return fig
+        self._potential = env_full_like(self._core, 0.)
 
     def _tex_indices(self, aux): 
         scene = self._core.scene 
@@ -76,12 +64,14 @@ class ExplorationEnv:
         reward = (1 - seen.int()).reshape(seen.shape[0], -1).sum(-1)
         reward[reset] = 0
         reward = reward.float()/self._core.res
+        self._potential += reward
         return reward
 
     def _reset(self, reset):
         self._respawner(reset)
         self._seen[reset[self._tex_to_env]] = False
         self._length[reset] = 0
+        self._potential[reset] = 0
 
     @torch.no_grad()
     def reset(self):
@@ -113,8 +103,24 @@ class ExplorationEnv:
             **self._core.state(d),
             movement=self._mover.state(d),
             obs=self._observer.state(d),
+            potential=self._potential[d].clone(),
             length=self._length[d].clone(),
             max_length=self._max_length[d].clone())
+
+    @classmethod
+    def plot_state(cls, state):
+        fig = plt.figure()
+        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
+
+        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
+
+        s = (f'Length: {state.length:d}/{state.max_length:d}\n'
+            f'Potential: {state.potential:.2f}')
+        ax.annotate(s, (5., 5.), xycoords='axes points')
+
+        return fig
+
 
     def display(self, d=0):
         return self.plot_state(arrdict.numpyify(self.state(d)))
