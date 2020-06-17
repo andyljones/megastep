@@ -4,25 +4,35 @@ from . import modules, plotting, spaces
 import matplotlib.pyplot as plt
 import torch
 from rebar import arrdict
-import cubicasa
 
 class IndicatorEnv:
 
-    def __init__(self, *args, n_envs=1, n_agents=1, **kwargs):
+    def __init__(self, n_envs=1, n_agents=1):
         self.n_envs = n_envs
         self.n_agents = n_agents
-        self.observation_space = spaces.MultiVector()
-        self.action_space = spaces.MultiDiscrete(self._core.n_agents, 2)
+        self.observation_space = spaces.MultiVector(self.n_agents, 1)
+        self.action_space = spaces.MultiDiscrete(self.n_agents, 2)
         self.device = torch.device('cuda')
 
     def _observe(self):
-        self._last_obs = torch.randn((self.n_envs, self.n_agents, 1)).gt(.5).float()
+        self._last_obs = torch.randn((self.n_envs, self.n_agents, 1), device=self.device).gt(.5).float()
         return self._last_obs
 
     def reset(self):
         return arrdict(
             obs=self._observe(),
-            reset=torch.)
+            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
+            reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
+            terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
+
+    def step(self, decisions):
+        reward = (decisions.actions == self._last_obs).float().sum(-1).sum(-1)
+        return arrdict(
+            obs=self._observe(),
+            reward=reward,
+            reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
+            terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+
 
 
 class MinimalEnv:

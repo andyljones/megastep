@@ -9,11 +9,12 @@ from torch.nn import functional as F
 class MultiVectorIntake(nn.Module):
 
     def __init__(self, space, width):
+        super().__init__()
         A, C = space.shape
 
         self.core = nn.Sequential(
                         nn.Linear(C, width), nn.ReLU(),
-                        nn.Linear(width, C), nn.ReLU())
+                        nn.Linear(width, width), nn.ReLU())
         
     def forward(self, obs):
         return self.core(obs)
@@ -58,7 +59,7 @@ class ConcatIntake(nn.Module):
 def intake(space, width):
     if isinstance(space, dict):
         return ConcatIntake(space, width)
-    elif isinstance(space, spaces.MultiVectorIntake):
+    elif isinstance(space, spaces.MultiVector):
         return MultiVectorIntake(space, width)
     elif isinstance(space, spaces.MultiImage):
         return MultiImageIntake(space, width)
@@ -125,6 +126,6 @@ class Agent(nn.Module):
         if sample:
             outputs['actions'] = self.policy.sample(outputs.logits)
         if value:
-            outputs['value'] = self.value(x).squeeze(-1)
+            outputs['value'] = self.value(x).squeeze(-1).mean(-1)
         return outputs
 

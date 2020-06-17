@@ -1,8 +1,8 @@
 import torch
 
 def sample(chunk, batchsize):
-    B = chunk.reaction.obs.rgb.shape[1]
-    indices = torch.randint(B, size=(batchsize,), device=chunk.reaction.obs.rgb.device)
+    B = chunk.reaction.reward.shape[1]
+    indices = torch.randint(B, size=(batchsize,), device=chunk.reaction.reward.device)
     batch = chunk[:, indices]
     batch = type(batch)({**batch[:-1], 'next_reaction': batch[1:].reaction})
     return batch
@@ -64,8 +64,8 @@ def advantages(ratios, value, reward, reset, v, gamma, max_pg_rho=1):
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.reaction, value=True)
 
-    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
-    new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
+    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1).sum(-1)
+    new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1).sum(-1)
     ratios = (new_logits - old_logits).exp()
 
     reward = batch.next_reaction.reward.clamp(-1, +1)
