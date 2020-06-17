@@ -1,9 +1,21 @@
 import numpy as np
 from .core import Core, env_full_like
-from . import modules, plotting
+from . import modules, plotting, spaces
 import matplotlib.pyplot as plt
 import torch
 from rebar import arrdict
+import cubicasa
+
+class IndicatorEnv:
+
+    def __init__(self, *args, n_envs=1, **kwargs):
+        self.n_envs = n_envs
+        self.observation_space = spaces.FlatImage()
+        self.action_space = spaces.MultiDiscrete(self._core.n_agents, 2)
+
+    def __call__(self, decisions):
+        pass
+
 
 class MinimalEnv:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
@@ -103,7 +115,6 @@ class ExplorationEnv:
         seen = self._seen[self._tex_to_env == d]
         return arrdict(
             **self._core.state(d),
-            movement=self._mover.state(d),
             obs=self._observer.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),

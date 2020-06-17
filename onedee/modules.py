@@ -5,9 +5,16 @@ from rebar.arrdict import cat, stack, tensorify
 from . import spaces, core, plotting
 import matplotlib.pyplot as plt
 
+
+def to_global_frame(agents, p):
+    a = np.pi/180*agents.angles
+    c, s = torch.cos(a), torch.sin(a)
+    x, y = p[..., 0], p[..., 1]
+    return torch.stack([c*x - s*y, s*x + c*y], -1)
+
 class SimpleMovement:
 
-    def __init__(self, core, *args, accel=5, ang_accel=100, decay=.125, **kwargs):
+    def __init__(self, core, *args, accel=10, ang_accel=180, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
@@ -17,36 +24,37 @@ class SimpleMovement:
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
 
-        self._accel = accel
-        self._ang_accel = ang_accel
-        self._decay = decay
-        self._last_actions = torch.zeros((core.n_envs, core.n_agents), device=core.device, dtype=torch.int)
-
-        self.action_space = arrdict(
-            move=spaces.MultiDiscrete(core.n_agents, 7))
-
-    def _to_global_frame(self, p):
-        a = np.pi/180*self._core.agents.angles
-        c, s = torch.cos(a), torch.sin(a)
-        x, y = p[..., 0], p[..., 1]
-        return torch.stack([c*x - s*y, s*x + c*y], -1)
+        self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
 
     def __call__(self, decisions):
         core = self._core
-        self._last_actions = decisions.actions
         delta = self._actionset[decisions.actions.move]
-        core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
-        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + self._to_global_frame(delta.momenta)
+        core.agents.angmomenta[:] = delta.angmomenta
+        core.agents.momenta[:] = to_global_frame(core.agents, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
 
-    def state(self, d):
+class MomentumMovement:
+
+    def __init__(self, core, *args, accel=5, ang_accel=90, decay=.125, **kwargs):
+        # noop, forward/backward, strafe left/right, turn left/right
+        self._core = core
+        momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
+        angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
+        self._actionset = arrdict(
+            momenta=accel/core.fps*momenta,
+            angmomenta=ang_accel/core.fps*angmomenta
+        ).to(core.device)
+
+        self._decay = decay
+
+        self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
+
+    def __call__(self, decisions):
         core = self._core
-        return arrdict(
-            actions=self._last_actions, 
-            momenta=core.agents.momenta.clone(),
-            angmomenta=core.agents.angmomenta.clone(),
-            max_momenta=self._accel/self._decay,
-            max_angmomenta=self._ang_accel/self._decay)
+        delta = self._actionset[decisions.actions.move]
+        core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
+        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents, delta.momenta)
+        core.cuda.physics(core.scene, core.agents)
 
 
 def unpack(d):
@@ -78,7 +86,7 @@ class RGBDObserver:
         render = self.render() if render is None else render
         self._last_obs = arrdict(
             rgb=self._downsample(render.screen),
-            d=1 - self._downsample(render.distances).div(self._max_depth).clamp(0, 1).unsqueeze(3))
+            d=1 - self._downsample(render.distances.div(self._max_depth).clamp(0, 1)).unsqueeze(3))
         return self._last_obs
     
     def state(self, d):
