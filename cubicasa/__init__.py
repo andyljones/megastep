@@ -10,6 +10,9 @@ import numpy as np
 from rebar import parallel, dotdict
 import ast
 
+# For re-export
+from .toys import box
+
 log = logging.getLogger(__name__)
 
 def download(url):
@@ -32,7 +35,7 @@ def cubicasa5k():
         p.write_bytes(download(url))
     return str(p)
 
-def svgdata(regenerate=False):
+def svg_data(regenerate=False):
     p = Path('.cache/cubicasa-svgs.json.gz')
     if not p.exists() or regenerate:
         p.parent.mkdir(exist_ok=True, parents=True)
@@ -95,7 +98,7 @@ def fastload(raw):
     header = ast.literal_eval(raw[10:10+headerlen].decode())
     return np.frombuffer(raw[10+headerlen:], dtype=header['descr']).reshape(header['shape'])
 
-def geometrydata(regenerate=False):
+def geometry_data(regenerate=False):
     # Why .npz.gz? Because applying gzip manually manages x10 better compression than
     # np.savez_compressed. They use the same compression alg, so I assume the difference
     # is in the default compression setting - which isn't accessible in np.savez_compressec.
@@ -105,7 +108,7 @@ def geometrydata(regenerate=False):
         if regenerate:
             log.info('Regenerating geometry cache from SVG cache.')
             with parallel.parallel(safe_geometry) as pool:
-                gs = pool.wait({str(row.id): pool(row.id, row.svg) for _, row in svgdata().iterrows()})
+                gs = pool.wait({str(row.id): pool(row.id, row.svg) for _, row in svg_data().iterrows()})
             gs = flatten({k: v for k, v in gs.items() if v is not None})
 
             bs = BytesIO()
@@ -126,7 +129,8 @@ _cache = None
 def sample(n_designs, split='training'):
     global _cache
     if _cache is None:
-        _cache = geometrydata()
+        _cache = geometry_data()
+        # Add the ID, since we're going to return this as a list
         _cache = type(_cache)({k: type(v)({'id': k, **v}) for k, v in _cache.items()})
     
     cutoff = int(.9*len(_cache))

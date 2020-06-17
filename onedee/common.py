@@ -21,7 +21,7 @@ def gamma_decode(x):
     """Converts to interpolatable values"""
     return x**2.2
 
-def cuda(**kwargs):
+def cuda():
     files = [resource_filename(__package__, f'src/{fn}') for fn in ('wrappers.cpp', 'kernels.cu')]
     includes = [resource_filename(__package__, 'include')]
     cflags = ['-std=c++17'] + (['-g'] if DEBUG else [])
