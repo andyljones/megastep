@@ -26,7 +26,7 @@ class IndicatorEnv:
             terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
 
     def step(self, decisions):
-        reward = (decisions.actions == self._last_obs).float().sum(-1).sum(-1)
+        reward = (decisions.actions == self._last_obs[..., 0]).float().sum(-1)
         return arrdict(
             obs=self._observe(),
             reward=reward,

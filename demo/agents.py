@@ -15,9 +15,13 @@ class MultiVectorIntake(nn.Module):
         self.core = nn.Sequential(
                         nn.Linear(C, width), nn.ReLU(),
                         nn.Linear(width, width), nn.ReLU())
+        self.proj = nn.Sequential(
+                        nn.Linear(A*width, width), nn.ReLU())
         
     def forward(self, obs):
-        return self.core(obs)
+        T, B, A, C = obs.shape
+        x = self.core(obs.reshape(T*B*A, C)).reshape(T, B, -1)
+        return self.proj(x)
 
 class MultiImageIntake(nn.Module):
 
@@ -126,6 +130,6 @@ class Agent(nn.Module):
         if sample:
             outputs['actions'] = self.policy.sample(outputs.logits)
         if value:
-            outputs['value'] = self.value(x).squeeze(-1).mean(-1)
+            outputs['value'] = self.value(x).squeeze(-1)
         return outputs
 

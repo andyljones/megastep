@@ -34,7 +34,7 @@ def run():
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-2)
+    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-3)
 
     paths.clear('test')
     compositor = widgets.Compositor()
@@ -55,10 +55,11 @@ def run():
                 chunk = arrdict.stack(buffer)
                 chunkstats(chunk[-gearing:])
 
-                batch = learning.sample(chunk, batch_size//n_envs)
+                batch = learning.sample(chunk, batch_size//buffer_size)
                 learning.step(agent, opt, batch)
                 log.info('stepped')
-                stats.rate('rate/learner', buffer_size)
+                stats.rate('rate/learner', batch_size)
+
 
 
 def demo():

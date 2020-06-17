@@ -28,7 +28,7 @@ class SimpleMovement:
 
     def __call__(self, decisions):
         core = self._core
-        delta = self._actionset[decisions.actions.move]
+        delta = self._actionset[decisions.actions]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
@@ -51,7 +51,7 @@ class MomentumMovement:
 
     def __call__(self, decisions):
         core = self._core
-        delta = self._actionset[decisions.actions.move]
+        delta = self._actionset[decisions.actions]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
