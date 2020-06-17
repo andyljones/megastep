@@ -8,13 +8,21 @@ import cubicasa
 
 class IndicatorEnv:
 
-    def __init__(self, *args, n_envs=1, **kwargs):
+    def __init__(self, *args, n_envs=1, n_agents=1, **kwargs):
         self.n_envs = n_envs
-        self.observation_space = spaces.FlatImage()
+        self.n_agents = n_agents
+        self.observation_space = spaces.MultiVector()
         self.action_space = spaces.MultiDiscrete(self._core.n_agents, 2)
+        self.device = torch.device('cuda')
 
-    def __call__(self, decisions):
-        pass
+    def _observe(self):
+        self._last_obs = torch.randn((self.n_envs, self.n_agents, 1)).gt(.5).float()
+        return self._last_obs
+
+    def reset(self):
+        return arrdict(
+            obs=self._observe(),
+            reset=torch.)
 
 
 class MinimalEnv:

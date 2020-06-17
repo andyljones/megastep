@@ -6,28 +6,40 @@ from onedee import spaces
 from rebar import arrdict
 from torch.nn import functional as F
 
+class MultiVectorIntake(nn.Module):
+
+    def __init__(self, space, width):
+        A, C = space.shape
+
+        self.core = nn.Sequential(
+                        nn.Linear(C, width), nn.ReLU(),
+                        nn.Linear(width, C), nn.ReLU())
+        
+    def forward(self, obs):
+        return self.core(obs)
+
 class MultiImageIntake(nn.Module):
 
     def __init__(self, space, width):
         super().__init__()
-        D, C, H, W = space.shape
+        A, C, H, W = space.shape
 
         self.conv = nn.Sequential(
                         nn.Conv2d(C, 16, (1, 8), stride=(1, 4)), nn.ReLU(),
                         nn.Conv2d(16, 32, (1, 4), stride=(1, 2)), nn.ReLU(),
                         nn.Conv2d(32, 32, (1, 3), stride=(1, 2)), nn.ReLU())
 
-        zeros = torch.zeros((D, C, H, W))
+        zeros = torch.zeros((A, C, H, W))
         convwidth = self.conv(zeros).nelement()
 
         self.proj = nn.Sequential(
                         nn.Linear(convwidth, width), nn.ReLU())
 
     def forward(self, obs):
-        T, B, D, C, H, W = obs.shape
+        T, B, A, C, H, W = obs.shape
         if obs.dtype == torch.uint8:
             obs = obs/255.
-        x = self.conv(obs.reshape(T*B*D, C, H, W)).reshape(T, B, -1)
+        x = self.conv(obs.reshape(T*B*A, C, H, W)).reshape(T, B, -1)
         return self.proj(x)
 
 class ConcatIntake(nn.Module):
@@ -46,6 +58,8 @@ class ConcatIntake(nn.Module):
 def intake(space, width):
     if isinstance(space, dict):
         return ConcatIntake(space, width)
+    elif isinstance(space, spaces.MultiVectorIntake):
+        return MultiVectorIntake(space, width)
     elif isinstance(space, spaces.MultiImage):
         return MultiImageIntake(space, width)
     raise ValueError(f'Can\'t handle {space}')
