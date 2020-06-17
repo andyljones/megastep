@@ -19,10 +19,10 @@ def agentfunc():
     return agents.Agent(env.observation_space, env.action_space).cuda()
 
 def run():
-    buffer_size = 100
-    batch_size = 32
-    n_envs = 128
-    gearing = 20
+    buffer_size = 64
+    batch_size = 64
+    n_envs = 4096
+    gearing = 1
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -51,6 +51,7 @@ def run():
                 log.info('stepped')
                 stats.mean('reward', chunk.reaction.reward.mean())
                 stats.rate('rate/learner', batch_size*buffer_size)
+
 
 def demo():
     env = envfunc(1)

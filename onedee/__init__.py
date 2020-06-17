@@ -71,7 +71,7 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
             obs=self._observe(render), 
             reset=reset, 
             terminal=self._full(False), 
-            )
+            reward=self._reward(render, reset))
 
     @torch.no_grad()
     def step(self, decisions):
@@ -85,4 +85,4 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
             obs=self._observe(render), 
             reset=reset, 
             terminal=reset, 
-            )
+            reward=self._reward(render, reset))
