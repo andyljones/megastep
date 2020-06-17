@@ -20,10 +20,11 @@ def agentfunc():
 
 def run():
     buffer_size = 100
-    batch_size = 128
+    batch_size = 32
+    n_envs = 128
+    gearing = 20
 
-    env = envfunc(128)
-    reaction = env.reset()
+    env = envfunc(n_envs)
     agent = agentfunc().cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=4.8e-4)
 
@@ -32,22 +33,24 @@ def run():
     with logging.via_dir('test', compositor), stats.via_dir('test', compositor):
         
         buffer = []
+        reaction = env.reset()
         while True:
-            decision = agent(reaction[None], sample=True).squeeze(0)
-            buffer.append(arrdict(
-                reaction=reaction,
-                decision=decision))
-            buffer = buffer[-buffer_size:]
-            reaction = env.step(decision)
-
+            for _ in range(gearing):
+                decision = agent(reaction[None], sample=True).squeeze(0)
+                buffer.append(arrdict(
+                    reaction=reaction,
+                    decision=decision))
+                buffer = buffer[-buffer_size:]
+                reaction = env.step(decision)
+                stats.rate('rate/actor', n_envs)
+            
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
                 batch = learning.sample(chunk, batch_size)
                 learning.step(agent, opt, batch)
-
                 log.info('stepped')
                 stats.mean('reward', chunk.reaction.reward.mean())
-
+                stats.rate('rate/learner', batch_size*buffer_size)
 
 def demo():
     env = envfunc(1)

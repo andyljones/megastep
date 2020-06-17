@@ -30,7 +30,7 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
         self._seen = torch.full_like(self._tex_to_env, False)
 
         self._length = self._full(0)
-        self.options.max_length = max_length
+        self._max_length = torch.randint_like(self._length, max_length//2, 2*max_length)
 
     def _tex_indices(self, aux): 
         mask = aux.indices >= 0
@@ -49,11 +49,13 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
         render['texindices'] = self._tex_indices(render)
         return render
 
-    def _reward(self, render):
+    def _reward(self, render, reset):
         seen = self._seen[render.texindices]
-        reward = (1 - seen.int()).reshape(seen.shape[0], -1).sum(-1)
         self._seen[render.texindices] = True
-        return reward.float()/self.options.res
+        reward = (1 - seen.int()).reshape(seen.shape[0], -1).sum(-1)
+        reward[reset] = 0
+        reward = reward.float()/self.options.res
+        return reward
 
     def _reset(self, reset):
         self._respawn(reset)
@@ -69,18 +71,18 @@ class ExplorationEnv(modules.SimpleMovement, modules.RandomSpawns, modules.RGBDO
             obs=self._observe(render), 
             reset=reset, 
             terminal=self._full(False), 
-            reward=self._reward(render))
+            )
 
     @torch.no_grad()
     def step(self, decisions):
         self._move(decisions)
         self._length += 1
 
-        reset = self._length == self.options.max_length
+        reset = self._length == self._max_length
         self._respawn(reset)
         render = self._render()
         return arrdict(
             obs=self._observe(render), 
             reset=reset, 
             terminal=reset, 
-            reward=self._reward(render))
+            )
