@@ -120,8 +120,8 @@ class Agent(nn.Module):
 
         self.register_buffer('gen', torch.tensor(0))
 
-    def forward(self, reaction, sample=False, value=False):
-        x = self.intake(reaction.obs)
+    def forward(self, world, sample=False, value=False):
+        x = self.intake(world.obs)
         x = self.torso(x)
 
         outputs = arrdict(

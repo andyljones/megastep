@@ -31,9 +31,9 @@ class SimpleMovement:
 
         self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
 
-    def __call__(self, decisions):
+    def __call__(self, decision):
         core = self._core
-        delta = self._actionset[decisions.actions]
+        delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
@@ -54,9 +54,9 @@ class MomentumMovement:
 
         self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
 
-    def __call__(self, decisions):
+    def __call__(self, decision):
         core = self._core
-        delta = self._actionset[decisions.actions]
+        delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents, delta.momenta)
         core.cuda.physics(core.scene, core.agents)

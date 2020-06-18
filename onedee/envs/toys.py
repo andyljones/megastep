@@ -25,13 +25,17 @@ class IndicatorEnv:
             terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
 
     @torch.no_grad()
-    def step(self, decisions):
-        reward = (decisions.actions == self._last_obs[..., 0]).float().sum(-1)
+    def step(self, decision):
+        reward = (decision.actions == self._last_obs[..., 0]).float().sum(-1)
         return arrdict(
             obs=self._observe(),
             reward=reward,
             reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
             terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+
+    def decide(self, world):
+        return arrdict(actions=world.obs[..., 0].int())
+
 
 class MinimalEnv:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
@@ -55,8 +59,8 @@ class MinimalEnv:
             terminal=torch.full((self._core.n_envs,), True, dtype=torch.bool, device=self.core.device))
 
     @torch.no_grad()
-    def step(self, decisions):
-        self._mover(decisions)
+    def step(self, decision):
+        self._mover(decision)
         return arrdict(
             obs=self._observer(),            
             reward=torch.full((self._core.n_envs,), 0., dtype=torch.float, device=self.core.device),

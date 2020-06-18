@@ -51,8 +51,8 @@ class WaypointEnv:
             terminal=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self._core.device))
 
     @torch.no_grad()
-    def step(self, decisions):
-        self._mover(decisions)
+    def step(self, decision):
+        self._mover(decision)
         return arrdict(
             obs=self._observe(),
             reward=self._reward(),
@@ -80,7 +80,7 @@ class WaypointEnv:
     def display(self, d=0):
         return self.plot_state(arrdict.numpyify(self.state(d)))
 
-    def decide(self, reaction):
+    def decide(self, world):
         accel = self._mover._actionset.momenta
-        actions = (reaction.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
+        actions = (world.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
         return arrdict(actions=actions)

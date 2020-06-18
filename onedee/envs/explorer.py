@@ -60,8 +60,8 @@ class ExplorerEnv:
             reward=self._reward(render, reset))
 
     @torch.no_grad()
-    def step(self, decisions):
-        self._mover(decisions)
+    def step(self, decision):
+        self._mover(decision)
         self._length += 1
 
         reset = self._length == self._max_length
