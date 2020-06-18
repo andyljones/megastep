@@ -86,16 +86,16 @@ class ExplorerEnv:
     @classmethod
     def plot_state(cls, state):
         fig = plt.figure()
-        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
+        gs = plt.gridspec(2, 2, fig, 0, 0, 1, 1)
 
         alpha = .1 + .9*state.seen.astype(float)
-        # Modifying this in place will bite me eventually. O for a lens
-        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
+        # modifying this in place will bite me eventually. o for a lens
+        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, none]], 1)
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
-        s = (f'Length: {state.length:d}/{state.max_length:d}\n'
-            f'Potential: {state.potential:.2f}')
+        s = (f'length: {state.length:d}/{state.max_length:d}\n'
+            f'potential: {state.potential:.2f}')
         ax.annotate(s, (5., 5.), xycoords='axes points')
 
         return fig

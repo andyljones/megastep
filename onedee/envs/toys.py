@@ -1,6 +1,7 @@
 import torch
 from rebar import arrdict
-from .. import spaces, modules, core
+from .. import spaces, modules, core, plotting
+import matplotlib.pyplot as plt
 
 class IndicatorEnv:
 
@@ -49,15 +50,35 @@ class MinimalEnv:
         self._respawner(core.env_full_like(self._core, True))
         return arrdict(
             obs=self._observer(),
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.core.device),
-            reset=torch.full((self.n_envs,), True, dtype=torch.bool, device=self.core.device),
-            terminal=torch.full((self.n_envs,), True, dtype=torch.bool, device=self.core.device))
+            reward=torch.full((self._core.n_envs,), 0., dtype=torch.float, device=self.core.device),
+            reset=torch.full((self._core.n_envs,), True, dtype=torch.bool, device=self.core.device),
+            terminal=torch.full((self._core.n_envs,), True, dtype=torch.bool, device=self.core.device))
 
     @torch.no_grad()
     def step(self, decisions):
         self._mover(decisions)
         return arrdict(
             obs=self._observer(),            
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.core.device),
-            reset=torch.full((self.n_envs,), False, dtype=torch.bool, device=self.core.device),
-            terminal=torch.full((self.n_envs,), False, dtype=torch.bool, device=self.core.device))
+            reward=torch.full((self._core.n_envs,), 0., dtype=torch.float, device=self.core.device),
+            reset=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self.core.device),
+            terminal=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self.core.device))
+
+    def state(self, d=0):
+        return arrdict(
+            **self._core.state(d),
+            obs=self._observer.state(d))
+
+    @classmethod
+    def plot_state(cls, state):
+        fig = plt.figure()
+        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
+
+        plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
+
+        return fig
+
+    def display(self, d=0):
+        return self.plot_state(arrdict.numpyify(self.state(d)))
+
+
