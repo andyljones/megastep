@@ -12,7 +12,6 @@ import cubicasa
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.IndicatorEnv(n_envs=n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorationEnv(ds)
 
