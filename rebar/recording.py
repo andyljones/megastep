@@ -71,10 +71,10 @@ class Encoder:
         # https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=3678
         # It's old and benign and possibly only apparent in homebrew-installed ffmpeg?
         if not type:
-            self._container.mux(self._stream.encode())
-            self._container.close()
-            self.value = self._content.getvalue()
-        return False
+            if hasattr(self, '_container'):
+                self._container.mux(self._stream.encode())
+                self._container.close()
+                self.value = self._content.getvalue()
         
 def html_tag(video, height=None, **kwargs):
     video = video.value if isinstance(video, Encoder) else video

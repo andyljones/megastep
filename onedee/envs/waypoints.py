@@ -32,13 +32,14 @@ class WaypointEnv:
         delta = self._waypoints - self._core.agents.positions
         relative = modules.to_local_frame(self._core.agents.angles, delta)
         obs['waypoint'] = relative
-        return obs
+        return obs.clone()
 
     def _reward(self):
-        distances = (self._waypoints - self._core.agents.positions).pow(2).sum(-1)
+        distances = (self._waypoints - self._core.agents.positions).pow(2).sum(-1).pow(.5)
         success = (distances < .15)
-        self._refresh_waypoints(success)
-        return success.float()
+        failure = (distances > 5)
+        self._refresh_waypoints(success | failure)
+        return success.float().sum(-1)
 
     @torch.no_grad()
     def reset(self):

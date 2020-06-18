@@ -22,6 +22,6 @@ def column(width=5, column_width=.1):
 
     return arrdict(
         walls=walls,
-        lights=spaces[0],
+        lights=2**.5 * np.array(corners) + width/2 + geometry.MARGIN,
         masks=geometry.masks(walls, spaces),
         res=geometry.RES)
