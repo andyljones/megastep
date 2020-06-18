@@ -1,4 +1,5 @@
 import torch
+from rebar import stats
 
 def sample(chunk, batchsize):
     B = chunk.world.reward.shape[1]
@@ -70,10 +71,11 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     reward = batch.world.reward.clamp(-1, +1)[1:]
     reset = batch.world.reset[1:]
     terminal = batch.world.terminal[1:]
-    v = v_trace(ratios, decision.value[:-1], reward, reset, terminal, gamma=gamma)
-    adv = advantages(ratios, decision.value[:-1], reward, reset, v, gamma=gamma)
+    value = decision.value[:-1]
+    v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
+    adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
 
-    v_loss = .5*(v - decision.value[:-1]).pow(2).mean() 
+    v_loss = .5*(v - value).pow(2).mean() 
     p_loss = (adv*new_logits[:-1]).mean()
     h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss
@@ -82,3 +84,21 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     loss.backward()
 
     opt.step()
+
+    stats.mean('loss/value', v_loss)
+    stats.mean('loss/policy', p_loss)
+    stats.mean('loss/entropy', h_loss)
+    stats.mean('loss/total', loss)
+    stats.mean('resid-var', (v - value).pow(2).mean(), v.pow(2).mean())
+    stats.mean('entropy', -(new_logits.exp()*new_logits).mean())
+    stats.mean('debug-v/v', v.mean())
+    stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
+    stats.mean('debug-scale/v', v.abs().mean())
+    stats.mean('debug-max/v', v.abs().max())
+    stats.mean('debug-scale/adv', adv.abs().mean())
+    stats.mean('debug-max/adv', adv.abs().max())
+    stats.rel_gradient_norm('rel-norm-grad', agent)
+    stats.mean('gen-lag', agent.gen - batch.decision.gen.float().mean())
+    stats.mean('debug-scale/ratios', ratios.mean())
+    stats.rate('step-rate/learner', 1)
+    stats.cumsum('steps/learner', 1)
