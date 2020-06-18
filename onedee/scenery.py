@@ -66,10 +66,10 @@ def init_textures(agentlines, agentcolors, walls, random=np.random):
 
     return textures, texwidths
 
-def random_lights(centroids, random=np.random):
+def random_lights(lights, random=np.random):
     return np.concatenate([
-        centroids,
-        random.uniform(.1, 1., (len(centroids), 1))], -1)
+        lights,
+        random.uniform(.1, 1., (len(lights), 1))], -1)
 
 @torch.no_grad()
 def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random): 
@@ -78,7 +78,7 @@ def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random):
 
     data = []
     for g in geometries:
-        lights = random_lights(g.centroids)
+        lights = random_lights(g.lights)
         lines = np.concatenate([agentlines, g.walls])
         textures, texwidths = init_textures(agentlines, agentcolors, g.walls, random) 
         data.append(arrdict({

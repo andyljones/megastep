@@ -11,7 +11,7 @@ from rebar import parallel, dotdict
 import ast
 
 # For re-export
-from .toys import box
+from .toys import box, column
 
 log = logging.getLogger(__name__)
 

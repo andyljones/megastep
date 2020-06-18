@@ -93,6 +93,6 @@ def geometry(svg):
     walls, spaces = transform(walls, spaces)
     return dict(
         walls=walls,
-        centroids=centroids(spaces),
+        lights=centroids(spaces),
         masks=masks(walls, spaces),
         res=RES)
