@@ -5,9 +5,14 @@ from rebar.arrdict import cat, stack, tensorify
 from . import spaces, core, plotting
 import matplotlib.pyplot as plt
 
+def to_local_frame(angles, p):
+    a = np.pi/180*angles
+    c, s = torch.cos(a), torch.sin(a)
+    x, y = p[..., 0], p[..., 1]
+    return torch.stack([c*x + s*y, -s*x + c*y], -1)
 
-def to_global_frame(agents, p):
-    a = np.pi/180*agents.angles
+def to_global_frame(angles, p):
+    a = np.pi/180*angles
     c, s = torch.cos(a), torch.sin(a)
     x, y = p[..., 0], p[..., 1]
     return torch.stack([c*x - s*y, s*x + c*y], -1)
@@ -30,7 +35,7 @@ class SimpleMovement:
         core = self._core
         delta = self._actionset[decisions.actions]
         core.agents.angmomenta[:] = delta.angmomenta
-        core.agents.momenta[:] = to_global_frame(core.agents, delta.momenta)
+        core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
 
 class MomentumMovement:

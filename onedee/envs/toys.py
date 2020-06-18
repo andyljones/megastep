@@ -12,9 +12,10 @@ class IndicatorEnv:
         self.device = torch.device('cuda')
 
     def _observe(self):
-        self._last_obs = torch.randn((self.n_envs, self.n_agents, 1), device=self.device).gt(.5).float()
+        self._last_obs = torch.rand((self.n_envs, self.n_agents, 1), device=self.device).gt(.5).float()
         return self._last_obs
 
+    @torch.no_grad()
     def reset(self):
         return arrdict(
             obs=self._observe(),
@@ -22,6 +23,7 @@ class IndicatorEnv:
             reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
             terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
 
+    @torch.no_grad()
     def step(self, decisions):
         reward = (decisions.actions == self._last_obs[..., 0]).float().sum(-1)
         return arrdict(
@@ -45,9 +47,17 @@ class MinimalEnv:
     @torch.no_grad()
     def reset(self):
         self._respawner(core.env_full_like(self._core, True))
-        return arrdict(obs=self._observer())
+        return arrdict(
+            obs=self._observer(),
+            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.core.device),
+            reset=torch.full((self.n_envs,), True, dtype=torch.bool, device=self.core.device),
+            terminal=torch.full((self.n_envs,), True, dtype=torch.bool, device=self.core.device))
 
     @torch.no_grad()
     def step(self, decisions):
         self._mover(decisions)
-        return arrdict(obs=self._observer())
+        return arrdict(
+            obs=self._observer(),            
+            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.core.device),
+            reset=torch.full((self.n_envs,), False, dtype=torch.bool, device=self.core.device),
+            terminal=torch.full((self.n_envs,), False, dtype=torch.bool, device=self.core.device))

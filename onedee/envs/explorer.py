@@ -2,7 +2,7 @@ import torch
 from .. import modules, core
 from rebar import arrdict
 
-class ExplorationEnv: 
+class ExplorerEnv: 
 
     def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)

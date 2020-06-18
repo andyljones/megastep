@@ -1,9 +1,6 @@
 import torch
-from torch import nn
-from torch.nn import functional as F
 from . import learning, agents
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
-import gym
 import pandas as pd
 import onedee
 from onedee import recording
@@ -13,7 +10,7 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     ds = cubicasa.sample(n_envs)
-    return onedee.ExplorationEnv(ds)
+    return onedee.ExplorerEnv(ds)
 
 def agentfunc():
     env = envfunc(n_envs=1)
