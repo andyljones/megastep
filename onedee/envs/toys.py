@@ -3,6 +3,39 @@ from rebar import arrdict
 from .. import spaces, modules, core, plotting
 import matplotlib.pyplot as plt
 
+class OneEnv:
+
+    def __init__(self, n_envs=1, n_agents=1):
+        self.n_envs = n_envs
+        self.n_agents = n_agents
+        self.observation_space = spaces.MultiVector(self.n_agents, 1)
+        self.action_space = spaces.MultiDiscrete(self.n_agents, 2)
+        self.device = torch.device('cuda')
+
+    def _observe(self):
+        return torch.rand((self.n_envs, self.n_agents, 1), device=self.device).gt(.5).float()
+
+    @torch.no_grad()
+    def reset(self):
+        return arrdict(
+            obs=self._observe(),
+            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
+            reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
+            terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
+
+    @torch.no_grad()
+    def step(self, decision):
+        reward = (decision.actions == 1).float().sum(-1)
+        return arrdict(
+            obs=self._observe(),
+            reward=reward,
+            reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
+            terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+
+    def decide(self, world):
+        return arrdict(actions=torch.ones_like(world.obs[..., 0]).int())
+
+
 class IndicatorEnv:
 
     def __init__(self, n_envs=1, n_agents=1):

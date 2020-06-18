@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-from rebar import stats
 
 def sample(chunk, batchsize):
     B = chunk.world.reward.shape[1]
@@ -62,39 +60,25 @@ def advantages(ratios, value, reward, reset, v, gamma, max_pg_rho=1):
     adv = reward + discount*vprime - value
     return (rho*adv).detach()
 
-def step(agent, opt, chunk, entropy=.01, gamma=.9):
+def step(agent, opt, batch, entropy=.01, gamma=.99):
+    decision = agent(batch.world, value=True)
 
-    decision = agent(chunk.world, value=True)
+    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
+    new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
+    ratios = (new_logits - old_logits).exp()
 
-    logits = flatten(gather(decision.logits, chunk.decision.actions)).sum(-1)
+    reward = batch.world.reward.clamp(-1, +1)
+    reset = batch.world.reset
+    terminal = batch.world.terminal
+    v = v_trace(ratios, decision.value, reward, reset, terminal, gamma=gamma)
+    adv = advantages(ratios, decision.value, reward, reset, v, gamma=gamma)
 
-    v = chunk.world.reward[1:] + gamma*decision.value[1:]
-    adv = (chunk.world.reward[1:] + gamma*decision.value[1:]) - decision.value[:-1]
-
-    v_loss = .5*(v - decision.value[:-1]).pow(2).mean() 
-    p_loss = (adv*logits[:-1]).mean()
-    h_loss = -(logits.exp()*logits).mean()
-
+    v_loss = .5*(v - decision.value).pow(2).mean() 
+    p_loss = (adv*new_logits).mean()
+    h_loss = -(new_logits.exp()*new_logits).mean()
     loss = v_loss - p_loss - entropy*h_loss
-
+    
     opt.zero_grad()
     loss.backward()
 
     opt.step()
-
-    stats.mean('loss/value', v_loss)
-    stats.mean('loss/policy', p_loss)
-    # stats.mean('loss/entropy', h_loss)
-    stats.mean('loss/total', loss)
-    stats.mean('resid-var', (v - decision.value[:-1]).pow(2).mean(), v.pow(2).mean())
-    stats.mean('rel-entropy', -logits.mean())
-    stats.mean('debug-v/v', v.mean())
-    stats.mean('debug-v/r-inf', chunk.world.reward.mean()/(1 - gamma))
-    stats.mean('debug-scale/v', v.abs().mean())
-    stats.mean('debug-max/v', v.abs().max())
-    stats.mean('debug-scale/adv', adv.abs().mean())
-    stats.mean('debug-max/adv', adv.abs().max())
-    stats.rel_gradient_norm('rel-norm-grad', agent)
-    # stats.mean('debug-scale/ratios', ratios.mean())
-    stats.rate('step-rate/learner', 1)
-    stats.cumsum('steps/learner', 1)
