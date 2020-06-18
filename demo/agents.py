@@ -126,12 +126,8 @@ class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=128):
         super().__init__()
-        self.value_intake = intake(observation_space, width)
-        self.policy_intake = intake(observation_space, width)
-        self.value_torso = nn.Sequential(
-            nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, width), nn.ReLU())
-        self.policy_torso = nn.Sequential(
+        self.intake = intake(observation_space, width)
+        self.torso = nn.Sequential(
             nn.Linear(width, width), nn.ReLU(),
             nn.Linear(width, width), nn.ReLU())
         self.policy = output(action_space, width)
@@ -142,15 +138,14 @@ class Agent(nn.Module):
         self.adv_scaler = Scaler()
 
     def forward(self, world, sample=False, value=False):
-        x = self.policy_intake(world.obs)
-        x = self.policy_torso(x)
+        x = self.intake(world.obs)
+        x = self.torso(x)
+
         outputs = arrdict(
             logits=self.policy(x))
         if sample:
             outputs['actions'] = self.policy.sample(outputs.logits)
         if value:
-            x = self.value_intake(world.obs)
-            x = self.value_torso(x)
             outputs['value'] = self.value(x).squeeze(-1)
         return outputs
 
