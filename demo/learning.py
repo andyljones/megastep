@@ -65,17 +65,17 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
 
     old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
     new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
-    ratios = (new_logits - old_logits).exp()
+    ratios = (new_logits - old_logits).exp()[:-1]
 
-    reward = batch.world.reward.clamp(-1, +1)
-    reset = batch.world.reset
-    terminal = batch.world.terminal
-    v = v_trace(ratios, decision.value, reward, reset, terminal, gamma=gamma)
-    adv = advantages(ratios, decision.value, reward, reset, v, gamma=gamma)
+    reward = batch.world.reward.clamp(-1, +1)[1:]
+    reset = batch.world.reset[1:]
+    terminal = batch.world.terminal[1:]
+    v = v_trace(ratios, decision.value[:-1], reward, reset, terminal, gamma=gamma)
+    adv = advantages(ratios, decision.value[:-1], reward, reset, v, gamma=gamma)
 
-    v_loss = .5*(v - decision.value).pow(2).mean() 
-    p_loss = (adv*new_logits).mean()
-    h_loss = -(new_logits.exp()*new_logits).mean()
+    v_loss = .5*(v - decision.value[:-1]).pow(2).mean() 
+    p_loss = (adv*new_logits[:-1]).mean()
+    h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss
     
     opt.zero_grad()
