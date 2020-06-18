@@ -75,7 +75,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
     adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
 
-    v_loss = .5*(agent.value_scaler(v) - agent.value_scaler(value)).pow(2).mean() 
+    v_loss = .5*(v - agent.value_scaler(value)).pow(2).mean() 
     p_loss = (agent.adv_scaler(adv)*new_logits[:-1]).mean()
     h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss

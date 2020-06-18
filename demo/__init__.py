@@ -9,7 +9,6 @@ import cubicasa
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.IndicatorEnv(n_envs)
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
@@ -25,7 +24,7 @@ def chunkstats(chunk):
     stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
 def run():
-    buffer_size = 64
+    buffer_size = 128
     batch_size = 4096
     n_envs = 4096
     gearing = 1
@@ -69,5 +68,5 @@ def demo():
         decision = agent(world[None], sample=True).squeeze(0)
         world = env.step(decision)
         states.append(env.state(0))
-    states = arrdict.numpyify(arrdict.stack(states))
-    return recording.replay(env.plot_state, states)
+    states = arrdict.numpyify(states)
+    recording.replay(env.plot_state, states)
