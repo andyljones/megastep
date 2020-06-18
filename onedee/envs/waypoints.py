@@ -80,4 +80,7 @@ class WaypointEnv:
     def display(self, d=0):
         return self.plot_state(arrdict.numpyify(self.state(d)))
 
-
+    def decide(self, reaction):
+        accel = self._mover._actionset.momenta
+        actions = (reaction.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
+        return arrdict(actions=actions)
