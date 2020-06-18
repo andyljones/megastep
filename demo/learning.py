@@ -75,8 +75,8 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
     adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
 
-    v_loss = .5*(v - value).pow(2).mean() 
-    p_loss = (adv*new_logits[:-1]).mean()
+    v_loss = .5*(agent.value_scaler(v) - agent.value_scaler(value)).pow(2).mean() 
+    p_loss = (agent.adv_scaler(adv)*new_logits[:-1]).mean()
     h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss
     
@@ -84,6 +84,8 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     loss.backward()
 
     opt.step()
+    agent.value_scaler.step(v)
+    agent.adv_scaler.step(adv)
 
     stats.mean('loss/value', v_loss)
     stats.mean('loss/policy', p_loss)
@@ -98,7 +100,6 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     stats.mean('debug-scale/adv', adv.abs().mean())
     stats.mean('debug-max/adv', adv.abs().max())
     stats.rel_gradient_norm('rel-norm-grad', agent)
-    stats.mean('gen-lag', agent.gen - batch.decision.gen.float().mean())
     stats.mean('debug-scale/ratios', ratios.mean())
     stats.rate('step-rate/learner', 1)
     stats.cumsum('steps/learner', 1)

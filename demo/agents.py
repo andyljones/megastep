@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch import nn
 from onedee import spaces
-from rebar import arrdict
+from rebar import arrdict, stats
 from torch.nn import functional as F
 
 class MultiVectorIntake(nn.Module):
@@ -107,6 +107,21 @@ def output(space, width):
         return DiscreteOutput(space, width)
     raise ValueError(f'Can\'t handle {space}')
 
+class Scaler(nn.Module):
+
+    def __init__(self, com=100):
+        super().__init__()
+        self._alpha = 1/(1+com)
+        self.register_buffer('var', torch.ones(()))
+
+    def step(self, x):
+        a = self._alpha
+        self.var[()] = a*x.pow(2).mean() + (1 - a)*self.var
+        stats.last('scaler/std', self.var.pow(.5))
+    
+    def __call__(self, x):
+        return x/self.var.pow(.5)
+
 class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=128):
@@ -116,16 +131,17 @@ class Agent(nn.Module):
             nn.Linear(width, width), nn.ReLU(),
             nn.Linear(width, width), nn.ReLU())
         self.policy = output(action_space, width)
-        self.value = nn.Linear(width, 1)
-
-        self.register_buffer('gen', torch.tensor(0))
+        self.value = nn.Sequential(
+            nn.Linear(width, width), nn.ReLU(),
+            nn.Linear(width, 1))
+        self.value_scaler = Scaler()
+        self.adv_scaler = Scaler()
 
     def forward(self, world, sample=False, value=False):
         x = self.intake(world.obs)
         x = self.torso(x)
 
         outputs = arrdict(
-            gen=self.gen.new_full(x.shape[:2], self.gen),
             logits=self.policy(x))
         if sample:
             outputs['actions'] = self.policy.sample(outputs.logits)
