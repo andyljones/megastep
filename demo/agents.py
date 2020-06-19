@@ -109,43 +109,65 @@ def output(space, width):
 
 class Scaler(nn.Module):
 
-    def __init__(self, com=100):
+    def __init__(self, width, com=1000):
+        """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
-        self.register_buffer('var', torch.ones(()))
+        self.register_buffer('mu', torch.zeros(()))
+        self.register_buffer('nu', torch.ones(()))
+        self.layer = nn.Linear(width, 1)
+
+    @property
+    def sigma(self):
+        return (self.nu - self.mu**2).pow(.5)
 
     def step(self, x):
         a = self._alpha
-        self.var[()] = a*x.pow(2).mean() + (1 - a)*self.var
-        stats.last('scaler/std', self.var.pow(.5))
+        mu = a*x.mean() + (1 - a)*self.mu
+        nu = a*x.pow(2).mean() + (1 - a)*self.nu
+        sigma = (nu - mu**2).pow(.5)
+        
+        self.layer.weight.data[:] = sigma/self.sigma*self.layer.weight
+        self.layer.bias.data[:] = (sigma*self.layer.bias + mu - self.mu)/self.sigma
+
+        self.mu[()] = mu
+        self.nu[()] = nu
+        stats.last('scaler/mean', mu)
+        stats.last('scaler/std', sigma)
     
-    def __call__(self, x):
-        return x/self.var.pow(.5)
+    def scale(self, x):
+        return (x - self.mu)/self.sigma
+    
+    def unscale(self, x):
+        return (x + self.mu)*self.sigma
+    
+    def forward(self, x):
+        return self.layer(x)
 
 class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=128):
         super().__init__()
-        self.intake = intake(observation_space, width)
-        self.torso = nn.Sequential(
+        out = output(action_space, width)
+        self.sampler = out.sample
+        self.policy = nn.Sequential(
+            intake(observation_space, width),
             nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, width), nn.ReLU())
-        self.policy = output(action_space, width)
+            nn.Linear(width, width), nn.ReLU(),
+            out)
+        self.scaler = Scaler(width)
         self.value = nn.Sequential(
+            intake(observation_space, width),
             nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, 1))
-        self.value_scaler = Scaler()
-        self.adv_scaler = Scaler()
+            nn.Linear(width, width), nn.ReLU(),
+            self.scaler)
 
     def forward(self, world, sample=False, value=False):
-        x = self.intake(world.obs)
-        x = self.torso(x)
-
         outputs = arrdict(
-            logits=self.policy(x))
+            logits=self.policy(world.obs))
         if sample:
-            outputs['actions'] = self.policy.sample(outputs.logits)
+            outputs['actions'] = self.sampler(outputs.logits)
         if value:
-            outputs['value'] = self.value(x).squeeze(-1)
+            outputs['value'] = self.value(world.obs).squeeze(-1)
         return outputs
 

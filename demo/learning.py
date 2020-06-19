@@ -47,10 +47,13 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
     discount = (1 - reset.int())[:-1]*gamma
 
+    A = value[:-1] + dV - discount*c[:-1]*value[1:]
+    B = discount*c[:-1]
+
     v = torch.zeros_like(value)
     v[-1] = value[-1]
     for t in reversed(range(len(v)-1)):
-        v[t] = value[t] + dV[t] + discount[t]*c[t]*(v[t+1] - value[t+1])
+        v[t] = A[t] + B[t]*v[t+1]
 
     return v.detach()
 
@@ -72,11 +75,11 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     reset = batch.world.reset[1:]
     terminal = batch.world.terminal[1:]
     value = decision.value[:-1]
-    v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
-    adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
+    v = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
+    adv = advantages(ratios, value, reward, reset, agent.scaler.scale(v), gamma=gamma)
 
-    v_loss = .5*(v - agent.value_scaler(value)).pow(2).mean() 
-    p_loss = (agent.adv_scaler(adv)*new_logits[:-1]).mean()
+    v_loss = .5*(agent.scaler.scale(v) - value).pow(2).mean() 
+    p_loss = (adv*new_logits[:-1]).mean()
     h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss
     
@@ -84,8 +87,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     loss.backward()
 
     opt.step()
-    agent.value_scaler.step(v)
-    agent.adv_scaler.step(adv)
+    agent.scaler.step(v)
 
     stats.mean('loss/value', v_loss)
     stats.mean('loss/policy', p_loss)
