@@ -52,24 +52,41 @@ class FSMEnv:
             reset=reset,
             terminal=reset)
 
-def add_fsm(name, states):
+    def __repr__(self):
+        s, a = self._trans.shape
+        return f'{type(self).__name__}({s}s{a}a)' 
 
-    def init(self, *args, **kwargs):
-        super(self.__class__, self).__init__(states, *args, **kwargs)
+    def __str__(self):
+        return repr(self)
 
-    globals()[name] = type(name, (FSMEnv,), {'__init__': init})
+def fsm(f):
+
+    def init(self, *args, n_envs=1, **kwargs):
+        states = f(*args, **kwargs)
+        super(self.__class__, self).__init__(states=states, n_envs=n_envs)
+
+    name = f.__name__
     __all__.append(name)
+    return type(name, (FSMEnv,), {'__init__': init})
 
-add_fsm('UnitReward', {
-    'start': (False, (), [('start', 1.)]),})
+@fsm
+def UnitReward():
+    return {'start': (False, (), [('start', 1.)]),}
 
-add_fsm('OneStepNoReward', {
-    'start': (False, (), [('terminal', 0.)]),
-    'terminal': (True, (), [('terminal', 0.)])})
+@fsm
+def Chain(n):
+    assert n >= 2, 'Need the number of states to be at least 1'
+    states = {}
+    for i in range(n-2):
+        states[i] = (False, (i/n,), [(i+1, 0.)])
+    if n > 1:
+        states[n-2] = (False, (n-2/n,), [(n-1, 1.)])
+    states[n-1] = (True, (n-1/n,), [(n-1, 0.)])
+    return states
 
-add_fsm('OneStepUnitReward', {
-    'start': (False, (), [('terminal', 1.)]),
-    'terminal': (True, (), [('terminal', 0.)])})
-
-
-
+@fsm
+def CoinFlip():
+    return {
+        'heads': (False, (+1.,), [('end', +1.)]),
+        'tails': (False, (-1.,), [('end', -1.)]),
+        'end': (True, (0.,), [('end', 0.)])}
