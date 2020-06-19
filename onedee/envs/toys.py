@@ -3,6 +3,15 @@ from rebar import arrdict
 from .. import spaces, modules, core, plotting
 import matplotlib.pyplot as plt
 
+def falses(n_envs, device):
+    return torch.zeros((n_envs,), dtype=torch.bool, device=device)
+
+def trues(n_envs, device):
+    return torch.ones((n_envs,), dtype=torch.bool, device=device)
+
+def zeros(n_envs, device):
+    return torch.ones((n_envs,), dtype=torch.float, device=device)
+
 class ObliviousEnv:
 
     def __init__(self, n_envs=1, n_agents=1):
@@ -16,46 +25,43 @@ class ObliviousEnv:
     def reset(self):
         return arrdict(
             obs=torch.empty((self.n_envs, self.n_agents, 0), device=self.device),
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
-            reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
+            reward=zeros(self.n_envs, self.device),
+            reset=trues(self.n_envs, self.device),
+            terminal=trues(self.n_envs, self.device),)
 
     @torch.no_grad()
     def step(self, decision):
         return arrdict(
             obs=torch.empty((self.n_envs, self.n_agents, 0), device=self.device),
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
-            reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+            reward=zeros(self.n_envs, self.device),
+            reset=falses(self.n_envs, self.device),
+            terminal=falses(self.n_envs, self.device),)
 
-class ConstantDecisionEnv:
+class BlindEnv:
 
     def __init__(self, n_envs=1, n_agents=1):
         self.n_envs = n_envs
         self.n_agents = n_agents
-        self.observation_space = spaces.MultiVector(self.n_agents, 0)
+        self.observation_space = spaces.MultiEmpty()
         self.action_space = spaces.MultiDiscrete(self.n_agents, 2)
         self.device = torch.device('cuda')
-
-    def _observe(self):
-        return torch.zeros((self.n_envs, self.n_agents, 0), device=self.device)
 
     @torch.no_grad()
     def reset(self):
         return arrdict(
-            obs=self._observe(),
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
-            reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
+            obs=torch.zeros((self.n_envs, self.n_agents, 0), device=self.device),
+            reward=zeros(self.n_envs, self.device),
+            reset=trues(self.n_envs, self.device),
+            terminal=trues(self.n_envs, self.device),)
 
     @torch.no_grad()
     def step(self, decision):
         reward = (decision.actions == 1).float().sum(-1)
         return arrdict(
-            obs=self._observe(),
+            obs=torch.zeros((self.n_envs, self.n_agents, 0), device=self.device),
             reward=reward,
-            reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+            reset=falses(self.n_envs, self.device),
+            terminal=falses(self.n_envs, self.device),)
 
     def decide(self, world):
         return arrdict(actions=torch.ones_like(world.obs[..., 0]).int())
@@ -78,9 +84,9 @@ class IndicatorEnv:
     def reset(self):
         return arrdict(
             obs=self._observe(),
-            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
-            reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
+            reward=zeros(self.n_envs, self.device),
+            reset=trues(self.n_envs, self.device),
+            terminal=trues(self.n_envs, self.device),)
 
     @torch.no_grad()
     def step(self, decision):
@@ -88,8 +94,8 @@ class IndicatorEnv:
         return arrdict(
             obs=self._observe(),
             reward=reward,
-            reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
-            terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
+            reset=falses(self.n_envs, self.device),
+            terminal=falses(self.n_envs, self.device),)
 
     def decide(self, world):
         return arrdict(actions=world.obs[..., 0].int())
@@ -112,18 +118,18 @@ class MinimalEnv:
         self._respawner(core.env_full_like(self._core, True))
         return arrdict(
             obs=self._observer(),
-            reward=torch.full((self._core.n_envs,), 0., dtype=torch.float, device=self.core.device),
-            reset=torch.full((self._core.n_envs,), True, dtype=torch.bool, device=self.core.device),
-            terminal=torch.full((self._core.n_envs,), True, dtype=torch.bool, device=self.core.device))
+            reward=zeros(self.n_envs, self.device),
+            reset=trues(self.n_envs, self.device),
+            terminal=trues(self.n_envs, self.device),)
 
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
         return arrdict(
             obs=self._observer(),            
-            reward=torch.full((self._core.n_envs,), 0., dtype=torch.float, device=self.core.device),
-            reset=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self.core.device),
-            terminal=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self.core.device))
+            reward=zeros(self.n_envs, self.device),
+            reset=falses(self.n_envs, self.device),
+            terminal=falses(self.n_envs, self.device),)
 
     def state(self, d=0):
         return arrdict(
