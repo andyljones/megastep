@@ -64,7 +64,7 @@ def advantages(ratios, value, reward, reset, v, gamma, max_pg_rho=1):
     adv = reward + discount*vprime - value
     return (rho*adv).detach()
 
-def step(agent, opt, batch, entropy=.01, gamma=.99):
+def step(agent, opt, batch, entropy=.01, gamma=.9):
     decision = agent(batch.world, value=True)
 
     old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
@@ -76,9 +76,10 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     terminal = batch.world.terminal[1:]
     value = decision.value[:-1]
     v = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
+    v = agent.scaler.scale(v)
     adv = advantages(ratios, value, reward, reset, agent.scaler.scale(v), gamma=gamma)
 
-    v_loss = .5*(agent.scaler.scale(v) - value).pow(2).mean() 
+    v_loss = .5*(v - value).pow(2).mean() 
     p_loss = (adv*new_logits[:-1]).mean()
     h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
     loss = v_loss - p_loss - entropy*h_loss

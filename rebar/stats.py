@@ -73,7 +73,7 @@ def format(v):
 
 def adaptive_rule(df):
     timespan = (df.index[-1] - df.index[0]).total_seconds()
-    elif timespan < 600:
+    if timespan < 600:
         return '15s'
     elif timespan < 7200:
         return '1min'
