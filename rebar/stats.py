@@ -71,6 +71,16 @@ def format(v):
         return '{' + ', '.join(f'{k}: {format(vv)}' for k, vv in v.items()) + '}'
     return str(v)
 
+def adaptive_rule(df):
+    timespan = (df.index[-1] - df.index[0]).total_seconds()
+    elif timespan < 600:
+        return '15s'
+    elif timespan < 7200:
+        return '1min'
+    else:
+        return '10min'
+    
+
 class Reader:
 
     def __init__(self, run_name, prefix=''):

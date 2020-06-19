@@ -25,9 +25,9 @@ def chunkstats(chunk):
 
 def run():
     buffer_size = 128
-    batch_size = 4096
-    n_envs = 4096
-    gearing = 1
+    batch_size = 2048
+    n_envs = 2048
+    gearing = 8
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()

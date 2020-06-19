@@ -109,7 +109,7 @@ def output(space, width):
 
 class Scaler(nn.Module):
 
-    def __init__(self, width, com=1000):
+    def __init__(self, width, com=100):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
