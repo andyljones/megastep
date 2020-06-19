@@ -75,9 +75,9 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     reset = batch.world.reset[1:]
     terminal = batch.world.terminal[1:]
     value = decision.value[:-1]
-    v = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
-    v = agent.scaler.scale(v)
-    adv = advantages(ratios, value, reward, reset, agent.scaler.scale(v), gamma=gamma)
+    vu = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
+    v = agent.scaler.scale(vu)
+    adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
 
     v_loss = .5*(v - value).pow(2).mean() 
     p_loss = (adv*new_logits[:-1]).mean()
@@ -88,18 +88,18 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     loss.backward()
 
     opt.step()
-    agent.scaler.step(v)
+    agent.scaler.step(vu)
 
     stats.mean('loss/value', v_loss)
     stats.mean('loss/policy', p_loss)
     stats.mean('loss/entropy', h_loss)
     stats.mean('loss/total', loss)
-    stats.mean('resid-var', (v - value).pow(2).mean(), v.pow(2).mean())
+    stats.mean('resid-var', (vu - agent.scaler.unscale(value)).pow(2).mean(), vu.pow(2).mean())
     stats.mean('entropy', -(new_logits.exp()*new_logits).mean())
-    stats.mean('debug-v/v', v.mean())
+    stats.mean('debug-v/v', vu.mean())
     stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-    stats.mean('debug-scale/v', v.abs().mean())
-    stats.mean('debug-max/v', v.abs().max())
+    stats.mean('debug-scale/v', vu.abs().mean())
+    stats.mean('debug-max/v', vu.abs().max())
     stats.mean('debug-scale/adv', adv.abs().mean())
     stats.mean('debug-max/adv', adv.abs().max())
     stats.rel_gradient_norm('rel-norm-grad', agent)
