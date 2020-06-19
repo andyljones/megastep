@@ -59,6 +59,31 @@ class FSMEnv:
     def __str__(self):
         return repr(self)
 
+
+class State:
+
+    def __init__(self, name, builder):
+        self._name = name
+        self._builder = builder
+
+    def obs(self, obs):
+        self._builder._obs.add((self._name, obs))
+        return self
+
+    def to(self, action, state, reward=0., prob=1.):
+        self._builder._trans.add((self._name, action, state, reward, prob))
+        return self
+
+class Builder:
+
+    def __init__(self):
+        self._obs = []
+        self._trans = []
+
+    def state(self, name):
+        return State(name, self)
+
+
 def fsm(f):
 
     def init(self, *args, n_envs=1, **kwargs):
@@ -84,9 +109,10 @@ def Chain(n):
     states[n-1] = (True, (n-1/n,), [(n-1, 0.)])
     return states
 
-@fsm
-def CoinFlip():
-    return {
-        'heads': (False, (+1.,), [('end', +1.)]),
-        'tails': (False, (-1.,), [('end', -1.)]),
-        'end': (True, (0.,), [('end', 0.)])}
+# @fsm
+# def CoinFlip():
+#     return {
+#         'start': (False, (0.,))
+#         'heads': (False, (+1.,), [('end', +1.)]),
+#         'tails': (False, (-1.,), [('end', -1.)]),
+#         'end': (True, (0.,), [('end', 0.)])}
