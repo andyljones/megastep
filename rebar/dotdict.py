@@ -15,9 +15,11 @@ def treestr(t):
         if isinstance(v, dotdict):
             d[k] = str(v)
         elif isinstance(v, (list, set, dict)):
-            d[k] = f'({len(v)},)-{type(v).__name__}'
-        elif hasattr(v, 'shape'):                    
-            d[k] = f'{tuple(v.shape)}-{type(v).__name__}'
+            d[k] = f'{type(v).__name__}({len(v)},)'
+        elif hasattr(v, 'shape') and hasattr(v, 'dtype'):                    
+            d[k] = f'{type(v).__name__}({tuple(v.shape)}, {v.dtype})'
+        elif hasattr(v, 'shape'):
+            d[k] = f'{type(v).__name__}({tuple(v.shape)})'
         else:
             lines = str(v).splitlines()
             if (len(lines) > 1) or (len(lines[0]) > val_length):

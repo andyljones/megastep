@@ -64,7 +64,7 @@ def advantages(ratios, value, reward, reset, v, gamma, max_pg_rho=1):
     adv = reward + discount*vprime - value
     return (rho*adv).detach()
 
-def step(agent, opt, batch, entropy=.01, gamma=.9):
+def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
 
     old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
