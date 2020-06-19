@@ -8,27 +8,23 @@ class ObliviousEnv:
     def __init__(self, n_envs=1, n_agents=1):
         self.n_envs = n_envs
         self.n_agents = n_agents
-        self.observation_space = spaces.MultiVector(self.n_agents, 0)
-        self.action_space = spaces.MultiDiscrete(self.n_agents, 1)
+        self.observation_space = spaces.MultiEmpty()
+        self.action_space = spaces.MultiConstant(self.n_agents)
         self.device = torch.device('cuda')
-
-    def _observe(self):
-        return torch.rand((self.n_envs, self.n_agents, 0), device=self.device).gt(.5).float()
 
     @torch.no_grad()
     def reset(self):
         return arrdict(
-            obs=self._observe(),
+            obs=torch.empty((self.n_envs, self.n_agents, 0), device=self.device),
             reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
             reset=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool),
             terminal=torch.full((self.n_envs,), True, device=self.device, dtype=torch.bool))
 
     @torch.no_grad()
     def step(self, decision):
-        reward = (decision.actions == 1).float().sum(-1)
         return arrdict(
-            obs=self._observe(),
-            reward=reward,
+            obs=torch.empty((self.n_envs, self.n_agents, 0), device=self.device),
+            reward=torch.full((self.n_envs,), 0., dtype=torch.float, device=self.device),
             reset=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool),
             terminal=torch.full((self.n_envs,), False, device=self.device, dtype=torch.bool))
 

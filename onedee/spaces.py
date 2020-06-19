@@ -8,17 +8,17 @@ from torch.nn import functional as F
 
 class MultiEmpty(gym.spaces.Space):
     
-    def __init__(self, n_agents):
-        self.shape = (n_agents,)
+    def __init__(self):
+        pass
 
 class MultiEmptyIntake(nn.Module):
 
     def __init__(self, space, width):
         super().__init__()
-        self.register_buffer('zeros', torch.zeros((*space.shape, width)))
+        self._width = width
 
     def forward(self, obs):
-        return self.zeros
+        return obs.new_zeros((*obs.shape[:-2], self._width))
 
 class MultiVector(gym.spaces.Space):
 
@@ -89,25 +89,27 @@ class ConcatIntake(nn.Module):
 def intake(space, width):
     if isinstance(space, dict):
         return ConcatIntake(space, width)
-    elif isinstance(space, spaces.MultiVector):
-        return MultiVectorIntake(space, width)
-    elif isinstance(space, spaces.MultiImage):
-        return MultiImageIntake(space, width)
+    name = f'{type(space).__name__}Intake'
+    if name in globals():
+        return globals()[name](space, width)
     raise ValueError(f'Can\'t handle {space}')
 
-class MultiNull(gym.spaces.Space):
+class MultiConstant(gym.spaces.Space):
 
     def __init__(self, n_agents):
         self.shape = (n_agents,)
 
-class MultiNullOutput(nn.Module):
+class MultiConstantOutput(nn.Module):
 
     def __init__(self, space, width):
         super().__init__()
-        self.register_buffer('empty', torch.zeros((*space.shape, 0)))
+        self.shape = space.shape
 
     def forward(self, x):
-        return self.empty
+        return x.new_zeros((*x.shape[:-1], *self.shape, 1))
+
+    def sample(self, zeros):
+        return torch.zeros(zeros.shape[:-1], dtype=torch.int, device=zeros.device)
 
 class MultiDiscrete(gym.spaces.Space):
 
@@ -149,6 +151,7 @@ class DictOutput(nn.Module):
 def output(space, width):
     if isinstance(space, dict):
         return DictOutput(space, width)
-    if isinstance(space, spaces.MultiDiscrete):
-        return MultiDiscreteOutput(space, width)
+    name = f'{type(space).__name__}Output'
+    if name in globals():
+        return globals()[name](space, width)
     raise ValueError(f'Can\'t handle {space}')
