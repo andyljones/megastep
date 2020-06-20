@@ -57,27 +57,25 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
     return v.detach()
 
-def advantages(ratios, value, reward, reset, vu, scaler, gamma, max_pg_rho=1):
-    rho = ratios.clamp(0, max_pg_rho)
-    discount = (1 - reset.int())*gamma
-    vprime = torch.cat([vu[1:], scaler.unscale(value)[[-1]]])
-    adv = scaler.scale(reward + discount*vprime) - value
-    return (rho*adv).detach()
+def advantages(ratios, value, reward, reset, terminal, vu, scaler, gamma, max_pg_rho=1):
+    regular_adv = (reward[:-1] + gamma*vu[1:]) - value[:-1]
+    terminated_adv = torch.where(terminal[1:], scaler.scale(reward[:-1] - scaler.unscale(value[:-1])), regular_adv)
+    return torch.where(reset[1:] & ~terminal[1:], torch.zeros_like(reward[:-1]), terminated_adv).detach()
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
 
     old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
     new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
-    ratios = (new_logits - old_logits).exp()[:-1]
+    ratios = (new_logits - old_logits).exp()
 
-    reward = batch.world.reward[1:]
-    reset = batch.world.reset[1:]
-    terminal = batch.world.terminal[1:]
-    value = decision.value[:-1]
+    reward = batch.world.reward
+    reset = batch.world.reset
+    terminal = batch.world.terminal
+    value = decision.value
     vu = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
     v = agent.scaler.scale(vu)
-    adv = advantages(ratios, value, reward, reset, vu, agent.scaler, gamma=gamma)
+    adv = advantages(ratios, value, reward, reset, terminal, vu, agent.scaler, gamma=gamma)
 
     v_loss = .5*(v - value).pow(2).mean() 
     p_loss = (adv*new_logits[:-1]).mean()

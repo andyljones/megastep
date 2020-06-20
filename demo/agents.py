@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 class Scaler(nn.Module):
 
-    def __init__(self, width, com=10):
+    def __init__(self, width, com=100):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
