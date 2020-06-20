@@ -34,30 +34,32 @@ class WaypointEnv:
         obs['waypoint'] = relative
         return obs.clone()
 
-    def _reward(self):
+    def _success(self):
         distances = (self._waypoints - self._core.agents.positions).pow(2).sum(-1).pow(.5)
-        success = (distances < .15)
-        failure = (distances > 5)
-        self._refresh_waypoints(success | failure)
-        return success.float().sum(-1)
+        success = (distances < .15).all(-1)
+        failure = (distances > 5).any(-1)
+        return success, failure
 
     @torch.no_grad()
     def reset(self):
-        self._reset(core.env_full_like(self._core, True))
+        reset = core.env_full_like(self._core, True)
+        self._reset(reset)
         return arrdict(
             obs=self._observe(),
-            reward=self._reward(),
-            reset=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self._core.device),
-            terminal=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self._core.device))
+            reward=core.env_full_like(self._core, 0.),
+            reset=reset,
+            terminal=reset)
 
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
+        success, failure = self._success()
+        self._reset(success | failure)
         return arrdict(
             obs=self._observe(),
-            reward=self._reward(),
-            reset=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self._core.device),
-            terminal=torch.full((self._core.n_envs,), False, dtype=torch.bool, device=self._core.device))
+            reward=success.float(),
+            reset=success | failure,
+            terminal=success | failure)
 
     def state(self, d=0):
         return arrdict(

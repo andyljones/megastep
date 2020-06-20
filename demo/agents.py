@@ -25,8 +25,8 @@ class Scaler(nn.Module):
         nu = a*x.pow(2).mean() + (1 - a)*self.nu
         sigma = (nu - mu**2).pow(.5)
         
-        self.layer.weight.data[:] = sigma/self.sigma*self.layer.weight
-        self.layer.bias.data[:] = (sigma*self.layer.bias + mu - self.mu)/self.sigma
+        self.layer.weight.data[:] = self.sigma/sigma*self.layer.weight
+        self.layer.bias.data[:] = (self.sigma*self.layer.bias + self.mu - mu)/sigma
 
         self.mu[()] = mu
         self.nu[()] = nu
