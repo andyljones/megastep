@@ -1,5 +1,6 @@
+import numpy as np
 import torch
-from rebar import arrdict
+from rebar import arrdict, dotdict
 from .. import spaces
 
 __all__ = []
@@ -66,12 +67,13 @@ class State:
         self._name = name
         self._builder = builder
 
-    def obs(self, obs):
-        self._builder._obs.add((self._name, obs))
-        return self
-
-    def to(self, action, state, reward=0., prob=1.):
-        self._builder._trans.add((self._name, action, state, reward, prob))
+    def to(self, state, action, reward=0., prob=1.):
+        self._builder._trans.append(dotdict(
+            prev=self._name, 
+            action=action, 
+            next=state, 
+            reward=reward, 
+            prob=prob))
         return self
 
 class Builder:
@@ -80,15 +82,48 @@ class Builder:
         self._obs = []
         self._trans = []
 
-    def state(self, name):
+    def state(self, name, obs):
+        if isinstance(obs, (int, float, bool)):
+            obs = (obs,)
+        self._obs.append(dotdict(state=name, obs=obs))
         return State(name, self)
+    
+    def build(self):
+        states = (
+            {x.state for x in self._obs} | 
+            {x.prev for x in self._trans} | 
+            {x.next for x in self._trans})
+
+        actions = {x.action for x in self._trans}
+        assert max(actions) == len(actions)-1, 'Action set isn\'t contiguous'
+        
+        indices = {s: i for i, s in enumerate(states)}
+
+        n_states = len(states)
+        n_actions = len(actions)
+        (d_obs,) = {len(x.obs) for x in self._obs}
+
+        obs = torch.full((n_states, d_obs), np.nan)
+        for x in self._obs:
+            obs[indices[x.state]] = torch.as_tensor(x.obs)
+
+        trans = torch.full((n_states, n_actions, n_states), 0.)
+        reward = torch.full((n_states, n_actions), 0.)
+        for x in self._trans:
+            trans[indices[x.prev], x.action, indices[x.next]] = x.prob
+            reward[indices[x.prev], x.action] = x.reward
+        
+        terminal = trans.sum(-1).max(-1).values == 0
+        origin = (trans.sum(0).max(1).values == 0)
+
+        return dotdict(obs=obs, trans=trans, terminal=terminal, origin=origin, indices=indices)
 
 
 def fsm(f):
 
     def init(self, *args, n_envs=1, **kwargs):
-        states = f(*args, **kwargs)
-        super(self.__class__, self).__init__(states=states, n_envs=n_envs)
+        fsm = f(*args, **kwargs)
+        super(self.__class__, self).__init__(fsm=fsm, n_envs=n_envs)
 
     name = f.__name__
     __all__.append(name)
@@ -96,7 +131,9 @@ def fsm(f):
 
 @fsm
 def UnitReward():
-    return {'start': (False, (), [('start', 1.)]),}
+    b = Builder()
+    b.state('start', ()).to('start', 0, 1.)
+    return b.build()
 
 @fsm
 def Chain(n):
