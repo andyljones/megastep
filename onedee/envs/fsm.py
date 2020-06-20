@@ -148,18 +148,18 @@ def UnitReward():
     return Builder().state('start', (), 1.).to('start', 0, 1.).build()
 
 @fsm
-def Chain(n):
+def Chain(n, r=1):
     assert n >= 2, 'Need the number of states to be at least 2'
     b = Builder()
     b.state(0, obs=0., start=1.).to(1, 0)
     for i in range(1, n-1):
         b.state(i, obs=i/n).to(i+1, 0)
-    b.state(n-1, obs=n-1/n).to(n, 0, reward=1)
+    b.state(n-1, obs=n-1/n).to(n, 0, reward=r)
     return b.build()
 
 @fsm
-def CoinFlip():
+def CoinFlip(r=1.):
     return (Builder()
-        .state('heads', obs=+1., start=1.).to('end', 0, reward=+1.)
-        .state('tails', obs=-1., start=1.).to('end', 0, reward=-1.)
+        .state('heads', obs=+1., start=1.).to('end', 0, reward=+r)
+        .state('tails', obs=-1., start=1.).to('end', 0, reward=-r)
         .build())
