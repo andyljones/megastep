@@ -68,7 +68,7 @@ class State:
         self._builder = builder
 
     def to(self, state, action, reward=0., weight=1.):
-        assert isinstance(action, int)
+        action = int(action)
         self._builder._trans.append(dotdict(
             prev=self._name, 
             action=action, 
@@ -148,13 +148,13 @@ def UnitReward():
     return Builder().state('start', (), 1.).to('start', 0, 1.).build()
 
 @fsm
-def Chain(n, r=1):
+def ObliviousChain(n, r=1):
     assert n >= 2, 'Need the number of states to be at least 2'
     b = Builder()
     b.state(0, obs=0., start=1.).to(1, 0)
-    for i in range(1, n-1):
-        b.state(i, obs=i/n).to(i+1, 0)
-    b.state(n-1, obs=n-1/n).to(n, 0, reward=r)
+    for i in range(1, n):
+        reward = (i == n-1)
+        b.state(i, obs=i/n).to(i+1, 0, reward=reward)
     return b.build()
 
 @fsm
@@ -163,3 +163,53 @@ def CoinFlip(r=1.):
         .state('heads', obs=+1., start=1.).to('end', 0, reward=+r)
         .state('tails', obs=-1., start=1.).to('end', 0, reward=-r)
         .build())
+
+@fsm
+def MatchCoinFlip(r=1.):
+    return (Builder()
+        .state('heads', obs=+1., start=1.)
+            .to('end', 0, reward=+r)
+            .to('end', 1, reward=-r)
+        .state('tails', obs=-1., start=1.)
+            .to('end', 0, reward=-r)
+            .to('end', 1, reward=+r)
+        .build())
+
+@fsm
+def DoubleChain(n, r=1.):
+    assert n >= 2, 'Need the radius to be at least 2'
+    b = Builder()
+    (b.state(0, obs=0., start=1.)
+        .to(-1, action=0)
+        .to(+1, action=1))
+    for i in range(1, n):
+        reward = (i == n-1)
+        (b.state(+i, obs=+i/n)
+            .to(+i-1, action=0)
+            .to(+i+1, action=1, reward=+reward))
+        (b.state(-i, obs=-i/n)
+            .to(-i-1, action=0, reward=-reward)
+            .to(-i+1, action=1))
+    return b.build()
+
+@fsm
+def DoubleRandomChain(n, r=1.):
+    assert n >= 2, 'Need the radius to be at least 2'
+    b = Builder()
+    actions = np.random.permutation([0, 1])
+    (b.state(0, obs=0., start=1.)
+        .to(-1, action=actions[0])
+        .to(+1, action=actions[1]))
+    for i in range(1, n):
+        reward = (i == n-1)
+        actions = np.random.permutation([0, 1])
+        (b.state(+i, obs=+i/n)
+            .to(+i-1, action=actions[0])
+            .to(+i+1, action=actions[1], reward=+reward))
+        actions = np.random.permutation([0, 1])
+        (b.state(-i, obs=-i/n)
+            .to(-i-1, action=actions[0], reward=-reward)
+            .to(-i+1, action=actions[1]))
+    return b.build()
+
+  

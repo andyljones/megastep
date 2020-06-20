@@ -100,6 +100,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     stats.mean('entropy', -(new_logits.exp()*new_logits).mean())
     stats.mean('debug-v/vu', vu.mean())
     stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
+    stats.mean('debug-scale/v', v.abs().mean())
     stats.mean('debug-scale/vu', vu.abs().mean())
     stats.mean('debug-max/vu', vu.abs().max())
     stats.mean('debug-scale/adv', adv.abs().mean())
