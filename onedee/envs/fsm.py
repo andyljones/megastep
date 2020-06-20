@@ -13,6 +13,7 @@ class FSMEnv:
 
         self._obs = fsm.obs.to(device)
         self._trans = fsm.trans.to(device)
+        self._reward = fsm.reward.to(device)
         self._terminal = fsm.terminal.to(device)
         self._start = fsm.start.to(device)
         self._indices = fsm.indices
@@ -75,6 +76,12 @@ class State:
             weight=weight))
         return self
 
+    def state(self, *args, **kwargs):
+        return self._builder.state(*args, **kwargs)
+
+    def build(self):
+        return self._builder.build()
+
 class Builder:
 
     def __init__(self):
@@ -120,7 +127,7 @@ class Builder:
         assert start.sum() > 0, 'No start state declared'
 
         return dotdict(
-            obs=obs, trans=trans, terminal=terminal, start=start, 
+            obs=obs, trans=trans, reward=reward, terminal=terminal, start=start, 
             indices=indices, names=names,
             n_states=n_states, n_actions=n_actions, d_obs=d_obs)
 
@@ -137,20 +144,17 @@ def fsm(f):
 
 @fsm
 def UnitReward():
-    b = Builder()
-    b.state('start', (), 1.).to('start', 0, 1.)
-    return b.build()
+    return Builder().state('start', (), 1.).to('start', 0, 1.).build()
 
 @fsm
 def Chain(n):
     assert n >= 2, 'Need the number of states to be at least 1'
-    states = {}
-    for i in range(n-2):
-        states[i] = (False, (i/n,), [(i+1, 0.)])
-    if n > 1:
-        states[n-2] = (False, (n-2/n,), [(n-1, 1.)])
-    states[n-1] = (True, (n-1/n,), [(n-1, 0.)])
-    return states
+    b = Builder()
+    b.state(0, obs=0., start=1.).to(1, 0)
+    for i in range(1, n-1):
+        b.state(i, obs=i/n).to(i+1, 0)
+    b.state(n-1, obs=n-1/n).to(n, 0, reward=1)
+    return b.build()
 
 # @fsm
 # def CoinFlip():
