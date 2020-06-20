@@ -7,7 +7,7 @@ __all__ = []
 
 class FSMEnv:
 
-    def __init__(self, fsm, n_envs, device='cuda'):
+    def __init__(self, n_envs, fsm, device='cuda'):
         self.n_envs = n_envs
         self.device = torch.device(device)
 
@@ -68,6 +68,7 @@ class State:
         self._builder = builder
 
     def to(self, state, action, reward=0., weight=1.):
+        assert isinstance(action, int)
         self._builder._trans.append(dotdict(
             prev=self._name, 
             action=action, 
@@ -134,9 +135,9 @@ class Builder:
 
 def fsm(f):
 
-    def init(self, *args, n_envs=1, **kwargs):
+    def init(self, n_envs=1, *args, **kwargs):
         fsm = f(*args, **kwargs)
-        super(self.__class__, self).__init__(fsm=fsm, n_envs=n_envs)
+        super(self.__class__, self).__init__(n_envs, fsm)
 
     name = f.__name__
     __all__.append(name)
@@ -148,7 +149,7 @@ def UnitReward():
 
 @fsm
 def Chain(n):
-    assert n >= 2, 'Need the number of states to be at least 1'
+    assert n >= 2, 'Need the number of states to be at least 2'
     b = Builder()
     b.state(0, obs=0., start=1.).to(1, 0)
     for i in range(1, n-1):
@@ -156,10 +157,9 @@ def Chain(n):
     b.state(n-1, obs=n-1/n).to(n, 0, reward=1)
     return b.build()
 
-# @fsm
-# def CoinFlip():
-#     return {
-#         'start': (False, (0.,))
-#         'heads': (False, (+1.,), [('end', +1.)]),
-#         'tails': (False, (-1.,), [('end', -1.)]),
-#         'end': (True, (0.,), [('end', 0.)])}
+@fsm
+def CoinFlip():
+    return (Builder()
+        .state('heads', obs=+1., start=1.).to('end', 0, reward=+1.)
+        .state('tails', obs=-1., start=1.).to('end', 0, reward=-1.)
+        .build())
