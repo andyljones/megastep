@@ -158,25 +158,25 @@ def ObliviousChain(n, r=1):
     return b.build()
 
 @fsm
-def CoinFlip(r=1.):
+def CoinFlip(reward=1.):
     return (Builder()
-        .state('heads', obs=+1., start=1.).to('end', 0, reward=+r)
-        .state('tails', obs=-1., start=1.).to('end', 0, reward=-r)
+        .state('heads', obs=+1., start=1.).to('end', 0, reward=+reward)
+        .state('tails', obs=-1., start=1.).to('end', 0, reward=-reward)
         .build())
 
 @fsm
-def MatchCoinFlip(r=1.):
+def MatchCoinFlip(reward=1.):
     return (Builder()
         .state('heads', obs=+1., start=1.)
-            .to('end', 0, reward=+r)
-            .to('end', 1, reward=-r)
+            .to('end', 0, reward=+reward)
+            .to('end', 1, reward=-reward)
         .state('tails', obs=-1., start=1.)
-            .to('end', 0, reward=-r)
-            .to('end', 1, reward=+r)
+            .to('end', 0, reward=-reward)
+            .to('end', 1, reward=+reward)
         .build())
 
 @fsm
-def DoubleChain(n, r=1.):
+def DoubleChain(n):
     assert n >= 2, 'Need the radius to be at least 2'
     b = Builder()
     (b.state(0, obs=0., start=1.)
@@ -193,20 +193,21 @@ def DoubleChain(n, r=1.):
     return b.build()
 
 @fsm
-def DoubleRandomChain(n, r=1.):
+def DoubleRandomChain(n, seed=0):
     assert n >= 2, 'Need the radius to be at least 2'
     b = Builder()
-    actions = np.random.permutation([0, 1])
+    random = np.random.RandomState(seed)
+    actions = random.permutation([0, 1])
     (b.state(0, obs=0., start=1.)
         .to(-1, action=actions[0])
         .to(+1, action=actions[1]))
     for i in range(1, n):
         reward = (i == n-1)
-        actions = np.random.permutation([0, 1])
+        actions = random.permutation([0, 1])
         (b.state(+i, obs=+i/n)
             .to(+i-1, action=actions[0])
             .to(+i+1, action=actions[1], reward=+reward))
-        actions = np.random.permutation([0, 1])
+        actions = random.permutation([0, 1])
         (b.state(-i, obs=-i/n)
             .to(-i-1, action=actions[0], reward=-reward)
             .to(-i+1, action=actions[1]))
