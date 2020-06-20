@@ -57,11 +57,11 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
     return v.detach()
 
-def advantages(ratios, value, reward, reset, v, gamma, max_pg_rho=1):
+def advantages(ratios, value, reward, reset, vu, scaler, gamma, max_pg_rho=1):
     rho = ratios.clamp(0, max_pg_rho)
     discount = (1 - reset.int())*gamma
-    vprime = torch.cat([v[1:], value[[-1]]])
-    adv = reward + discount*vprime - value
+    vprime = torch.cat([vu[1:], scaler.unscale(value)[[-1]]])
+    adv = scaler.scale(reward + discount*vprime) - value
     return (rho*adv).detach()
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
@@ -77,7 +77,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     value = decision.value[:-1]
     vu = v_trace(ratios, agent.scaler.unscale(value), reward, reset, terminal, gamma=gamma)
     v = agent.scaler.scale(vu)
-    adv = advantages(ratios, value, reward, reset, v, gamma=gamma)
+    adv = advantages(ratios, value, reward, reset, vu, agent.scaler, gamma=gamma)
 
     v_loss = .5*(v - value).pow(2).mean() 
     p_loss = (adv*new_logits[:-1]).mean()
@@ -87,14 +87,16 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     opt.zero_grad()
     loss.backward()
 
-    opt.step()
+    torch.nn.utils.clip_grad_norm_(agent.parameters(), 40.)
     agent.scaler.step(vu)
+    opt.step()
 
     stats.mean('loss/value', v_loss)
     stats.mean('loss/policy', p_loss)
     stats.mean('loss/entropy', h_loss)
     stats.mean('loss/total', loss)
-    stats.mean('resid-var', (vu - agent.scaler.unscale(value)).pow(2).mean(), vu.pow(2).mean())
+    stats.mean('resid-var/raw', (vu - agent.scaler.unscale(value)).pow(2).mean(), vu.pow(2).mean())
+    stats.mean('resid-var/scaled', (v - value).pow(2).mean(), v.pow(2).mean())
     stats.mean('entropy', -(new_logits.exp()*new_logits).mean())
     stats.mean('debug-v/v', vu.mean())
     stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))

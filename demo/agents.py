@@ -7,19 +7,21 @@ from torch.nn import functional as F
 
 class Scaler(nn.Module):
 
-    def __init__(self, width, com=100):
+    def __init__(self, width, com=10):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
         self.register_buffer('mu', torch.zeros(()))
         self.register_buffer('nu', torch.ones(()))
         self.layer = nn.Linear(width, 1)
+        self._n = 0
 
     @property
     def sigma(self):
         return (self.nu - self.mu**2).pow(.5)
 
     def step(self, x):
+        self._n += 1
         a = self._alpha
         mu = a*x.mean() + (1 - a)*self.mu
         nu = a*x.pow(2).mean() + (1 - a)*self.nu
