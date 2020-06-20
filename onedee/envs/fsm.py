@@ -7,32 +7,29 @@ __all__ = []
 
 class FSMEnv:
 
-    def __init__(self, states, n_envs, device='cuda'):
-        indices = {n: i for i, n in enumerate(states)}
-        (d_obs,) = {len(o) for t, o, ars in states.values()}
-        (n_actions,) = {len(ars) for t, o, ars in states.values()}
-
-        self.action_space = spaces.MultiDiscrete(1, n_actions)
-        self.observation_space = spaces.MultiVector(1, d_obs) if d_obs else spaces.MultiEmpty()
-
+    def __init__(self, fsm, n_envs, device='cuda'):
         self.n_envs = n_envs
-        self.n_agents = 1
         self.device = torch.device(device)
-        self._token = torch.zeros(n_envs, dtype=torch.long)
 
-        term, obs, trans, reward = [], [], [], []
-        for t, o, ars in states.values():
-            term.append(t)
-            obs.append(o)
-            trans.append([indices[s] for s, r in ars])
-            reward.append([r for s, r in ars])
-        self._term = torch.as_tensor(term, dtype=torch.bool, device=self.device)
-        self._obs = torch.as_tensor(obs, dtype=torch.float, device=self.device)
-        self._trans = torch.as_tensor(trans, dtype=torch.int, device=self.device)
-        self._reward = torch.as_tensor(reward, dtype=torch.float, device=self.device)
+        self._obs = fsm.obs.to(device)
+        self._trans = fsm.trans.to(device)
+        self._terminal = fsm.terminal.to(device)
+        self._start = fsm.start.to(device)
+        self._indices = fsm.indices
+        self._names = fsm.names
+
+        self._token = torch.full((self.n_envs,), -1, dtype=torch.long, device=device)
+
+        self.observation_space = spaces.MultiVector(1, fsm.d_obs) if fsm.d_obs else spaces.MultiEmpty()
+        self.action_space = spaces.MultiDiscrete(1, fsm.n_actions)
+
+    def _reset(self, reset):
+        if reset.any():
+            n_reset = reset.sum()
+            self._token[reset] = torch.distributions.Categorical(self._start).sample((n_reset,))
 
     def reset(self):
-        self._token[:] = 0
+        self._reset(self._terminal.new_ones((self.n_envs,)))
         return arrdict(
             obs=self._obs[self._token, None],
             reward=torch.zeros((self.n_envs,), dtype=torch.float, device=self.device),
@@ -42,10 +39,12 @@ class FSMEnv:
     def step(self, decision):
         actions = decision.actions[:, 0]
         reward = self._reward[self._token, actions]
-        self._token[:] = self._trans[self._token, actions].long()
+
+        weights = self._trans[self._token, actions]
+        self._token[:] = torch.distributions.Categorical(weights).sample()
         
-        reset = self._term[self._token]
-        self._token[reset] = 0
+        reset = self._terminal[self._token]
+        self._reset(reset)
 
         return arrdict(
             obs=self._obs[self._token, None],
@@ -54,7 +53,7 @@ class FSMEnv:
             terminal=reset)
 
     def __repr__(self):
-        s, a = self._trans.shape
+        s, a, _ = self._trans.shape
         return f'{type(self).__name__}({s}s{a}a)' 
 
     def __str__(self):
@@ -67,13 +66,13 @@ class State:
         self._name = name
         self._builder = builder
 
-    def to(self, state, action, reward=0., prob=1.):
+    def to(self, state, action, reward=0., weight=1.):
         self._builder._trans.append(dotdict(
             prev=self._name, 
             action=action, 
             next=state, 
             reward=reward, 
-            prob=prob))
+            weight=weight))
         return self
 
 class Builder:
@@ -82,10 +81,10 @@ class Builder:
         self._obs = []
         self._trans = []
 
-    def state(self, name, obs):
+    def state(self, name, obs, start=0.):
         if isinstance(obs, (int, float, bool)):
             obs = (obs,)
-        self._obs.append(dotdict(state=name, obs=obs))
+        self._obs.append(dotdict(state=name, obs=obs, start=start))
         return State(name, self)
     
     def build(self):
@@ -98,25 +97,32 @@ class Builder:
         assert max(actions) == len(actions)-1, 'Action set isn\'t contiguous'
         
         indices = {s: i for i, s in enumerate(states)}
+        names = np.array(list(states))
 
         n_states = len(states)
         n_actions = len(actions)
         (d_obs,) = {len(x.obs) for x in self._obs}
 
         obs = torch.full((n_states, d_obs), np.nan)
+        start = torch.full((n_states,), 0.)
         for x in self._obs:
             obs[indices[x.state]] = torch.as_tensor(x.obs)
+            start[indices[x.state]] = x.start
 
         trans = torch.full((n_states, n_actions, n_states), 0.)
         reward = torch.full((n_states, n_actions), 0.)
         for x in self._trans:
-            trans[indices[x.prev], x.action, indices[x.next]] = x.prob
+            trans[indices[x.prev], x.action, indices[x.next]] = x.weight
             reward[indices[x.prev], x.action] = x.reward
         
-        terminal = trans.sum(-1).max(-1).values == 0
-        origin = (trans.sum(0).max(1).values == 0)
+        terminal = (trans.sum(-1).max(-1).values == 0)
 
-        return dotdict(obs=obs, trans=trans, terminal=terminal, origin=origin, indices=indices)
+        assert start.sum() > 0, 'No start state declared'
+
+        return dotdict(
+            obs=obs, trans=trans, terminal=terminal, start=start, 
+            indices=indices, names=names,
+            n_states=n_states, n_actions=n_actions, d_obs=d_obs)
 
 
 def fsm(f):
@@ -132,7 +138,7 @@ def fsm(f):
 @fsm
 def UnitReward():
     b = Builder()
-    b.state('start', ()).to('start', 0, 1.)
+    b.state('start', (), 1.).to('start', 0, 1.)
     return b.build()
 
 @fsm
