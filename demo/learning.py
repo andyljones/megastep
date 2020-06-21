@@ -35,7 +35,7 @@ def deltas(reward, value, reset, terminal, gamma=.99):
     # Because we're missing the value for the state after the final reward, we drop that final reward
     #
     # Indices of the output correspond to the front T-1 indices of the values. 
-    reward, reset, terminal = reward[:-1], reset[1:], terminal[1:]
+    reward, reset, terminal = reward[1:], reset[1:], terminal[1:]
     regular_deltas = reward - (value[:-1] - gamma*value[1:])
     terminated_deltas = torch.where(terminal, reward - value[:-1], regular_deltas)
     return torch.where(reset & ~terminal, torch.zeros_like(reward), terminated_deltas)
@@ -58,9 +58,10 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
     return v.detach()
 
 def advantages(ratios, value, reward, reset, terminal, vu, scaler, gamma, max_pg_rho=1):
-    regular_adv = (reward[:-1] + gamma*vu[1:]) - value[:-1]
-    terminated_adv = torch.where(terminal[1:], scaler.scale(reward[:-1] - scaler.unscale(value[:-1])), regular_adv)
-    return torch.where(reset[1:] & ~terminal[1:], torch.zeros_like(reward[:-1]), terminated_adv).detach()
+    reward, reset, terminal = reward[1:], reset[1:], terminal[1:]
+    regular_adv = (reward + gamma*vu[1:]) - value[:-1]
+    terminated_adv = torch.where(terminal, scaler.scale(reward - scaler.unscale(value[:-1])), regular_adv)
+    return torch.where(reset & ~terminal, torch.zeros_like(reward), terminated_adv).detach()
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
@@ -118,7 +119,7 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
             prod_c = c[s:t].prod()
             if terminal[t+1]:
                 # If the next state is terminal, then the next value is zero
-                dV = rho[t]*(reward[t] - value[t])
+                dV = rho[t]*(reward[t+1] - value[t])
                 v[s] += gamma**(t - s) * prod_c*dV
                 break
             elif reset[t+1]:
@@ -126,52 +127,52 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
                 # explained the intervening reward perfectly
                 break
             else:
-                dV = rho[t]*(reward[t] + gamma*value[t+1] - value[t])
+                dV = rho[t]*(reward[t+1] + gamma*value[t+1] - value[t])
                 v[s] += gamma**(t - s) * prod_c*dV
     
     return v
 
 def test_v_trace_trivial():
     ratios = torch.tensor([1., 1.])
-    value = torch.tensor([2., 3.])
-    reward = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, False])
     terminal = torch.tensor([False, False])
     gamma = 1.
 
     expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([4., 3.]))
+    torch.testing.assert_allclose(expected, torch.tensor([6., 4.]))
 
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([4., 3.]))
+    torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
 
 def test_v_trace_reset():
     ratios = torch.tensor([1., 1.])
-    value = torch.tensor([2., 3.])
-    reward = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, False])
     gamma = 1.
 
     expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([2., 3.]))
+    torch.testing.assert_allclose(expected, torch.tensor([3., 4.]))
 
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([2., 3.]))
+    torch.testing.assert_allclose(actual, torch.tensor([3., 4.]))
 
 def test_v_trace_terminal():
     ratios = torch.tensor([1., 1.])
-    value = torch.tensor([2., 3.])
-    reward = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, True])
     gamma = 1.
 
     expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([1., 3.]))
+    torch.testing.assert_allclose(expected, torch.tensor([2., 4.]))
 
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([1., 3.]))
+    torch.testing.assert_allclose(actual, torch.tensor([2., 4.]))
 
 def test_v_trace_random(R=100, T=10):
     for _ in range(R):

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from rebar import arrdict, dotdict
 from .. import spaces
+import pandas as pd
 
 __all__ = []
 
@@ -9,6 +10,7 @@ class FSMEnv:
 
     def __init__(self, n_envs, fsm, device='cuda'):
         self.n_envs = n_envs
+        self.n_states = fsm.n_states
         self.device = torch.device(device)
 
         self._obs = fsm.obs.to(device)
@@ -52,6 +54,24 @@ class FSMEnv:
             reward=reward,
             reset=reset,
             terminal=reset)
+
+    def solve(self, eps=1e-3, gamma=.99):
+        value = self._reward.new_zeros((self.n_states,))
+        while True:
+            succ = (value[None, None, :]*self._trans).sum(-1)
+            best = (self._reward + gamma*succ).max(-1)
+            best.values[self._terminal] = 0
+            change = value - best.values
+            value = best.values
+            
+            if change.pow(2).mean().pow(.5) < eps:
+                break
+                
+        return arrdict(value=value, policy=best.indices)
+
+    def dataframe(self, **kwargs):
+        pass
+
 
     def __repr__(self):
         s, a, _ = self._trans.shape
@@ -137,6 +157,7 @@ def fsm(f):
 
     def init(self, n_envs=1, *args, **kwargs):
         fsm = f(*args, **kwargs)
+        assert isinstance(fsm, dict), 'FSM description must be a dictionary. Did you forget to call `.build()`?'
         super(self.__class__, self).__init__(n_envs, fsm)
 
     name = f.__name__
@@ -145,7 +166,20 @@ def fsm(f):
 
 @fsm
 def UnitReward():
-    return Builder().state('start', (), 1.).to('start', 0, 1.).build()
+    return (Builder()
+        .state('start', obs=(), start=1.)
+            .to('end', action=0, reward=1.)
+        .build())
+
+@fsm
+def UnitZeroReward():
+    return (Builder()
+        .state('start', obs=0., start=1.)
+            .to('middle', action=0, reward=1)
+        .state('middle', obs=1.)
+            .to('end', action=0, reward=0)
+        .build())
+
 
 @fsm
 def ObliviousChain(n, r=1):
