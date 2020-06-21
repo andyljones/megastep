@@ -70,8 +70,17 @@ class FSMEnv:
         return arrdict(value=value, policy=best.indices)
 
     def dataframe(self, **kwargs):
-        pass
-
+        soln = self.solve(**kwargs)
+        successor = self._trans[torch.arange(self.n_states, device=self.device), soln.policy].argmax(-1)
+        successor = [self._names[i] for i in successor]
+        return pd.DataFrame(arrdict.numpyify(dict(
+                    obs=[tuple(f'{x:.2f}' for x in o) for o in arrdict.numpyify(self._obs)],
+                    term=self._terminal,
+                    start=self._start,
+                    value=soln.value,
+                    policy=soln.policy,
+                    successor=successor
+                )), index=self._names).sort_index()
 
     def __repr__(self):
         s, a, _ = self._trans.shape
