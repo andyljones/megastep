@@ -14,14 +14,12 @@ class Scaler(nn.Module):
         self.register_buffer('mu', torch.zeros(()))
         self.register_buffer('nu', torch.ones(()))
         self.layer = nn.Linear(width, 1)
-        self._n = 0
 
     @property
     def sigma(self):
         return (self.nu - self.mu**2).pow(.5)
 
     def step(self, x):
-        self._n += 1
         a = 0*self._alpha
         mu = a*x.mean() + (1 - a)*self.mu
         nu = a*x.pow(2).mean() + (1 - a)*self.nu
