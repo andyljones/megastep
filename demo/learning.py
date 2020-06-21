@@ -1,5 +1,8 @@
 import torch
 from rebar import stats
+import logging
+
+log = logging.getLogger(__name__)
 
 def sample(chunk, batchsize):
     B = chunk.world.reward.shape[1]
@@ -61,7 +64,7 @@ def advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma, max_pg_rho=1
     rho = ratios.clamp(0, max_pg_rho)
     return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal, gamma=gamma)).detach()
 
-def step(agent, opt, batch, entropy=.01, gamma=.99):
+def step(agent, opt, batch, entropy=.0005, gamma=.99):
     decision = agent(batch.world, value=True)
 
     logits = flatten(decision.logits)

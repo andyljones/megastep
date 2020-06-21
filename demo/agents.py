@@ -20,7 +20,7 @@ class Scaler(nn.Module):
         return (self.nu - self.mu**2).pow(.5)
 
     def step(self, x):
-        a = 0*self._alpha
+        a = self._alpha
         mu = a*x.mean() + (1 - a)*self.mu
         nu = a*x.pow(2).mean() + (1 - a)*self.nu
         sigma = (nu - mu**2).pow(.5)

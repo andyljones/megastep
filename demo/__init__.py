@@ -9,7 +9,7 @@ import cubicasa
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    # return onedee.DoubleRandomChain(n=2)
+    # return onedee.RandomChain(n_envs, n=2)
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
@@ -21,18 +21,19 @@ def agentfunc():
 def chunkstats(chunk):
     stats.rate('rate/actor', chunk.world.reset.nelement())
     stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
+    stats.cumsum('n-traj', chunk.world.reset.sum())
     stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
     stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
 def run():
-    buffer_size = 128
-    batch_size = 2048
-    n_envs = 2048
-    gearing = 8
+    buffer_size = 32
+    batch_size = 512
+    n_envs = 512
+    gearing = 1
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-3)
+    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-4)
 
     paths.clear('test')
     compositor = widgets.Compositor()

@@ -246,41 +246,20 @@ def MatchCoin(reward=1.):
         .build())
 
 @fsm
-def DoubleChain(n):
-    assert n >= 2, 'Need the radius to be at least 2'
-    b = Builder()
-    (b.state(0, obs=0., start=1.)
-        .to(-1, action=0)
-        .to(+1, action=1))
-    for i in range(1, n):
-        reward = (i == n-1)
-        (b.state(+i, obs=+i/n)
-            .to(+i-1, action=0)
-            .to(+i+1, action=1, reward=+reward))
-        (b.state(-i, obs=-i/n)
-            .to(-i-1, action=0, reward=-reward)
-            .to(-i+1, action=1))
-    return b.build()
-
-@fsm
-def DoubleRandomChain(n, seed=0):
+def RandomChain(n, seed=0):
     assert n >= 2, 'Need the radius to be at least 2'
     b = Builder()
     random = np.random.RandomState(seed)
     actions = random.permutation([0, 1])
     (b.state(0, obs=0., start=1.)
-        .to(-1, action=actions[0])
-        .to(+1, action=actions[1]))
+        .to(0, action=actions[0])
+        .to(1, action=actions[1]))
     for i in range(1, n):
         reward = (i == n-1)
         actions = random.permutation([0, 1])
         (b.state(+i, obs=+i/n)
-            .to(+i-1, action=actions[0])
-            .to(+i+1, action=actions[1], reward=+reward))
-        actions = random.permutation([0, 1])
-        (b.state(-i, obs=-i/n)
-            .to(-i-1, action=actions[0], reward=-reward)
-            .to(-i+1, action=actions[1]))
+            .to(0, action=actions[0])
+            .to(i+1, action=actions[1], reward=+reward))
     return b.build()
 
   
