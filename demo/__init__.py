@@ -9,7 +9,7 @@ import cubicasa
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.DoubleRandomChain(n=3)
+    return onedee.ObliviousDelayedCoin()
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)

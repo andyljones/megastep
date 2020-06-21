@@ -4,7 +4,16 @@ from rebar import arrdict, dotdict
 from .. import spaces
 import pandas as pd
 
-__all__ = []
+__all__ = ['dataframe']
+
+def _dataframe(traj):
+    if isinstance(traj, dict):
+        return [([k] + kk, vv) for k, v in traj.items() for kk, vv in _dataframe(v)]
+    if isinstance(traj, torch.Tensor):
+        return [([], pd.Series([x for x in arrdict.numpyify(traj)]))]
+
+def dataframe(traj):
+    return pd.concat({'.'.join(k): v for k, v in _dataframe(traj)}, 1)
 
 class FSMEnv:
 
@@ -51,6 +60,7 @@ class FSMEnv:
 
         return arrdict(
             obs=self._obs[self._token, None],
+            idx=self._token.clone(),
             reward=reward,
             reset=reset,
             terminal=reset)
@@ -74,13 +84,14 @@ class FSMEnv:
         successor = self._trans[torch.arange(self.n_states, device=self.device), soln.policy].argmax(-1)
         successor = [self._names[i] for i in successor]
         return pd.DataFrame(arrdict.numpyify(dict(
+                    name=self._names,
                     obs=[tuple(f'{x:.2f}' for x in o) for o in arrdict.numpyify(self._obs)],
                     term=self._terminal,
                     start=self._start,
                     value=soln.value,
                     policy=soln.policy,
-                    successor=successor
-                )), index=self._names).sort_index()
+                    successor=successor,
+                ))).sort_index()
 
     def __repr__(self):
         s, a, _ = self._trans.shape
@@ -96,7 +107,7 @@ class State:
         self._name = name
         self._builder = builder
 
-    def to(self, state, action, reward=0., weight=1.):
+    def to(self, state, action=0, reward=0., weight=1.):
         action = int(action)
         self._builder._trans.append(dotdict(
             prev=self._name, 
@@ -174,19 +185,19 @@ def fsm(f):
     return type(name, (FSMEnv,), {'__init__': init})
 
 @fsm
-def UnitReward():
+def ObliviousConstantReward():
     return (Builder()
         .state('start', obs=(), start=1.)
-            .to('end', action=0, reward=1.)
+            .to('end', reward=1.)
         .build())
 
 @fsm
-def UnitZeroReward():
+def ObliviousCyclicReward():
     return (Builder()
         .state('start', obs=0., start=1.)
-            .to('middle', action=0, reward=1)
+            .to('middle', reward=1)
         .state('middle', obs=1.)
-            .to('end', action=0, reward=0)
+            .to('end', reward=0)
         .build())
 
 
@@ -201,10 +212,25 @@ def ObliviousChain(n, r=1):
     return b.build()
 
 @fsm
-def CoinFlip(reward=1.):
+def ObliviousCoin(reward=1.):
     return (Builder()
-        .state('heads', obs=+1., start=1.).to('end', 0, reward=+reward)
-        .state('tails', obs=-1., start=1.).to('end', 0, reward=-reward)
+        .state('heads', obs=+1., start=1.)
+            .to('end', 0, reward=+reward)
+        .state('tails', obs=-1., start=1.)
+            .to('end', 0, reward=-reward)
+        .build())
+
+@fsm
+def ObliviousDelayedCoin(reward=1.):
+    return (Builder()
+        .state('heads-1', obs=+.5, start=1.)
+            .to('heads-2')
+        .state('heads-2', obs=+1.)
+            .to('end', reward=+reward)
+        .state('tails-1', obs=-.5, start=1.)
+            .to('tails-2')
+        .state('tails-2', obs=-1.)
+            .to('end', reward=-reward)
         .build())
 
 @fsm
