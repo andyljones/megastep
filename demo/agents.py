@@ -34,11 +34,17 @@ class Scaler(nn.Module):
         self.nu[()] = nu
         stats.last('scaler/mean', mu)
         stats.last('scaler/std', sigma)
-    
+
     def scale(self, x):
+        return x/self.sigma
+
+    def unscale(self, x):
+        return x*self.sigma
+    
+    def norm(self, x):
         return (x - self.mu)/self.sigma
     
-    def unscale(self, x):
+    def unnorm(self, x):
         return (x + self.mu)*self.sigma
     
     def forward(self, x):
