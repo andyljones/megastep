@@ -202,7 +202,6 @@ def ObliviousCyclicReward():
             .to('end', reward=0)
         .build())
 
-
 @fsm
 def ObliviousChain(n, r=1):
     assert n >= 2, 'Need the number of states to be at least 2'
@@ -236,7 +235,7 @@ def ObliviousDelayedCoin(reward=1.):
         .build())
 
 @fsm
-def MatchCoinFlip(reward=1.):
+def MatchCoin(reward=1.):
     return (Builder()
         .state('heads', obs=+1., start=1.)
             .to('end', 0, reward=+reward)

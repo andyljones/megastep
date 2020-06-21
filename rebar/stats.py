@@ -47,7 +47,8 @@ def clean(x):
 
 def record(category, field, *args, **kwargs):
     if WRITER is None:
-        raise IOError(f'No writer set while trying to record a "{category}" called "{field}"')
+        return 
+        # raise IOError(f'No writer set while trying to record a "{category}" called "{field}"')
     if not isinstance(field, str):
         raise ValueError(f'Field should be a string, is actually {field}')
 

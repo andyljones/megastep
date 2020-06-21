@@ -59,30 +59,31 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
 def advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma, max_pg_rho=1):
     rho = ratios.clamp(0, max_pg_rho)
-    return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal)).detach()
+    return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal, gamma=gamma)).detach()
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
 
-    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
+    logits = flatten(decision.logits)
     new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
+    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
     ratios = (new_logits - old_logits).exp()
 
     reward = batch.world.reward
     rewardz = agent.scaler.scale(reward)
-    reset = batch.world.reset
-    terminal = batch.world.terminal
     valuez = decision.value
     value = agent.scaler.unnorm(valuez)
+    reset = batch.world.reset
+    terminal = batch.world.terminal
 
     v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
     vz = agent.scaler.norm(v)
 
     adv = advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma=gamma)
 
-    v_loss = .5*(vz - valuez).pow(2).mean() 
-    p_loss = (adv*new_logits[:-1]).mean()
-    h_loss = -(new_logits.exp()*new_logits)[:-1].mean()
+    v_loss = .5*(vz - valuez).pow(2).sum() 
+    p_loss = (adv*new_logits[:-1]).sum()
+    h_loss = -(logits.exp()*logits)[:-1].sum(-1).sum()
     loss = v_loss - p_loss - entropy*h_loss
     
     opt.zero_grad()
@@ -98,7 +99,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
     stats.mean('loss/total', loss)
     stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
     stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-    stats.mean('entropy', -(new_logits.exp()*new_logits).mean())
+    stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
     stats.mean('debug-v/v', v.mean())
     stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
     stats.mean('debug-scale/vz', vz.abs().mean())
@@ -189,3 +190,36 @@ def test_v_trace_random(R=100, T=10):
         actual = v_trace(ratios, value, reward, reset, terminal, gamma)
 
         torch.testing.assert_allclose(expected, actual)
+
+def test_advantages_trivial():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
+    gamma = 1.
+
+    adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
+    torch.testing.assert_allclose(adv, torch.tensor([3.]))
+
+def test_advantages_reset():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, False])
+    gamma = 1.
+
+    adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
+    torch.testing.assert_allclose(adv, torch.tensor([0.]))
+
+def test_advantages_terminal():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, True])
+    gamma = 1.
+
+    adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
+    torch.testing.assert_allclose(adv, torch.tensor([-1.]))
