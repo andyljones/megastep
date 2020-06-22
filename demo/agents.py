@@ -7,11 +7,10 @@ from torch.nn import functional as F
 
 class Scaler(nn.Module):
 
-    def __init__(self, width, com=100):
+    def __init__(self, width, com=10000):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
-        self._alpha = 0.
         self.register_buffer('mu', torch.zeros(()))
         self.register_buffer('nu', torch.ones(()))
         self.layer = nn.Linear(width, 1)
@@ -63,7 +62,7 @@ class Agent(nn.Module):
             spaces.intake(observation_space, width),
             nn.Linear(width, width), nn.ReLU(),
             nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, 1))
+            self.scaler)
 
     def forward(self, world, sample=False, value=False):
         outputs = arrdict(

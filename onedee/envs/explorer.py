@@ -1,6 +1,8 @@
+import numpy as np
 import torch
-from .. import modules, core
+from .. import modules, core, plotting
 from rebar import arrdict
+import matplotlib.pyplot as plt
 
 class ExplorerEnv: 
 
@@ -50,7 +52,7 @@ class ExplorerEnv:
 
     @torch.no_grad()
     def reset(self):
-        reset = env_full_like(self._core, True)
+        reset = core.env_full_like(self._core, True)
         self._reset(reset)
         render = self._observer.render()
         return arrdict(
@@ -86,11 +88,11 @@ class ExplorerEnv:
     @classmethod
     def plot_state(cls, state):
         fig = plt.figure()
-        gs = plt.gridspec(2, 2, fig, 0, 0, 1, 1)
+        gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
         alpha = .1 + .9*state.seen.astype(float)
         # modifying this in place will bite me eventually. o for a lens
-        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, none]], 1)
+        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 

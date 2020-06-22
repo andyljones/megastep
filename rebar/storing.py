@@ -27,6 +27,6 @@ def stored(run_name=-1):
 
     return pd.DataFrame(infos)
 
-def load_one(run_name=-1, procname='MainProcess'):
+def load(run_name=-1, procname='MainProcess'):
     path = stored(run_name).loc[lambda df: df.procname == procname].iloc[-1].path
     return pickle.loads(path.read_bytes())

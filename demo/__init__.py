@@ -10,6 +10,7 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
+    return onedee.ExplorerEnv(cubicasa.sample(n_envs))
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
@@ -55,8 +56,8 @@ def step(agent, opt, batch, entropy=1e-4, gamma=.99):
     opt.zero_grad()
     loss.backward()
 
-    agent.scaler.step(v)
     opt.step()
+    agent.scaler.step(v)
 
     with stats.defer():
         stats.mean('loss/value', v_loss)
@@ -65,7 +66,7 @@ def step(agent, opt, batch, entropy=1e-4, gamma=.99):
         stats.mean('loss/total', loss)
         stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
         stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-        stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
+        stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('debug-v/v', v.mean())
         stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
         stats.mean('debug-scale/vz', vz.abs().mean())
