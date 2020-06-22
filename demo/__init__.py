@@ -33,7 +33,7 @@ def run():
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=4.8e-4)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
 
     paths.clear('test')
     compositor = widgets.Compositor()

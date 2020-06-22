@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from rebar import stats
 import logging
@@ -43,6 +44,15 @@ def deltas(value, reward, target, reset, terminal, gamma=.99):
     terminated_deltas = torch.where(terminal, reward - value[:-1], regular_deltas)
     return torch.where(reset & ~terminal, torch.zeros_like(reward), terminated_deltas)
 
+def present_value(vals, finals, reset, alpha):
+    reset = reset.type(torch.float)
+    acc = finals
+    result = torch.full_like(vals, np.nan)
+    for t in np.arange(vals.shape[0])[::-1]:
+        acc = vals[t] + acc*alpha*(1 - reset[t])
+        result[t] = acc
+    return result
+
 def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
     rho = ratios.clamp(0, max_rho)
     c = ratios.clamp(0, max_c)
@@ -64,6 +74,10 @@ def advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma, max_pg_rho=1
     rho = ratios.clamp(0, max_pg_rho)
     return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal, gamma=gamma)).detach()
 
+def generalized_advantages(value, reward, v, reset, terminal, gamma, lambd=.97):
+    dV = deltas(value, reward, v, reset, terminal, gamma=gamma)
+    return present_value(dV, torch.zeros_like(dV[-1]), reset, lambd*gamma)
+
 def step(agent, opt, batch, entropy=.0005, gamma=.99):
     decision = agent(batch.world, value=True)
 
@@ -82,7 +96,7 @@ def step(agent, opt, batch, entropy=.0005, gamma=.99):
     v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
     vz = agent.scaler.norm(v)
 
-    adv = advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma=gamma)
+    adv = generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
 
     v_loss = .5*(vz - valuez).pow(2).sum() 
     p_loss = (adv*new_logits[:-1]).sum()
