@@ -26,38 +26,12 @@ def chunkstats(chunk):
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def stepstats(l):
-    with stats.defer():
-        stats.mean('loss/value', l.v_loss)
-        stats.mean('loss/policy', l.p_loss)
-        stats.mean('loss/entropy', l.h_loss)
-        stats.mean('loss/total', l.loss)
-        stats.mean('resid-var/v', (l.v - l.value).pow(2).mean(), l.v.pow(2).mean())
-        stats.mean('resid-var/vz', (l.vz - l.valuez).pow(2).mean(), l.vz.pow(2).mean())
-        stats.mean('entropy', -(l.logits.exp()*l.logits).sum(-1).mean())
-        stats.mean('debug-v/v', l.v.mean())
-        stats.mean('debug-v/r-inf', l.reward.mean()/(1 - l.gamma))
-        stats.mean('debug-scale/vz', l.vz.abs().mean())
-        stats.mean('debug-scale/v', l.v.abs().mean())
-        stats.mean('debug-max/v', l.v.abs().max())
-        stats.mean('debug-scale/adv', l.adv.abs().mean())
-        stats.mean('debug-max/adv', l.adv.abs().max())
-        # stats.rel_gradient_norm('rel-norm-grad', l.agent)
-        stats.mean('debug-scale/ratios', l.ratios.mean())
-        stats.rate('rate/learner', l.reset.nelement())
-        stats.rate('step-rate/learner', 1)
-        stats.cumsum('steps/learner', 1)
-        stats.last('scaler/mean', l.agent.scaler.mu)
-        stats.last('scaler/std', l.agent.scaler.sigma)
-
-
-
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
 
     logits = learning.flatten(decision.logits)
-    new_logits = learning.flatten(learning.gather(decision.logits, batch.decision.actions)).sum(-1)
     old_logits = learning.flatten(learning.gather(batch.decision.logits, batch.decision.actions)).sum(-1)
+    new_logits = learning.flatten(learning.gather(decision.logits, batch.decision.actions)).sum(-1)
     ratios = (new_logits - old_logits).exp()
 
     reward = batch.world.reward
@@ -83,7 +57,29 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
 
     agent.scaler.step(v)
     opt.step()
-    stepstats(dotdict(locals()))
+
+    with stats.defer():
+        stats.mean('loss/value', v_loss)
+        stats.mean('loss/policy', p_loss)
+        stats.mean('loss/entropy', h_loss)
+        stats.mean('loss/total', loss)
+        stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
+        stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
+        stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
+        stats.mean('debug-v/v', v.mean())
+        stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
+        stats.mean('debug-scale/vz', vz.abs().mean())
+        stats.mean('debug-scale/v', v.abs().mean())
+        stats.mean('debug-max/v', v.abs().max())
+        stats.mean('debug-scale/adv', adv.abs().mean())
+        stats.mean('debug-max/adv', adv.abs().max())
+        # stats.rel_gradient_norm('rel-norm-grad', agent)
+        stats.mean('debug-scale/ratios', ratios.mean())
+        stats.rate('rate/learner', reset.nelement())
+        stats.rate('step-rate/learner', 1)
+        stats.cumsum('steps/learner', 1)
+        stats.last('scaler/mean', agent.scaler.mu)
+        stats.last('scaler/std', agent.scaler.sigma)
 
 def run():
     buffer_size = 16
