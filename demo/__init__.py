@@ -41,7 +41,7 @@ def step(agent, opt, batch, entropy=.0005, gamma=.99):
     terminal = batch.world.terminal
 
     # v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
-    v = learning.reward_to_go(value, reward, reset, terminal, gamma=gamma)
+    v = learning.reward_to_go(reward, value, reset, terminal, gamma=gamma)
     vz = agent.scaler.norm(v)
 
     adv = learning.generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
@@ -107,7 +107,7 @@ def run():
                 chunkstats(chunk[-gearing:])
 
                 batch = learning.sample(chunk, batch_size//buffer_size)
-                learning.step(agent, opt, batch)
+                step(agent, opt, batch)
                 log.info('stepped')
                 stats.rate('rate/learner', batch_size)
 

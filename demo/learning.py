@@ -66,13 +66,13 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
     return v.detach()
 
-def reward_to_go(value, reward, reset, terminal, gamma):
-    terminated = torch.where(reset & ~terminal, value, reward)
-    return torch.cat([present_value(terminated[:-1], value[-1], reset, gamma), value[[-1]]], 0).detach()
+def reward_to_go(reward, value, reset, terminal, gamma):
+    terminated = torch.where(reset[1:] & ~terminal[1:], value[:-1], reward[1:])
+    return torch.cat([present_value(terminated, value[-1], reset[1:], gamma), value[[-1]]], 0).detach()
 
-def advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma, max_pg_rho=1):
+def advantages(ratios, value, reward, v, reset, terminal, gamma, max_pg_rho=1):
     rho = ratios.clamp(0, max_pg_rho)
-    return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal, gamma=gamma)).detach()
+    return (rho[:-1]*deltas(value, reward, v, reset, terminal, gamma=gamma)).detach()
 
 def generalized_advantages(value, reward, v, reset, terminal, gamma, lambd=.97):
     dV = deltas(value, reward, v, reset, terminal, gamma=gamma)
@@ -101,49 +101,49 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
     
     return v
 
-def test_v_trace_trivial():
+def test_v_trace():
     ratios = torch.tensor([1., 1.])
     reward = torch.tensor([1., 2.])
     value = torch.tensor([3., 4.])
-    reset = torch.tensor([False, False])
-    terminal = torch.tensor([False, False])
     gamma = 1.
 
-    expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([6., 4.]))
-
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
 
-def test_v_trace_reset():
-    ratios = torch.tensor([1., 1.])
-    reward = torch.tensor([1., 2.])
-    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, False])
-    gamma = 1.
-
-    expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([3., 4.]))
-
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([3., 4.]))
 
-def test_v_trace_terminal():
-    ratios = torch.tensor([1., 1.])
-    reward = torch.tensor([1., 2.])
-    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, True])
-    gamma = 1.
-
-    expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(expected, torch.tensor([2., 4.]))
-
     actual = v_trace(ratios, value, reward, reset, terminal, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([2., 4.]))
 
-def test_v_trace_random(R=100, T=10):
+def test_v_trace_explicit():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    gamma = 1.
+
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, False])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([3., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, True])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([2., 4.]))
+
+def test_v_trace_equivalent(R=100, T=10):
     for _ in range(R):
         ratios = torch.rand((T,))
         value = torch.rand((T,))
@@ -157,35 +157,43 @@ def test_v_trace_random(R=100, T=10):
 
         torch.testing.assert_allclose(expected, actual)
 
-def test_advantages_trivial():
+def test_reward_to_go():
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    gamma = 1.
+
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
+    actual = reward_to_go(reward, value, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, False])
+    expected = reward_to_go(reward, value, reset, terminal, gamma)
+    torch.testing.assert_allclose(expected, torch.tensor([3., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, True])
+    expected = reward_to_go(reward, value, reset, terminal, gamma)
+    torch.testing.assert_allclose(expected, torch.tensor([2., 4.]))
+
+def test_advantages():
     ratios = torch.tensor([1., 1.])
     reward = torch.tensor([1., 2.])
     value = torch.tensor([3., 4.])
-    reset = torch.tensor([False, False])
-    terminal = torch.tensor([False, False])
     gamma = 1.
 
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
     adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
     torch.testing.assert_allclose(adv, torch.tensor([3.]))
 
-def test_advantages_reset():
-    ratios = torch.tensor([1., 1.])
-    reward = torch.tensor([1., 2.])
-    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, False])
-    gamma = 1.
-
     adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
     torch.testing.assert_allclose(adv, torch.tensor([0.]))
 
-def test_advantages_terminal():
-    ratios = torch.tensor([1., 1.])
-    reward = torch.tensor([1., 2.])
-    value = torch.tensor([3., 4.])
     reset = torch.tensor([False, True])
     terminal = torch.tensor([False, True])
-    gamma = 1.
-
     adv = advantages(ratios, value, reward, value, reset, terminal, gamma=gamma)
     torch.testing.assert_allclose(adv, torch.tensor([-1.]))
