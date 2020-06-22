@@ -1,6 +1,6 @@
 import torch
 from . import learning, agents
-from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict
+from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict
 import pandas as pd
 import onedee
 from onedee import recording
@@ -25,6 +25,32 @@ def chunkstats(chunk):
         stats.cumsum('n-traj', chunk.world.reset.sum())
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
+
+def stepstats(l):
+    with stats.defer():
+        stats.mean('loss/value', l.v_loss)
+        stats.mean('loss/policy', l.p_loss)
+        stats.mean('loss/entropy', l.h_loss)
+        stats.mean('loss/total', l.loss)
+        stats.mean('resid-var/v', (l.v - l.value).pow(2).mean(), l.v.pow(2).mean())
+        stats.mean('resid-var/vz', (l.vz - l.valuez).pow(2).mean(), l.vz.pow(2).mean())
+        stats.mean('entropy', -(l.logits.exp()*l.logits).sum(-1).mean())
+        stats.mean('debug-v/v', l.v.mean())
+        stats.mean('debug-v/r-inf', l.reward.mean()/(1 - l.gamma))
+        stats.mean('debug-scale/vz', l.vz.abs().mean())
+        stats.mean('debug-scale/v', l.v.abs().mean())
+        stats.mean('debug-max/v', l.v.abs().max())
+        stats.mean('debug-scale/adv', l.adv.abs().mean())
+        stats.mean('debug-max/adv', l.adv.abs().max())
+        # stats.rel_gradient_norm('rel-norm-grad', l.agent)
+        stats.mean('debug-scale/ratios', l.ratios.mean())
+        stats.rate('rate/learner', l.reset.nelement())
+        stats.rate('step-rate/learner', 1)
+        stats.cumsum('steps/learner', 1)
+        stats.last('scaler/mean', l.agent.scaler.mu)
+        stats.last('scaler/std', l.agent.scaler.sigma)
+
+
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
@@ -57,29 +83,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
 
     agent.scaler.step(v)
     opt.step()
-
-    with stats.defer():
-        stats.mean('loss/value', v_loss)
-        stats.mean('loss/policy', p_loss)
-        stats.mean('loss/entropy', h_loss)
-        stats.mean('loss/total', loss)
-        stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
-        stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-        stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
-        stats.mean('debug-v/v', v.mean())
-        stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-        stats.mean('debug-scale/vz', vz.abs().mean())
-        stats.mean('debug-scale/v', v.abs().mean())
-        stats.mean('debug-max/v', v.abs().max())
-        stats.mean('debug-scale/adv', adv.abs().mean())
-        stats.mean('debug-max/adv', adv.abs().max())
-        stats.rel_gradient_norm('rel-norm-grad', agent)
-        stats.mean('debug-scale/ratios', ratios.mean())
-        stats.rate('rate/learner', reset.nelement())
-        stats.rate('step-rate/learner', 1)
-        stats.cumsum('steps/learner', 1)
-        stats.last('scaler/mean', agent.scaler.mu)
-        stats.last('scaler/std', agent.scaler.sigma)
+    # stepstats(dotdict(locals()))
 
 def run():
     buffer_size = 16
@@ -108,12 +112,11 @@ def run():
             
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
-                chunkstats(chunk[-gearing:])
+                # chunkstats(chunk[-gearing:])
 
                 batch = learning.sample(chunk, batch_size//buffer_size)
                 step(agent, opt, batch)
                 log.info('stepped')
-                stats.rate('rate/learner', batch_size)
 
 
 def demo():
