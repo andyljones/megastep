@@ -1,9 +1,5 @@
-import numpy as np
 import torch
-from rebar import stats
-import logging
-
-log = logging.getLogger(__name__)
+import numpy as np
 
 def sample(chunk, batchsize):
     B = chunk.world.reward.shape[1]
@@ -70,64 +66,17 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 
     return v.detach()
 
+def reward_to_go(value, reward, reset, terminal, gamma):
+    terminated = torch.where(reset & ~terminal, value, reward)
+    return torch.cat([present_value(terminated[:-1], value[-1], reset, gamma), value[[-1]]], 0).detach()
+
 def advantages(ratios, valuez, rewardz, vz, reset, terminal, gamma, max_pg_rho=1):
     rho = ratios.clamp(0, max_pg_rho)
     return (rho[:-1]*deltas(valuez, rewardz, vz, reset, terminal, gamma=gamma)).detach()
 
 def generalized_advantages(value, reward, v, reset, terminal, gamma, lambd=.97):
     dV = deltas(value, reward, v, reset, terminal, gamma=gamma)
-    return present_value(dV, torch.zeros_like(dV[-1]), reset, lambd*gamma)
-
-def step(agent, opt, batch, entropy=.0005, gamma=.99):
-    decision = agent(batch.world, value=True)
-
-    logits = flatten(decision.logits)
-    new_logits = flatten(gather(decision.logits, batch.decision.actions)).sum(-1)
-    old_logits = flatten(gather(batch.decision.logits, batch.decision.actions)).sum(-1)
-    ratios = (new_logits - old_logits).exp()
-
-    reward = batch.world.reward
-    rewardz = agent.scaler.scale(reward)
-    valuez = decision.value
-    value = agent.scaler.unnorm(valuez)
-    reset = batch.world.reset
-    terminal = batch.world.terminal
-
-    v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
-    vz = agent.scaler.norm(v)
-
-    adv = generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
-
-    v_loss = .5*(vz - valuez).pow(2).sum() 
-    p_loss = (adv*new_logits[:-1]).sum()
-    h_loss = -(logits.exp()*logits)[:-1].sum(-1).sum()
-    loss = v_loss - p_loss - entropy*h_loss
-    
-    opt.zero_grad()
-    loss.backward()
-
-    torch.nn.utils.clip_grad_norm_(agent.parameters(), 40.)
-    agent.scaler.step(v)
-    opt.step()
-
-    stats.mean('loss/value', v_loss)
-    stats.mean('loss/policy', p_loss)
-    stats.mean('loss/entropy', h_loss)
-    stats.mean('loss/total', loss)
-    stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
-    stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-    stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
-    stats.mean('debug-v/v', v.mean())
-    stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-    stats.mean('debug-scale/vz', vz.abs().mean())
-    stats.mean('debug-scale/v', v.abs().mean())
-    stats.mean('debug-max/v', v.abs().max())
-    stats.mean('debug-scale/adv', adv.abs().mean())
-    stats.mean('debug-max/adv', adv.abs().max())
-    stats.rel_gradient_norm('rel-norm-grad', agent)
-    stats.mean('debug-scale/ratios', ratios.mean())
-    stats.rate('step-rate/learner', 1)
-    stats.cumsum('steps/learner', 1)
+    return present_value(dV, torch.zeros_like(dV[-1]), reset, lambd*gamma).detach()
 
 def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=1, max_c=1):
     rho = ratios.clamp(0, max_rho)

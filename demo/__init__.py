@@ -25,6 +25,58 @@ def chunkstats(chunk):
     stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
     stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
+def step(agent, opt, batch, entropy=.0005, gamma=.99):
+    decision = agent(batch.world, value=True)
+
+    logits = learning.flatten(decision.logits)
+    new_logits = learning.flatten(learning.gather(decision.logits, batch.decision.actions)).sum(-1)
+    old_logits = learning.flatten(learning.gather(batch.decision.logits, batch.decision.actions)).sum(-1)
+    ratios = (new_logits - old_logits).exp()
+
+    reward = batch.world.reward
+    rewardz = agent.scaler.scale(reward)
+    valuez = decision.value
+    value = agent.scaler.unnorm(valuez)
+    reset = batch.world.reset
+    terminal = batch.world.terminal
+
+    # v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
+    v = learning.reward_to_go(value, reward, reset, terminal, gamma=gamma)
+    vz = agent.scaler.norm(v)
+
+    adv = learning.generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
+
+    v_loss = .5*(vz - valuez).pow(2).sum() 
+    p_loss = (adv*new_logits[:-1]).sum()
+    h_loss = -(logits.exp()*logits)[:-1].sum(-1).sum()
+    loss = v_loss - p_loss - entropy*h_loss
+    
+    opt.zero_grad()
+    loss.backward()
+
+    torch.nn.utils.clip_grad_norm_(agent.parameters(), 40.)
+    agent.scaler.step(v)
+    opt.step()
+
+    stats.mean('loss/value', v_loss)
+    stats.mean('loss/policy', p_loss)
+    stats.mean('loss/entropy', h_loss)
+    stats.mean('loss/total', loss)
+    stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
+    stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
+    stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
+    stats.mean('debug-v/v', v.mean())
+    stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
+    stats.mean('debug-scale/vz', vz.abs().mean())
+    stats.mean('debug-scale/v', v.abs().mean())
+    stats.mean('debug-max/v', v.abs().max())
+    stats.mean('debug-scale/adv', adv.abs().mean())
+    stats.mean('debug-max/adv', adv.abs().max())
+    stats.rel_gradient_norm('rel-norm-grad', agent)
+    stats.mean('debug-scale/ratios', ratios.mean())
+    stats.rate('step-rate/learner', 1)
+    stats.cumsum('steps/learner', 1)
+
 def run():
     buffer_size = 32
     batch_size = 512
