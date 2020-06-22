@@ -5,28 +5,28 @@ import pandas as pd
 import onedee
 from onedee import recording
 import cubicasa
+import numpy as np
 
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.RandomChain(n_envs)
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
 
 def agentfunc():
     env = envfunc(n_envs=1)
-    return agents.Agent(env.observation_space, env.action_space, width=16).cuda()
+    return agents.Agent(env.observation_space, env.action_space).cuda()
 
 def chunkstats(chunk):
     with stats.defer():
         stats.rate('rate/actor', chunk.world.reset.nelement())
         stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
-        stats.cumsum('n-traj', chunk.world.reset.sum())
+        stats.cumsum('traj-count', chunk.world.reset.sum())
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def step(agent, opt, batch, entropy=.01, gamma=.99):
+def step(agent, opt, batch, entropy=1e-4, gamma=.99):
     decision = agent(batch.world, value=True)
 
     logits = learning.flatten(decision.logits)
@@ -65,7 +65,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
         stats.mean('loss/total', loss)
         stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
         stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-        stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
+        stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('debug-v/v', v.mean())
         stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
         stats.mean('debug-scale/vz', vz.abs().mean())
