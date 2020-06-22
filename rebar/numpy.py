@@ -27,14 +27,17 @@ def make_header(dtype):
 
 class FileWriter:
 
-    def __init__(self, path):
+    def __init__(self, path, period=1):
         self._path = path
         self._file = None
+        self._period = 5
+        self._next = time.time()
         
     def _init(self, exemplar):
-        self._file = self._path.open('wb')
         self._dtype = infer_dtype(exemplar)
+        self._file = self._path.open('wb', buffering=self._dtype.itemsize)
         self._file.write(make_header(self._dtype))
+        self._file.flush()
 
     def write(self, d):
         if self._file is None:
@@ -42,7 +45,6 @@ class FileWriter:
         assert set(d) == set(self._dtype.names)
         row = np.array([tuple(v for v in d.values())], self._dtype)
         self._file.write(row.tobytes())
-        self._file.flush()
 
     def close(self):
         self._file.close()
@@ -60,6 +62,13 @@ class Writer:
             path = paths.path(self._run_name, self._group, channel).with_suffix('.npr')
             self._writers[channel] = FileWriter(path)
         self._writers[channel].write(d)
+
+    def write_many(self, ds):
+        for channel, d in ds.items():
+            if channel not in self._writers:
+                path = paths.path(self._run_name, self._group, channel).with_suffix('.npr')
+                self._writers[channel] = FileWriter(path)
+            self._writers[channel].write(d)
 
     def close(self):
         for _, w in self._writers.items():

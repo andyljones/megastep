@@ -126,6 +126,7 @@ def defer():
     finally:
         collection, getters = _gather(QUEUE)
 
+        calls = {}
         for (category, field, getter) in getters:
             args, kwargs = getter(collection)
             args = tuple(clean(a) for a in args)
@@ -133,9 +134,9 @@ def defer():
             func = statscategories.CATEGORIES[category]
             call = inspect.getcallargs(func, *args, **kwargs)
             call = {'_time': np.datetime64('now'), **call}
+            calls[f'{category}/{field}'] = call
 
-            if WRITER is not None:
-                WRITER.write(f'{category}/{field}', call)
+        WRITER.write_many(calls)
     
         QUEUE = None
         _record = eager_record

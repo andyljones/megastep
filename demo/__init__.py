@@ -83,7 +83,7 @@ def step(agent, opt, batch, entropy=.01, gamma=.99):
 
     agent.scaler.step(v)
     opt.step()
-    # stepstats(dotdict(locals()))
+    stepstats(dotdict(locals()))
 
 def run():
     buffer_size = 16
@@ -112,7 +112,7 @@ def run():
             
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
-                # chunkstats(chunk[-gearing:])
+                chunkstats(chunk[-gearing:])
 
                 batch = learning.sample(chunk, batch_size//buffer_size)
                 step(agent, opt, batch)
