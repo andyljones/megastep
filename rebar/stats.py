@@ -45,10 +45,9 @@ def clean(x):
         return {k: clean(v) for k, v in x.items()}
     return x
 
-def record(category, field, *args, **kwargs):
+def eager_record(category, field, *args, **kwargs):
     if WRITER is None:
         return 
-        # raise IOError(f'No writer set while trying to record a "{category}" called "{field}"')
     if not isinstance(field, str):
         raise ValueError(f'Field should be a string, is actually {field}')
 
@@ -60,6 +59,85 @@ def record(category, field, *args, **kwargs):
     call = {'_time': np.datetime64('now'), **call}
 
     WRITER.write(f'{category}/{field}', call)
+
+_record = eager_record
+QUEUE = None
+
+def record(*args, **kwargs):
+    breakpoint()
+    return _record(*args, **kwargs)
+
+def deferred_record(category, field, *args, **kwargs):
+    if not isinstance(field, str):
+        raise ValueError(f'Field should be a string, is actually {field}')
+    QUEUE.append((category, field, args, kwargs))
+
+def _mono_getter(collection, x):
+    dtype = x.dtype
+    start = sum(c.nelement() for c in collection)
+    end = start + x.nelement()
+    collection.setdefault(dtype, []).append(x.flatten())
+    def f(collection):
+        return collection[dtype][start:end]
+    return f
+
+def _dummy_getter(x):
+    def f(collection):
+        return x
+    return f
+
+def _multi_getter(collection, *args, **kwargs):
+    arggetters = []
+    for a in args:
+        if isinstance(a, torch.Tensor):
+            arggetters.append(_mono_getter(collection, a))
+        else:
+            arggetters.append(_dummy_getter(a))
+
+    kwarggetters = {}
+    for k, v in kwargs.items():
+        if isinstance(v, torch.Tensor):
+            kwarggetters[k] = _mono_getter(collection, v)
+        else:
+            kwarggetters[k] = _dummy_getter(v)
+
+    def f(collection):
+        args = tuple(g(collection) for g in arggetters)
+        kwargs = {k: g(collection) for k, g in kwarggetters.items()}
+        return args, kwargs
+    return f
+
+def _gather(queue):
+    collection = {}
+    getters = []
+    for category, field, args, kwargs in queue:
+        getters.append((category, field, _multi_getter(collection, *args, **kwargs)))
+    collection = {k: torch.cat(v) for k, v in collection.items()}
+    return collection, getters
+
+@contextmanager
+def defer():
+    global _record
+    global QUEUE
+    _record = deferred_record
+    QUEUE = []
+    try:
+        yield
+    finally:
+        collection, getters = _gather(QUEUE)
+        breakpoint()
+
+        for (category, field, getter) in getters:
+            args, kwargs = getter(collection)
+            func = statscategories.CATEGORIES[category]
+            call = inspect.getcallargs(func, *args, **kwargs)
+            call = {'_time': np.datetime64('now'), **call}
+
+            if WRITER is not None:
+                WRITER.write(f'{category}/{field}', call)
+    
+        QUEUE = None
+        _record = eager_record
 
 def format(v):
     if isinstance(v, int):
@@ -215,7 +293,7 @@ def via_dir(run_name, compositor=None):
 
 for c in statscategories.CATEGORIES:
     locals()[c] = partial(record, c)
-# For other functions in this module
+# Defned to be used by other functions in this module
 mean = partial(record, 'mean')
 
 def gpu_memory(name):

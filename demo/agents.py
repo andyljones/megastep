@@ -31,8 +31,6 @@ class Scaler(nn.Module):
 
         self.mu[()] = mu
         self.nu[()] = nu
-        stats.last('scaler/mean', mu)
-        stats.last('scaler/std', sigma)
 
     def scale(self, x):
         return x/self.sigma
