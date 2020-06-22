@@ -98,7 +98,7 @@ def tdformat(td):
     else:
         return f'{h:.0f}h{m:02.0f}m{s:02.0f}s'
 
-def __from_dir(canceller, run_name, out, throttle=1):
+def __from_dir(canceller, run_name, out, rule, throttle=1):
     reader = Reader(run_name)
     start = pd.Timestamp.now()
 
@@ -110,7 +110,7 @@ def __from_dir(canceller, run_name, out, throttle=1):
             # Base slightly into the future, else by the time the resample actually happens you're 
             # left with an almost-empty last interval.
             base = int(time.time() % 60) + 5
-            values = reader.resample(rule='60s', base=base)
+            values = reader.resample(rule=rule, base=base)
             
             if len(values) > 0:
                 values = values.ffill(limit=1).iloc[-1].to_dict()
@@ -121,27 +121,27 @@ def __from_dir(canceller, run_name, out, throttle=1):
 
             size = paths.size(run_name, 'stats')
             age = pd.Timestamp.now() - start
-            out.refresh(f'{run_name}: {tdformat(age)} old, {size:.0f}MB on disk\n\n{content}')
+            out.refresh(f'{run_name}: {tdformat(age)} old, {rule} rule, {size:.0f}MB on disk\n\n{content}')
 
         if canceller.is_set():
             break
 
         time.sleep(.1)
 
-def _from_dir(canceller, run_name, out):
+def _from_dir(*args, **kwargs):
     try:
-        __from_dir(canceller, run_name, out)
+        __from_dir(*args, **kwargs)
     except KeyboardInterrupt:
         log.info('Interrupting main')
         _thread.interrupt_main()
 
 @contextmanager
-def from_dir(run_name, compositor=None):
+def from_dir(run_name, compositor=None, rule='60s'):
     if logging.in_ipython():
         try:
             canceller = threading.Event()
             out = (compositor or widgets.Compositor()).output()
-            thread = threading.Thread(target=_from_dir, args=(canceller, run_name, out))
+            thread = threading.Thread(target=_from_dir, args=(canceller, run_name, out, rule))
             thread.start()
             yield
         finally:

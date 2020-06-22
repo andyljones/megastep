@@ -206,9 +206,9 @@ class Stream:
         clear_output(wait=True)
         self._handle = bop.show(self._grid, notebook_handle=True)
 
-    def update(self, df=None):
+    def update(self, rule='60s', df=None):
         # Drop the last row as it'll be constantly refreshed as the period occurs
-        df = self._reader.resample().iloc[:-1] if df is None else df
+        df = self._reader.resample(rule).iloc[:-1] if df is None else df
 
         has_new_cols = not df.columns.isin(self._source.data).all()
         if has_new_cols:
@@ -220,15 +220,15 @@ class Stream:
         
         boi.push_notebook(handle=self._handle)
 
-def view(run_name=-1, prefix=''):
+def view(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
     while True:
-        stream.update()
+        stream.update(rule=rule)
         time.sleep(1)
 
-def review(run_name=-1, prefix=''):
+def review(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
-    stream.update()
+    stream.update(rule=rule)
 
 def test_stream():
     times = pd.TimedeltaIndex([0, 60e3, 120e3])

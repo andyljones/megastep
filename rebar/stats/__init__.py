@@ -18,8 +18,8 @@ for c in categories.CATEGORIES:
 mean = partial(record, 'mean')
 
 @contextmanager
-def via_dir(run_name, compositor=None):
-    with to_dir(run_name), from_dir(run_name, compositor):
+def via_dir(run_name, *args, **kwargs):
+    with to_dir(run_name), from_dir(run_name, *args, **kwargs):
         yield
 
 def gpu_memory(name):
