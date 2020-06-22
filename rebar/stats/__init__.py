@@ -9,8 +9,8 @@ import logging
 log = logging.getLogger(__name__)
 
 # For re-export
-from .writer import to_dir, defer, record
-from .reader import from_dir, Reader
+from .writing import to_dir, defer, record
+from .reading import from_dir, Reader
 
 for c in categories.CATEGORIES:
     locals()[c] = partial(record, c)

@@ -10,7 +10,8 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.ExplorerEnv(cubicasa.sample(n_envs))
+    return onedee.RandomChain(n_envs, n=10)
+    # return onedee.ExplorerEnv(cubicasa.sample(n_envs))
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
@@ -27,7 +28,7 @@ def chunkstats(chunk):
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def step(agent, opt, batch, entropy=1e-4, gamma=.99):
+def step(agent, opt, batch, entropy=1e-2, gamma=.99):
     decision = agent(batch.world, value=True)
 
     logits = learning.flatten(decision.logits)
@@ -48,13 +49,14 @@ def step(agent, opt, batch, entropy=1e-4, gamma=.99):
 
     adv = learning.generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
 
-    v_loss = .5*(vz - valuez).pow(2).sum() 
-    p_loss = (adv*new_logits[:-1]).sum()
-    h_loss = -(logits.exp()*logits)[:-1].sum(-1).sum()
+    v_loss = .5*(vz - valuez).pow(2).mean() 
+    p_loss = (adv*new_logits[:-1]).mean()
+    h_loss = -(logits.exp()*logits)[:-1].sum(-1).mean()
     loss = v_loss - p_loss - entropy*h_loss
     
     opt.zero_grad()
     loss.backward()
+    torch.nn.utils.clip_grad_norm_(agent.parameters(), 1.)
 
     opt.step()
     agent.scaler.step(v)
@@ -83,7 +85,7 @@ def step(agent, opt, batch, entropy=1e-4, gamma=.99):
         stats.last('scaler/std', agent.scaler.sigma)
 
 def run():
-    buffer_size = 16
+    buffer_size = 128
     batch_size = 512
     n_envs = 512
     gearing = 8
@@ -92,13 +94,14 @@ def run():
     agent = agentfunc().cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
 
-    paths.clear('test')
+    run_name = 'test'
+    paths.clear(run_name)
     compositor = widgets.Compositor()
-    with logging.via_dir('test', compositor), stats.via_dir('test', compositor):
+    with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
         buffer = []
         world = env.reset()
-        for _ in range(180):
+        while True:
             for _ in range(gearing):
                 decision = agent(world[None], sample=True).squeeze(0)
                 buffer.append(arrdict(
@@ -114,6 +117,7 @@ def run():
                 batch = learning.sample(chunk, batch_size//buffer_size)
                 step(agent, opt, batch)
                 log.info('stepped')
+                storing.store(run_name, {'agent': agent}, throttle=60)
 
 
 def demo():
