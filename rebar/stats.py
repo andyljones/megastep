@@ -39,8 +39,6 @@ def clean(x):
         x = x.detach().cpu().numpy()
     if isinstance(x, np.ndarray) and x.ndim == 0:
         x = x.item()
-    if isinstance(x, np.ndarray):
-        x = x.tolist()
     if isinstance(x, dict):
         return {k: clean(v) for k, v in x.items()}
     return x
@@ -64,7 +62,6 @@ _record = eager_record
 QUEUE = None
 
 def record(*args, **kwargs):
-    breakpoint()
     return _record(*args, **kwargs)
 
 def deferred_record(category, field, *args, **kwargs):
@@ -74,11 +71,14 @@ def deferred_record(category, field, *args, **kwargs):
 
 def _mono_getter(collection, x):
     dtype = x.dtype
-    start = sum(c.nelement() for c in collection)
+    if dtype not in collection:
+        collection[dtype] = []
+    start = sum(c.nelement() for c in collection[dtype])
     end = start + x.nelement()
-    collection.setdefault(dtype, []).append(x.flatten())
+    collection[dtype].append(x.flatten())
+
     def f(collection):
-        return collection[dtype][start:end]
+        return collection[dtype][start:end].reshape(x.shape)
     return f
 
 def _dummy_getter(x):
@@ -89,14 +89,14 @@ def _dummy_getter(x):
 def _multi_getter(collection, *args, **kwargs):
     arggetters = []
     for a in args:
-        if isinstance(a, torch.Tensor):
+        if isinstance(a, torch.Tensor) and a.device.type != 'cpu':
             arggetters.append(_mono_getter(collection, a))
         else:
             arggetters.append(_dummy_getter(a))
 
     kwarggetters = {}
     for k, v in kwargs.items():
-        if isinstance(v, torch.Tensor):
+        if isinstance(v, torch.Tensor) and v.device.type != 'cpu':
             kwarggetters[k] = _mono_getter(collection, v)
         else:
             kwarggetters[k] = _dummy_getter(v)
@@ -112,7 +112,7 @@ def _gather(queue):
     getters = []
     for category, field, args, kwargs in queue:
         getters.append((category, field, _multi_getter(collection, *args, **kwargs)))
-    collection = {k: torch.cat(v) for k, v in collection.items()}
+    collection = {k: torch.cat(v).detach().cpu() for k, v in collection.items()}
     return collection, getters
 
 @contextmanager
@@ -125,10 +125,11 @@ def defer():
         yield
     finally:
         collection, getters = _gather(QUEUE)
-        breakpoint()
 
         for (category, field, getter) in getters:
             args, kwargs = getter(collection)
+            args = tuple(clean(a) for a in args)
+            kwargs = {k: clean(v) for k, v in kwargs.items()}
             func = statscategories.CATEGORIES[category]
             call = inspect.getcallargs(func, *args, **kwargs)
             call = {'_time': np.datetime64('now'), **call}
@@ -268,7 +269,7 @@ def from_dir(run_name, compositor=None):
     if logging.in_ipython():
         try:
             canceller = threading.Event()
-            out = (compositor or widgets.compositor()).output()
+            out = (compositor or widgets.Compositor()).output()
             thread = threading.Thread(target=_from_dir, args=(canceller, run_name, out))
             thread.start()
             yield

@@ -19,11 +19,12 @@ def agentfunc():
     return agents.Agent(env.observation_space, env.action_space, width=16).cuda()
 
 def chunkstats(chunk):
-    stats.rate('rate/actor', chunk.world.reset.nelement())
-    stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
-    stats.cumsum('n-traj', chunk.world.reset.sum())
-    stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
-    stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
+    with stats.defer():
+        stats.rate('rate/actor', chunk.world.reset.nelement())
+        stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
+        stats.cumsum('n-traj', chunk.world.reset.sum())
+        stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
+        stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
 def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
