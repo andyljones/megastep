@@ -34,8 +34,8 @@ class FileWriter:
         self._next = time.time()
         
     def _init(self, exemplar):
+        self._file = self._path.open('wb', buffering=4096)
         self._dtype = infer_dtype(exemplar)
-        self._file = self._path.open('wb', buffering=self._dtype.itemsize)
         self._file.write(make_header(self._dtype))
         self._file.flush()
 
@@ -45,6 +45,7 @@ class FileWriter:
         assert set(d) == set(self._dtype.names)
         row = np.array([tuple(v for v in d.values())], self._dtype)
         self._file.write(row.tobytes())
+        self._file.flush()
 
     def close(self):
         self._file.close()

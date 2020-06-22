@@ -126,7 +126,6 @@ def defer():
     finally:
         collection, getters = _gather(QUEUE)
 
-        calls = {}
         for (category, field, getter) in getters:
             args, kwargs = getter(collection)
             args = tuple(clean(a) for a in args)
@@ -134,9 +133,9 @@ def defer():
             func = statscategories.CATEGORIES[category]
             call = inspect.getcallargs(func, *args, **kwargs)
             call = {'_time': np.datetime64('now'), **call}
-            calls[f'{category}/{field}'] = call
 
-        WRITER.write_many(calls)
+            if WRITER is not None:
+                WRITER.write(f'{category}/{field}', call)
     
         QUEUE = None
         _record = eager_record
@@ -232,7 +231,7 @@ def __from_dir(canceller, run_name, out, throttle=1):
     reader = Reader(run_name)
     start = pd.Timestamp.now()
 
-    nxt = 0
+    nxt = _time.time()
     while True:
         if _time.time() > nxt:
             nxt = nxt + throttle
@@ -256,7 +255,7 @@ def __from_dir(canceller, run_name, out, throttle=1):
         if canceller.is_set():
             break
 
-        _time.sleep(.001)
+        _time.sleep(.1)
 
 def _from_dir(canceller, run_name, out):
     try:

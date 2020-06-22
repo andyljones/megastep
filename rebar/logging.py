@@ -141,7 +141,7 @@ def __from_dir(canceller, renderer, reader):
         if canceller.is_set():
             break
 
-        time.sleep(.001)
+        time.sleep(.01)
 
 def _from_dir(canceller, renderer, reader):
     try:
