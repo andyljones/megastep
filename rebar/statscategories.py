@@ -70,6 +70,7 @@ def rate(count=1):
     def resample(**kwargs):
         counts = count.resample(**kwargs).sum()
         dt = pd.to_timedelta(counts.index.freq).total_seconds()
+        dt = min(dt, (count.index[-1] - count.index[0]).total_seconds())
         return counts/dt
     return resample
 
@@ -78,6 +79,7 @@ def period(count=1):
     def resample(**kwargs):
         counts = count.resample(**kwargs).sum()
         dt = pd.to_timedelta(counts.index.freq).total_seconds()
+        dt = min(dt, (count.index[-1] - count.index[0]).total_seconds())
         return dt/counts
     return resample
 
