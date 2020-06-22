@@ -9,23 +9,23 @@ import cubicasa
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    # return onedee.RandomChain(n_envs, n=2)
+    return onedee.RandomChain(n_envs)
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
 
 def agentfunc():
     env = envfunc(n_envs=1)
-    return agents.Agent(env.observation_space, env.action_space).cuda()
+    return agents.Agent(env.observation_space, env.action_space, width=16).cuda()
 
 def chunkstats(chunk):
     stats.rate('rate/actor', chunk.world.reset.nelement())
-    stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
-    stats.cumsum('n-traj', chunk.world.reset.sum())
-    stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
-    stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
+    # stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
+    # stats.cumsum('n-traj', chunk.world.reset.sum())
+    # stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
+    # stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def step(agent, opt, batch, entropy=.0005, gamma=.99):
+def step(agent, opt, batch, entropy=.01, gamma=.99):
     decision = agent(batch.world, value=True)
 
     logits = learning.flatten(decision.logits)
@@ -54,34 +54,34 @@ def step(agent, opt, batch, entropy=.0005, gamma=.99):
     opt.zero_grad()
     loss.backward()
 
-    torch.nn.utils.clip_grad_norm_(agent.parameters(), 40.)
-    agent.scaler.step(v)
+    # agent.scaler.step(v)
     opt.step()
 
-    stats.mean('loss/value', v_loss)
-    stats.mean('loss/policy', p_loss)
-    stats.mean('loss/entropy', h_loss)
-    stats.mean('loss/total', loss)
-    stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
-    stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
-    stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
-    stats.mean('debug-v/v', v.mean())
-    stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-    stats.mean('debug-scale/vz', vz.abs().mean())
-    stats.mean('debug-scale/v', v.abs().mean())
-    stats.mean('debug-max/v', v.abs().max())
-    stats.mean('debug-scale/adv', adv.abs().mean())
-    stats.mean('debug-max/adv', adv.abs().max())
-    stats.rel_gradient_norm('rel-norm-grad', agent)
-    stats.mean('debug-scale/ratios', ratios.mean())
+    # stats.mean('loss/value', v_loss)
+    # stats.mean('loss/policy', p_loss)
+    # stats.mean('loss/entropy', h_loss)
+    # stats.mean('loss/total', loss)
+    # stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
+    # stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
+    # stats.mean('entropy', -(logits.exp()*logits).sum(-1).mean())
+    # stats.mean('debug-v/v', v.mean())
+    # stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
+    # stats.mean('debug-scale/vz', vz.abs().mean())
+    # stats.mean('debug-scale/v', v.abs().mean())
+    # stats.mean('debug-max/v', v.abs().max())
+    # stats.mean('debug-scale/adv', adv.abs().mean())
+    # stats.mean('debug-max/adv', adv.abs().max())
+    # stats.rel_gradient_norm('rel-norm-grad', agent)
+    # stats.mean('debug-scale/ratios', ratios.mean())
+    # stats.rate('rate/learner', reset.nelement())
     stats.rate('step-rate/learner', 1)
     stats.cumsum('steps/learner', 1)
 
 def run():
-    buffer_size = 32
+    buffer_size = 16
     batch_size = 512
     n_envs = 512
-    gearing = 1
+    gearing = 8
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -93,7 +93,7 @@ def run():
         
         buffer = []
         world = env.reset()
-        while True:
+        for _ in range(180):
             for _ in range(gearing):
                 decision = agent(world[None], sample=True).squeeze(0)
                 buffer.append(arrdict(
@@ -110,6 +110,7 @@ def run():
                 step(agent, opt, batch)
                 log.info('stepped')
                 stats.rate('rate/learner', batch_size)
+
 
 def demo():
     env = envfunc(1)

@@ -203,7 +203,7 @@ def ObliviousCyclicReward():
         .build())
 
 @fsm
-def ObliviousChain(n, r=1):
+def ObliviousChain(n=2, r=1):
     assert n >= 2, 'Need the number of states to be at least 2'
     b = Builder()
     b.state(0, obs=0., start=1.).to(1, 0)
@@ -246,7 +246,7 @@ def MatchCoin(reward=1.):
         .build())
 
 @fsm
-def RandomChain(n, seed=0):
+def RandomChain(n=2, seed=0):
     assert n >= 2, 'Need the radius to be at least 2'
     b = Builder()
     random = np.random.RandomState(seed)

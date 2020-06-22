@@ -122,7 +122,7 @@ class MultiDiscreteOutput(nn.Module):
     def __init__(self, space, width):
         super().__init__()
         shape = space.shape
-        self.core = nn.Linear(width, np.prod(shape))
+        self.core = nn.Linear(width, int(np.prod(shape)))
         self.shape = shape
     
     def forward(self, x):

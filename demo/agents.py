@@ -11,6 +11,7 @@ class Scaler(nn.Module):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__()
         self._alpha = 1/(1+com)
+        self._alpha = 0.
         self.register_buffer('mu', torch.zeros(()))
         self.register_buffer('nu', torch.ones(()))
         self.layer = nn.Linear(width, 1)
@@ -64,7 +65,7 @@ class Agent(nn.Module):
             spaces.intake(observation_space, width),
             nn.Linear(width, width), nn.ReLU(),
             nn.Linear(width, width), nn.ReLU(),
-            self.scaler)
+            nn.Linear(width, 1))
 
     def forward(self, world, sample=False, value=False):
         outputs = arrdict(
