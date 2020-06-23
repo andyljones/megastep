@@ -2,8 +2,9 @@ import numpy as np
 import torch
 from torch import nn
 from onedee import spaces
-from rebar import arrdict, stats
+from rebar import arrdict, stats, recurrence
 from torch.nn import functional as F
+from .transformer import Transformer
 
 class Scaler(nn.Module):
 
@@ -52,24 +53,21 @@ class Agent(nn.Module):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
-        self.policy = nn.Sequential(
+        self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, width), nn.ReLU(),
+            Transformer(mem_len=32, d_model=width),
             out)
-        self.scaler = Scaler(width)
-        self.value = nn.Sequential(
+        self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            nn.Linear(width, width), nn.ReLU(),
-            nn.Linear(width, width), nn.ReLU(),
-            self.scaler)
+            Transformer(mem_len=32, d_model=width),
+            nn.Linear(width, 1))
 
     def forward(self, world, sample=False, value=False):
         outputs = arrdict(
-            logits=self.policy(world.obs))
+            logits=self.policy(world.obs, reset=world.reset))
         if sample:
             outputs['actions'] = self.sampler(outputs.logits)
         if value:
-            outputs['value'] = self.value(world.obs).squeeze(-1)
+            outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
         return outputs
 

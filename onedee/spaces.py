@@ -17,7 +17,7 @@ class MultiEmptyIntake(nn.Module):
         super().__init__()
         self._width = width
 
-    def forward(self, obs):
+    def forward(self, obs, **kwargs):
         return obs.new_zeros((*obs.shape[:-2], self._width))
 
 class MultiVector(gym.spaces.Space):
@@ -38,7 +38,7 @@ class MultiVectorIntake(nn.Module):
         self.proj = nn.Sequential(
                         nn.Linear(A*width, width), nn.ReLU())
         
-    def forward(self, obs):
+    def forward(self, obs, **kwargs):
         T, B, A, C = obs.shape
         x = self.core(obs.reshape(T*B*A, C)).reshape(T, B, -1)
         return self.proj(x)
@@ -66,7 +66,7 @@ class MultiImageIntake(nn.Module):
         self.proj = nn.Sequential(
                         nn.Linear(convwidth, width), nn.ReLU())
 
-    def forward(self, obs):
+    def forward(self, obs, **kwargs):
         T, B, A, C, H, W = obs.shape
         if obs.dtype == torch.uint8:
             obs = obs/255.
@@ -82,7 +82,7 @@ class ConcatIntake(nn.Module):
         self.core = nn.Linear(len(intakes)*width, width)
         self.intakes = nn.ModuleDict(intakes)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         ys = [self.intakes[k](x[k]) for k in self.intakes]
         return self.core(torch.cat(ys, -1))
 
@@ -105,7 +105,7 @@ class MultiConstantOutput(nn.Module):
         super().__init__()
         self.shape = space.shape
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         return x.new_zeros((*x.shape[:-1], *self.shape, 1))
 
     def sample(self, zeros):
@@ -125,7 +125,7 @@ class MultiDiscreteOutput(nn.Module):
         self.core = nn.Linear(width, int(np.prod(shape)))
         self.shape = shape
     
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         y = self.core(x).reshape(*x.shape[:-1], *self.shape)
         return F.log_softmax(y, -1)
 
@@ -141,7 +141,7 @@ class DictOutput(nn.Module):
         self._dtype = type(space)
         self.outputs = nn.ModuleDict({k: output(v, width) for k, v in space.items()})
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         ys = torch.chunk(self.core(x), len(self.outputs), -1)
         return self._dtype({k: v(ys[i]) for i, (k, v) in enumerate(self.outputs.items())})
     
@@ -155,3 +155,4 @@ def output(space, width):
     if name in globals():
         return globals()[name](space, width)
     raise ValueError(f'Can\'t handle {space}')
+
