@@ -1,6 +1,6 @@
 import torch
 from . import learning, agents
-from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict
+from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence
 import pandas as pd
 import onedee
 from onedee import recording
@@ -10,7 +10,7 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return onedee.RandomChain(n_envs, n=10)
+    # return onedee.RandomChain(n_envs, n=10)
     # return onedee.ExplorerEnv(cubicasa.sample(n_envs))
     return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
@@ -37,15 +37,15 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99):
     ratios = (new_logits - old_logits).exp()
 
     reward = batch.world.reward
-    rewardz = agent.scaler.scale(reward)
-    valuez = decision.value
-    value = agent.scaler.unnorm(valuez)
     reset = batch.world.reset
     terminal = batch.world.terminal
+    value = decision.value
+    rewardz = reward
+    valuez = value
 
     # v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
     v = learning.reward_to_go(reward, value, reset, terminal, gamma=gamma)
-    vz = agent.scaler.norm(v)
+    vz = v
 
     adv = learning.generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
 
@@ -59,7 +59,7 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99):
     torch.nn.utils.clip_grad_norm_(agent.parameters(), 1.)
 
     opt.step()
-    agent.scaler.step(v)
+    # agent.scaler.step(v)
 
     with stats.defer():
         stats.mean('loss/value', v_loss)
@@ -81,8 +81,8 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99):
         stats.rate('rate/learner', reset.nelement())
         stats.rate('step-rate/learner', 1)
         stats.cumsum('steps/learner', 1)
-        stats.last('scaler/mean', agent.scaler.mu)
-        stats.last('scaler/std', agent.scaler.sigma)
+        # stats.last('scaler/mean', agent.scaler.mu)
+        # stats.last('scaler/std', agent.scaler.sigma)
 
 def run():
     buffer_size = 128
@@ -102,6 +102,7 @@ def run():
         buffer = []
         world = env.reset()
         while True:
+
             for _ in range(gearing):
                 decision = agent(world[None], sample=True).squeeze(0)
                 buffer.append(arrdict(
@@ -115,7 +116,8 @@ def run():
                 chunkstats(chunk[-gearing:])
 
                 batch = learning.sample(chunk, batch_size//buffer_size)
-                step(agent, opt, batch)
+                with recurrence.clear_context(agent):
+                    step(agent, opt, batch)
                 log.info('stepped')
                 storing.store(run_name, {'agent': agent}, throttle=60)
 

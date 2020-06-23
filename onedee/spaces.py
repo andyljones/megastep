@@ -148,6 +148,11 @@ class DictOutput(nn.Module):
     def sample(self, l):
         return self._dtype({k: v.sample(l[k]) for k, v in self.outputs.items()})
 
+class ValueOutput(nn.Linear):
+
+    def forward(self, x, **kwargs):
+        return super().forward(x)
+
 def output(space, width):
     if isinstance(space, dict):
         return DictOutput(space, width)

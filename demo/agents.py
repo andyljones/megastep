@@ -60,7 +60,7 @@ class Agent(nn.Module):
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
             Transformer(mem_len=32, d_model=width),
-            nn.Linear(width, 1))
+            spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False):
         outputs = arrdict(

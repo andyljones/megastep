@@ -1,5 +1,6 @@
 from .arrdict import arrdict
 from torch import nn
+from contextlib import contextmanager
 
 class State:
 
@@ -49,10 +50,20 @@ def get(net):
     return _nonnull(state(net).map(lambda s: s.get()))
 
 def set(net, recurrent):
-    state(net).set(recurrent).starmap(lambda n, r: n.set(r), recurrent)
+    recurrent.starmap(lambda r, n: n.set(r), state(net))
 
 def clear(net):
     state(net).map(lambda s: s.clear())
+
+@contextmanager
+def clear_context(net):
+    recurrent = get(net)
+    clear(net)
+    try:
+        yield
+    finally:
+        set(net, recurrent)
+
 
 class Sequential(nn.Sequential):
 

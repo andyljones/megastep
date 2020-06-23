@@ -45,9 +45,10 @@ def rel_shift(x):
 
     return x_padded[1:].view_as(x)
 
-class ResetMasker:
+class ResetMasker(nn.Module):
 
     def __init__(self, mem_len):
+        super().__init__()
         self._mem_len = mem_len
         self._reset = recurrence.State()
 
