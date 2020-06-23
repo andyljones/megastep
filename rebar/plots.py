@@ -123,6 +123,7 @@ def default_tools(f):
     f.toolbar_location = None
     f.toolbar.active_drag = f.select_one(bom.BoxZoomTool)
     # f.toolbar.active_scroll = f.select_one(bom.WheelZoomTool)
+    # f.toolbar.active_inspect = f.select_one(bom.HoverTool)
     f.js_on_event(
         boe.DoubleTap, 
         bom.callbacks.CustomJS(args=dict(p=f), code='p.reset.emit()'))
@@ -132,7 +133,8 @@ def styling(f):
     suffix_yaxis(f)
 
 def _timeseries(source, x, y):
-    f = bop.figure(x_range=bom.DataRange1d(start=0, follow='end'))
+    #TODO: Work out how to apply the axes formatters to the tooltips
+    f = bop.figure(x_range=bom.DataRange1d(start=0, follow='end'), tooltips=[('', '$data_y')])
     f.line(x=x, y=y, source=source)
     default_tools(f)
     x_zeroline(f)
@@ -145,7 +147,7 @@ def timeseries(s):
     return _timeseries(source, s.index.name, s.name)
 
 def _timedataframe(source, x, ys):
-    f = bop.figure(x_range=bom.DataRange1d(start=0, follow='end'))
+    f = bop.figure(x_range=bom.DataRange1d(start=0, follow='end'), tooltips=[('', '$data_y')])
 
     for y, color in zip(ys, cycle(Category10_10)):
         f.line(x=x, y=y, legend_label=y, color=color, width=2, source=source)
