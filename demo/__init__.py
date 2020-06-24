@@ -55,6 +55,10 @@ def chunkstats(chunk):
         stats.rate('sample-rate/actor', chunk.world.reset.nelement())
         stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
         stats.cumsum('count/traj', chunk.world.reset.sum())
+        stats.cumsum('count/actor', chunk.world.reset.size(0))
+        stats.cumsum('count/chunks', 1)
+        stats.rate('step-rate/chunks', 1)
+        stats.rate('step-rate/actor', chunk.world.reset.size(0))
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
