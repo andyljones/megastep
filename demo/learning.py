@@ -5,7 +5,7 @@ from torch import nn
 
 class Normer(nn.Module):
 
-    def __init__(self, com=10000):
+    def __init__(self, com=1000):
         super().__init__()
         self._alpha = 1/(1+com)
         self.register_buffer('mu', torch.zeros(()))
@@ -37,7 +37,7 @@ class Normer(nn.Module):
 
 class PopArtNormer(Normer):
 
-    def __init__(self, width, com=10000):
+    def __init__(self, width, com=1000):
         """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
         super().__init__(com=com)
         self.layer = nn.Linear(width, 1)

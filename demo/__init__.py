@@ -53,9 +53,9 @@ def agentfunc():
 
 def chunkstats(chunk):
     with stats.defer():
-        stats.rate('rate/actor', chunk.world.reset.nelement())
+        stats.rate('sample-rate/actor', chunk.world.reset.nelement())
         stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
-        stats.cumsum('traj-count', chunk.world.reset.sum())
+        stats.cumsum('count/traj', chunk.world.reset.sum())
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
@@ -69,12 +69,12 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     ratio = (new_logits - old_logits).exp()
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    rtg_z = agent.vnorm.norm(rtg)
+    rtg_z = agent.vnorm.norm(rtg).clamp(-3, +3)
     v_clipped = d0.value_z + torch.clamp(d.value_z - d0.value_z, -clip, +clip)
     v_loss = .5*torch.max((d.value_z - rtg_z)**2, (v_clipped - rtg_z)**2).mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    adv_z = agent.advnorm.norm(adv)
+    adv_z = agent.advnorm.norm(adv).clamp(-3, +3)
     free_adv = ratio[:-1]*adv_z
     clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv_z
     p_loss = -torch.min(free_adv, clip_adv).mean()
@@ -98,16 +98,23 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.mean('resid-var/v', (rtg - d.value).pow(2).mean(), rtg.pow(2).mean())
         stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('kl-div', kl_div) 
-        stats.mean('debug-v/v', d.value.mean())
-        stats.mean('debug-v/r-inf', w.reward.mean()/(1 - gamma))
-        stats.mean('debug-scale/v', d.value.abs().mean())
-        stats.mean('debug-max/v', d.value.abs().max())
-        stats.mean('debug-scale/adv', adv.abs().mean())
-        stats.mean('debug-max/adv', adv.abs().max())
-        # stats.rel_gradient_norm('rel-norm-grad', agent)
-        stats.rate('rate/learner', w.reset.nelement())
+
+        stats.mean('rtg/z-mean', rtg_z.mean())
+        stats.mean('rtg/z-std', rtg_z.std())
+        stats.max('rtg/z-max', rtg_z.abs().max())
+        stats.mean('rtg/mu', agent.vnorm.mu)
+        stats.mean('rtg/sigma', agent.vnorm.sigma)
+
+        stats.mean('adv/z-mean', adv_z.mean())
+        stats.mean('adv/z-std', adv_z.std())
+        stats.max('adv/z-max', adv_z.abs().max())
+        stats.mean('adv/mu', agent.advnorm.mu)
+        stats.mean('adv/sigma', agent.advnorm.sigma)
+
+        stats.rate('sample-rate/learner', w.reset.nelement())
         stats.rate('step-rate/learner', 1)
-        stats.cumsum('steps/learner', 1)
+        stats.cumsum('count/learner-steps', 1)
+        # stats.rel_gradient_norm('rel-norm-grad', agent)
 
     return kl_div
 
