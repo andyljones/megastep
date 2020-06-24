@@ -6,6 +6,7 @@ import onedee
 from onedee import recording
 import cubicasa
 import numpy as np
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ def run():
     agent = agentfunc().cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
 
-    run_name = 'test'
+    run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
@@ -123,11 +124,6 @@ def run():
                         log.info('kl div exceeded')
                         break
                 storing.store(run_name, {'agent': agent}, throttle=60)
-
-
-
-
-
 
 def demo():
     env = envfunc(1)
