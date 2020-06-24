@@ -22,7 +22,7 @@ def via_dir(run_name, *args, **kwargs):
     with to_dir(run_name), from_dir(run_name, *args, **kwargs):
         yield
 
-def gpu_memory(name):
+def gpu_memory(name='default'):
     total_mem = torch.cuda.get_device_properties('cuda').total_memory
     max(f'gpu-cache/{name}', torch.cuda.max_memory_cached()/total_mem)
     torch.cuda.reset_max_memory_cached()

@@ -84,7 +84,7 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 32
+    buffer_size = 64
     batch_size = 4096
     n_envs = 512
 
@@ -123,7 +123,7 @@ def run():
                     if kl > .02:
                         log.info('kl div exceeded')
                         break
-                storing.store(run_name, {'agent': agent}, throttle=60)
+                storing.store_latest(run_name, {'agent': agent}, throttle=60)
 
 def demo():
     env = envfunc(1)

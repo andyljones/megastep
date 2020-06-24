@@ -8,7 +8,7 @@ class ExplorerEnv:
 
     def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)
-        self._mover = modules.SimpleMovement(self._core)
+        self._mover = modules.MomentumMovement(self._core)
         self._observer = modules.RGBDObserver(self._core)
         self._respawner = modules.RandomSpawns(self._core)
 

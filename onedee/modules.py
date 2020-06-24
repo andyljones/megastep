@@ -58,7 +58,7 @@ class MomentumMovement:
         core = self._core
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
-        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents, delta.momenta)
+        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
         core.cuda.physics(core.scene, core.agents)
 
 
