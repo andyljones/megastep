@@ -148,15 +148,16 @@ def run():
             chunkstats(chunk)
 
             indices = learning.batch_indices(n_envs, batch_size//buffer_size)
+            learning.update_lr(opt)
+            entropy = learning.entropy(opt)
             for idxs in indices:
                 with recurrence.temp_clear_set(agent, state[:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs])
+                    kl = optimize(agent, opt, chunk[:, idxs], entropy)
 
                 log.info('stepped')
                 if kl > .02:
                     log.info('kl div exceeded')
                     break
-            learning.update_lr(opt)
             storing.store_latest(run_name, {'agent': agent}, throttle=60)
             stats.gpu.memory(0)
             stats.gpu.vitals(0)

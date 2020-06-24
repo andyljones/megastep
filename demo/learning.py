@@ -134,7 +134,7 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
     
     return v
 
-def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=180, halflife=10e3):
+def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=120, halflife=7200):
     step = np.mean([s['step'] for s in opt.state.values()])
 
     if (0 < warmup) and (step < warmup): 
@@ -149,7 +149,12 @@ def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=180, halflife=10e3):
         param_group['lr'] = lr
 
     stats.mean('learning-rate', lr)
-        
+
+def entropy(opt, initial=.01, halflife=7200):
+    step = np.mean([s['step'] for s in opt.state.values()])
+    entropy = initial*(1/2)**(step/halflife)
+    stats.mean('entropy-weight', entropy)
+    return entropy
 
 def test_v_trace():
     ratios = torch.tensor([1., 1.])
