@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class ExplorerEnv: 
 
-    def __init__(self, *args, max_length=2048, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.MomentumMovement(self._core)
         self._observer = modules.RGBDObserver(self._core)
@@ -19,7 +19,6 @@ class ExplorerEnv:
         self._seen = torch.full_like(self._tex_to_env, False)
 
         self._length = core.env_full_like(self._core, 0)
-        self._max_length = torch.randint_like(self._length, max_length//2, max_length)
 
         self._potential = core.env_full_like(self._core, 0.)
 
@@ -38,13 +37,16 @@ class ExplorerEnv:
 
     def _reward(self, render, reset):
         texindices = self._tex_indices(render)
-        seen = self._seen[texindices]
         self._seen[texindices] = True
-        reward = (1 - seen.int()).reshape(seen.shape[0], -1).sum(-1)
-        reward[reset] = 0
-        reward = reward.float()/self._core.res
-        self._potential += reward
-        return reward
+
+        potential = torch.zeros_like(self._potential)
+        potential.scatter_add_(0, self._tex_to_env, self._seen.float())
+
+        reward = (potential - self._potential)
+        self._potential = potential
+
+        #TODO: Get rid of this and add a reward scaling mechanism to the learner
+        return reward/self._core.res
 
     def _reset(self, reset):
         self._respawner(reset)
@@ -68,7 +70,7 @@ class ExplorerEnv:
         self._mover(decision)
         self._length += 1
 
-        reset = self._length == self._max_length
+        reset = self._length >= self._potential + 256
         self._reset(reset)
         render = self._observer.render()
         return arrdict(
