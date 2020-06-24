@@ -43,8 +43,7 @@ class Agent(nn.Module):
         if sample:
             outputs['actions'] = self.sampler(outputs.logits)
         if value:
-            outputs['value_z'] = self.value(world.obs, reset=world.reset).squeeze(-1)
-            outputs['value'] = self.vnorm.unnorm(outputs.value_z)
+            outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
         return outputs
 
 def agentfunc():
@@ -69,9 +68,8 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     ratio = (new_logits - old_logits).exp()
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    rtg_z = agent.vnorm.norm(rtg).clamp(-3, +3)
-    v_clipped = d0.value_z + torch.clamp(d.value_z - d0.value_z, -clip, +clip)
-    v_loss = .5*torch.max((d.value_z - rtg_z)**2, (v_clipped - rtg_z)**2).mean()
+    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip*agent.vnorm.sigma(), +clip*agent.vnorm.sigma())
+    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
     adv_z = agent.advnorm.norm(adv).clamp(-3, +3)
@@ -84,7 +82,8 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     
     opt.zero_grad()
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(agent.parameters(), 1.)
+    torch.nn.utils.clip_grad_norm_(agent.policy.parameters(), 1.)
+    torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 1.)
 
     opt.step()
     agent.vnorm.step(rtg)
@@ -99,17 +98,17 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('kl-div', kl_div) 
 
-        stats.mean('rtg/z-mean', rtg_z.mean())
-        stats.mean('rtg/z-std', rtg_z.std())
-        stats.max('rtg/z-max', rtg_z.abs().max())
-        stats.mean('rtg/mu', agent.vnorm.mu)
-        stats.mean('rtg/sigma', agent.vnorm.sigma)
+        stats.mean('rtg/mean', rtg.mean())
+        stats.mean('rtg/std', rtg.std())
+        stats.max('rtg/max', rtg.abs().max())
+        stats.mean('rtg/mu', agent.vnorm.mu())
+        stats.mean('rtg/sigma', agent.vnorm.sigma())
 
         stats.mean('adv/z-mean', adv_z.mean())
         stats.mean('adv/z-std', adv_z.std())
         stats.max('adv/z-max', adv_z.abs().max())
-        stats.mean('adv/mu', agent.advnorm.mu)
-        stats.mean('adv/sigma', agent.advnorm.sigma)
+        stats.mean('adv/mu', agent.advnorm.mu())
+        stats.mean('adv/sigma', agent.advnorm.sigma())
 
         stats.rate('sample-rate/learner', w.reset.nelement())
         stats.rate('step-rate/learner', 1)

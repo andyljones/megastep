@@ -5,58 +5,36 @@ from torch import nn
 
 class Normer(nn.Module):
 
-    def __init__(self, com=1000):
+    def __init__(self, prior=1e6):
         super().__init__()
-        self._alpha = 1/(1+com)
-        self.register_buffer('mu', torch.zeros(()))
-        self.register_buffer('nu', torch.ones(()))
+        self.register_buffer('S', torch.zeros(()))
+        self.register_buffer('S2', torch.ones(()))
+        self.register_buffer('N', torch.tensor(prior))
 
-    @property
+    def mu(self):
+        return self.S/self.N
+    
     def sigma(self):
-        return (self.nu - self.mu**2).pow(.5)
+        # RIP Bessel's correction. Clarity over unbiasedness!
+        return (self.S2/self.N - self.mu()**2 + 1/self.N)**.5
 
     def step(self, x):
-        a = self._alpha
-        self.mu[()] = a*x.mean() + (1 - a)*self.mu
-        self.nu[()] = a*x.pow(2).mean() + (1 - a)*self.nu
+        self.S += x.float().sum()
+        self.S2 += x.float().pow(2).sum()
+        self.N += x.numel()
 
     def scale(self, x):
-        return x/self.sigma
+        return x/self.sigma()
 
     def unscale(self, x):
-        return x*self.sigma
+        return x*self.sigma()
     
     def norm(self, x):
-        return (x - self.mu)/self.sigma
+        return (x - self.mu())/self.sigma()
     
     def unnorm(self, x):
-        return (x + self.mu)*self.sigma
+        return (x + self.mu())*self.sigma()
     
-    def forward(self, x):
-        return self.layer(x)
-
-class PopArtNormer(Normer):
-
-    def __init__(self, width, com=1000):
-        """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
-        super().__init__(com=com)
-        self.layer = nn.Linear(width, 1)
-
-    def step(self, x):
-        a = self._alpha
-        mu = a*x.mean() + (1 - a)*self.mu
-        nu = a*x.pow(2).mean() + (1 - a)*self.nu
-        sigma = (nu - mu**2).pow(.5)
-        
-        self.layer.weight.data[:] = self.sigma/sigma*self.layer.weight
-        self.layer.bias.data[:] = (self.sigma*self.layer.bias + self.mu - mu)/sigma
-
-        self.mu[()] = mu
-        self.nu[()] = nu
-    
-    def forward(self, x):
-        return self.layer(x)
-
 def batch_indices(n_envs, batch_width, device='cuda'):
     indices = torch.randperm(n_envs, device=device)
     indices = [indices[i:i+batch_width] for i in range(0, n_envs, batch_width)]
