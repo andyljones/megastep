@@ -1,6 +1,61 @@
 import torch
 import numpy as np
 from rebar import stats
+from torch import nn
+
+class Normer(nn.Module):
+
+    def __init__(self, com=10000):
+        super().__init__()
+        self._alpha = 1/(1+com)
+        self.register_buffer('mu', torch.zeros(()))
+        self.register_buffer('nu', torch.ones(()))
+
+    @property
+    def sigma(self):
+        return (self.nu - self.mu**2).pow(.5)
+
+    def step(self, x):
+        a = self._alpha
+        self.mu[()] = a*x.mean() + (1 - a)*self.mu
+        self.nu[()] = a*x.pow(2).mean() + (1 - a)*self.nu
+
+    def scale(self, x):
+        return x/self.sigma
+
+    def unscale(self, x):
+        return x*self.sigma
+    
+    def norm(self, x):
+        return (x - self.mu)/self.sigma
+    
+    def unnorm(self, x):
+        return (x + self.mu)*self.sigma
+    
+    def forward(self, x):
+        return self.layer(x)
+
+class PopArtNormer(Normer):
+
+    def __init__(self, width, com=10000):
+        """Follows _Multi-task Deep Reinforcement Learning with PopArt_"""
+        super().__init__(com=com)
+        self.layer = nn.Linear(width, 1)
+
+    def step(self, x):
+        a = self._alpha
+        mu = a*x.mean() + (1 - a)*self.mu
+        nu = a*x.pow(2).mean() + (1 - a)*self.nu
+        sigma = (nu - mu**2).pow(.5)
+        
+        self.layer.weight.data[:] = self.sigma/sigma*self.layer.weight
+        self.layer.bias.data[:] = (self.sigma*self.layer.bias + self.mu - mu)/sigma
+
+        self.mu[()] = mu
+        self.nu[()] = nu
+    
+    def forward(self, x):
+        return self.layer(x)
 
 def batch_indices(n_envs, batch_width, device='cuda'):
     indices = torch.randperm(n_envs, device=device)

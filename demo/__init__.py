@@ -1,12 +1,14 @@
 import torch
-from . import learning, agents
+from . import learning
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence
 import pandas as pd
 import onedee
-from onedee import recording
+from onedee import recording, spaces
 import cubicasa
 import numpy as np
 import pandas as pd
+from .transformer import Transformer
+from torch import nn
 
 log = logging.getLogger(__name__)
 
@@ -17,9 +19,37 @@ def envfunc(n_envs=1024):
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
 
+class Agent(nn.Module):
+
+    def __init__(self, observation_space, action_space, width=128):
+        super().__init__()
+        out = spaces.output(action_space, width)
+        self.sampler = out.sample
+        self.policy = recurrence.Sequential(
+            spaces.intake(observation_space, width),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            out)
+        self.value = recurrence.Sequential(
+            spaces.intake(observation_space, width),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            spaces.ValueOutput(width, 1))
+
+        self.vnorm = learning.Normer()
+        self.advnorm = learning.Normer()
+
+    def forward(self, world, sample=False, value=False):
+        outputs = arrdict(
+            logits=self.policy(world.obs, reset=world.reset))
+        if sample:
+            outputs['actions'] = self.sampler(outputs.logits)
+        if value:
+            outputs['value_z'] = self.value(world.obs, reset=world.reset).squeeze(-1)
+            outputs['value'] = self.vnorm.unnorm(outputs.value_z)
+        return outputs
+
 def agentfunc():
     env = envfunc(n_envs=1)
-    return agents.Agent(env.observation_space, env.action_space).cuda()
+    return Agent(env.observation_space, env.action_space).cuda()
 
 def chunkstats(chunk):
     with stats.defer():
@@ -29,7 +59,7 @@ def chunkstats(chunk):
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -39,12 +69,14 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     ratio = (new_logits - old_logits).exp()
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
-    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
+    rtg_z = agent.vnorm.norm(rtg)
+    v_clipped = d0.value_z + torch.clamp(d.value_z - d0.value_z, -clip, +clip)
+    v_loss = .5*torch.max((d.value_z - rtg_z)**2, (v_clipped - rtg_z)**2).mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    free_adv = ratio[:-1]*adv
-    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
+    adv_z = agent.advnorm.norm(adv)
+    free_adv = ratio[:-1]*adv_z
+    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv_z
     p_loss = -torch.min(free_adv, clip_adv).mean()
 
     h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
@@ -55,6 +87,8 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     torch.nn.utils.clip_grad_norm_(agent.parameters(), 1.)
 
     opt.step()
+    agent.vnorm.step(rtg)
+    agent.advnorm.step(adv)
 
     kl_div = -(new_logits - old_logits).mean().detach()
     with stats.defer():
@@ -110,7 +144,7 @@ def run():
             indices = learning.batch_indices(n_envs, batch_size//buffer_size)
             for idxs in indices:
                 with recurrence.temp_clear_set(agent, state[:, idxs]):
-                    kl = step(agent, opt, chunk[:, idxs])
+                    kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')
                 if kl > .02:
