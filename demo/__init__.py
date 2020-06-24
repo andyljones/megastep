@@ -11,8 +11,8 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.RandomChain(n_envs, n=10)
-    # return onedee.ExplorerEnv(cubicasa.sample(n_envs))
-    return onedee.WaypointEnv([cubicasa.column()]*n_envs)
+    return onedee.ExplorerEnv(cubicasa.sample(n_envs))
+    # return onedee.WaypointEnv([cubicasa.column()]*n_envs)
     ds = cubicasa.sample(n_envs)
     return onedee.ExplorerEnv(ds)
 
@@ -85,10 +85,9 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99):
         # stats.last('scaler/std', agent.scaler.sigma)
 
 def run():
-    buffer_size = 128
-    batch_size = 512
+    buffer_size = 32
+    batch_size = 4096
     n_envs = 512
-    gearing = 8
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -103,8 +102,9 @@ def run():
         world = env.reset()
         while True:
 
-            for _ in range(gearing):
-                decision = agent(world[None], sample=True).squeeze(0)
+            state = recurrence.get(agent)
+            for _ in range(buffer_size):
+                decision = agent(world[None], sample=True, value=True).squeeze(0)
                 buffer.append(arrdict(
                     world=world,
                     decision=decision))
@@ -113,12 +113,13 @@ def run():
             
             if len(buffer) == buffer_size:
                 chunk = arrdict.stack(buffer)
-                chunkstats(chunk[-gearing:])
+                chunkstats(chunk)
 
-                batch = learning.sample(chunk, batch_size//buffer_size)
-                with recurrence.clear_context(agent):
-                    step(agent, opt, batch)
-                log.info('stepped')
+                indices = learning.batch_indices(n_envs, batch_size//buffer_size)
+                for idxs in indices:
+                    with recurrence.temp_clear_set(agent, state):
+                        step(agent, opt, chunk[:, idxs])
+                    log.info('stepped')
                 storing.store(run_name, {'agent': agent}, throttle=60)
 
 

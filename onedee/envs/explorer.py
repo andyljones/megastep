@@ -23,6 +23,8 @@ class ExplorerEnv:
 
         self._potential = core.env_full_like(self._core, 0.)
 
+        self.device = self._core.device
+
     def _tex_indices(self, aux): 
         scene = self._core.scene 
         mask = aux.indices >= 0

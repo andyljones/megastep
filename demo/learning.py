@@ -1,11 +1,10 @@
 import torch
 import numpy as np
 
-def sample(chunk, batchsize):
-    B = chunk.world.reward.shape[1]
-    indices = torch.randint(B, size=(batchsize,), device=chunk.world.reward.device)
-    batch = chunk[:, indices]
-    return batch
+def batch_indices(n_envs, batch_width, device='cuda'):
+    indices = torch.randperm(n_envs, device=device)
+    indices = [indices[i:i+batch_width] for i in range(0, n_envs, batch_width)]
+    return indices
 
 def gather(arr, indices):
     if isinstance(arr, dict):

@@ -7,33 +7,29 @@ class State:
     def __init__(self):
         super().__init__()
 
-        self._ready = False
         self._value = None
 
     def get(self, factory=None):
-        if not self._ready and factory is not None:
+        if self._value is None and factory is not None:
             self._value = factory()
         return self._value
 
     def set(self, value):
-        self._ready = True
         self._value = value
 
     def clear(self):
-        self._ready = False
         self._value = None
 
     def __repr__(self):
-        return f'State({self._ready}, {self._value})'
+        return f'State({self._value})'
     
     def __str__(self):
         return repr(self)
 
-def state(net):
-    substates = {k: state(v) for k, v in net.named_children()}
-    states = {k: getattr(net, k) for k in dir(net) if isinstance(getattr(net, k), State)}
-    combined = {**states, **substates}
-    return arrdict({k: v for k, v in combined.items() if v})
+def states(net):
+    substates = {k: states(v) for k, v in net.named_children()}
+    ownstates = {k: getattr(net, k) for k in dir(net) if isinstance(getattr(net, k), State)}
+    return arrdict({k: v for k, v in {**ownstates, **substates}.items() if v})
 
 def _nonnull(x):
     y = type(x)()
@@ -47,23 +43,36 @@ def _nonnull(x):
     return y
 
 def get(net):
-    return _nonnull(state(net).map(lambda s: s.get()))
+    return _nonnull(states(net).map(lambda s: s.get()))
 
-def set(net, recurrent):
-    recurrent.starmap(lambda r, n: n.set(r), state(net))
+def set(net, state):
+    state.starmap(lambda r, n: n.set(r), states(net))
 
 def clear(net):
-    state(net).map(lambda s: s.clear())
+    states(net).map(lambda s: s.clear())
 
 @contextmanager
-def clear_context(net):
-    recurrent = get(net)
+def temp_clear(net):
+    original = get(net)
     clear(net)
     try:
         yield
     finally:
-        set(net, recurrent)
+        set(net, original)
 
+@contextmanager
+def temp_set(net, state):
+    original = get(net)
+    set(net, state)
+    try:
+        yield
+    finally:
+        set(net, original)
+
+@contextmanager
+def temp_clear_set(net, state):
+    with temp_clear(net), temp_set(net, state):
+        yield net
 
 class Sequential(nn.Sequential):
 
