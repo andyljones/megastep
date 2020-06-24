@@ -60,7 +60,7 @@ class ExplorerEnv:
         return arrdict(
             obs=self._observer(render), 
             reset=reset, 
-            terminal=reset, 
+            terminal=torch.zeros_like(reset), 
             reward=self._reward(render, reset))
 
     @torch.no_grad()
@@ -74,7 +74,7 @@ class ExplorerEnv:
         return arrdict(
             obs=self._observer(render), 
             reset=reset, 
-            terminal=reset, 
+            terminal=torch.zeros_like(reset), 
             reward=self._reward(render, reset))
 
     def state(self, d=0):
