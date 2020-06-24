@@ -30,24 +30,19 @@ def chunkstats(chunk):
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
 def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
-    decision = agent(batch.world, value=True)
+    w, d0 = batch.world, batch.decision
+    d = agent(w, value=True)
 
-    logits = learning.flatten(decision.logits)
-    old_logits = learning.flatten(learning.gather(batch.decision.logits, batch.decision.actions)).sum(-1)
-    new_logits = learning.flatten(learning.gather(decision.logits, batch.decision.actions)).sum(-1)
+    logits = learning.flatten(d.logits)
+    old_logits = learning.flatten(learning.gather(d0.logits, d0.actions)).sum(-1)
+    new_logits = learning.flatten(learning.gather(d.logits, d0.actions)).sum(-1)
     ratio = (new_logits - old_logits).exp()
 
-    reward = batch.world.reward
-    reset = batch.world.reset
-    terminal = batch.world.terminal
-    value0 = batch.decision.value
-    value = decision.value
+    rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
+    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
+    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
 
-    rtg = learning.reward_to_go(reward, value, reset, terminal, gamma=gamma)
-    v_clipped = value0 + torch.clamp(value - value0, -clip, +clip)
-    v_loss = .5*torch.max((value - rtg)**2, (v_clipped - rtg)**2).mean()
-
-    adv = learning.generalized_advantages(value0, reward, value0, reset, terminal, gamma=gamma)
+    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
     free_adv = ratio[:-1]*adv
     clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
     p_loss = -torch.min(free_adv, clip_adv).mean()
@@ -66,18 +61,17 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.mean('loss/value', v_loss)
         stats.mean('loss/policy', p_loss)
         stats.mean('loss/entropy', h_loss)
-        stats.mean('loss/total', loss)
-        stats.mean('resid-var/v', (rtg - value).pow(2).mean(), rtg.pow(2).mean())
+        stats.mean('resid-var/v', (rtg - d.value).pow(2).mean(), rtg.pow(2).mean())
         stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('kl-div', kl_div) 
-        stats.mean('debug-v/v', value.mean())
-        stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-        stats.mean('debug-scale/v', value.abs().mean())
-        stats.mean('debug-max/v', value.abs().max())
+        stats.mean('debug-v/v', d.value.mean())
+        stats.mean('debug-v/r-inf', w.reward.mean()/(1 - gamma))
+        stats.mean('debug-scale/v', d.value.abs().mean())
+        stats.mean('debug-max/v', d.value.abs().max())
         stats.mean('debug-scale/adv', adv.abs().mean())
         stats.mean('debug-max/adv', adv.abs().max())
         # stats.rel_gradient_norm('rel-norm-grad', agent)
-        stats.rate('rate/learner', reset.nelement())
+        stats.rate('rate/learner', w.reset.nelement())
         stats.rate('step-rate/learner', 1)
         stats.cumsum('steps/learner', 1)
 

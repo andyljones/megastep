@@ -55,12 +55,15 @@ class Agent(nn.Module):
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=32, d_model=width, n_layers=2),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=32, d_model=width, n_layers=2),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
+
+        self.register_buffer('v_mu', torch.tensor(0.))
+        self.register_buffer('v_sigma', torch.tensor(1.))
 
     def forward(self, world, sample=False, value=False):
         outputs = arrdict(
@@ -68,6 +71,7 @@ class Agent(nn.Module):
         if sample:
             outputs['actions'] = self.sampler(outputs.logits)
         if value:
-            outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
+            outputs['value_z'] = self.value(world.obs, reset=world.reset).squeeze(-1)
+            outputs['value'] = self.v_mu + self.v_sigma * outputs.value_z
         return outputs
 
