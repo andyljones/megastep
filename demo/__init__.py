@@ -110,20 +110,21 @@ def run():
                 buffer = buffer[-buffer_size:]
                 world = env.step(decision)
             
-            if len(buffer) == buffer_size:
-                chunk = arrdict.stack(buffer)
-                chunkstats(chunk)
+            chunk = arrdict.stack(buffer)
+            chunkstats(chunk)
 
-                indices = learning.batch_indices(n_envs, batch_size//buffer_size)
-                for idxs in indices:
-                    with recurrence.temp_clear_set(agent, state[:, idxs]):
-                        kl = step(agent, opt, chunk[:, idxs])
+            indices = learning.batch_indices(n_envs, batch_size//buffer_size)
+            for idxs in indices:
+                with recurrence.temp_clear_set(agent, state[:, idxs]):
+                    kl = step(agent, opt, chunk[:, idxs])
 
-                    log.info('stepped')
-                    if kl > .02:
-                        log.info('kl div exceeded')
-                        break
-                storing.store_latest(run_name, {'agent': agent}, throttle=60)
+                log.info('stepped')
+                if kl > .02:
+                    log.info('kl div exceeded')
+                    break
+            storing.store_latest(run_name, {'agent': agent}, throttle=60)
+            stats.gpu.memory()
+            stats.gpu.performance()
 
 def demo():
     env = envfunc(1)

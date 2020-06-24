@@ -4,6 +4,9 @@ import inspect
 from ..contextlib import maybeasynccontextmanager
 from .. import numpy
 from . import categories
+from functools import partial
+
+__all__ = ['to_dir', 'defer', 'record']
 
 WRITER = None
 
@@ -120,3 +123,7 @@ def defer():
     
         QUEUE = None
         _record = eager_record
+
+for c in categories.CATEGORIES:
+    locals()[c] = partial(record, c)
+    __all__.append(c)

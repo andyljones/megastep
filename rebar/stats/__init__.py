@@ -3,32 +3,20 @@ import time
 from contextlib import contextmanager
 from functools import partial
 from torch import nn
-from . import categories
 import logging
 
 log = logging.getLogger(__name__)
 
 # For re-export
-from .writing import to_dir, defer, record
+from .writing import *
+from .writing import to_dir, mean
 from .reading import from_dir, Reader
-
-for c in categories.CATEGORIES:
-    locals()[c] = partial(record, c)
-# Defned to be used by other functions in this module
-mean = partial(record, 'mean')
+from . import gpu
 
 @contextmanager
 def via_dir(run_name, *args, **kwargs):
     with to_dir(run_name), from_dir(run_name, *args, **kwargs):
         yield
-
-def gpu_memory(name='default'):
-    total_mem = torch.cuda.get_device_properties('cuda').total_memory
-    max(f'gpu-cache/{name}', torch.cuda.max_memory_cached()/total_mem)
-    torch.cuda.reset_max_memory_cached()
-    max(f'gpu-alloc/{name}', torch.cuda.max_memory_allocated()/total_mem)
-    torch.cuda.reset_max_memory_allocated()
-    torch.cuda.reset_max_memory_cached()
 
 def normhook(name, t):
 

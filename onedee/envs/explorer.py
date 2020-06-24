@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class ExplorerEnv: 
 
-    def __init__(self, *args, max_length=512, **kwargs):
+    def __init__(self, *args, max_length=2048, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.MomentumMovement(self._core)
         self._observer = modules.RGBDObserver(self._core)
