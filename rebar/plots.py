@@ -222,7 +222,7 @@ class Stream:
         
         boi.push_notebook(handle=self._handle)
 
-def live(run_name=-1, prefix='', rule='60s'):
+def view(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
     while True:
         stream.update(rule=rule)

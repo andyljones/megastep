@@ -22,6 +22,8 @@ class ExplorerEnv:
 
         self._potential = core.env_full_like(self._core, 0.)
 
+        self._base_length = 256
+
         self.device = self._core.device
 
     def _tex_indices(self, aux): 
@@ -70,7 +72,7 @@ class ExplorerEnv:
         self._mover(decision)
         self._length += 1
 
-        reset = self._length >= self._potential + 256
+        reset = self._length >= self._potential + self._base_length
         self._reset(reset)
         render = self._observer.render()
         return arrdict(
@@ -87,7 +89,7 @@ class ExplorerEnv:
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),
-            max_length=self._max_length[d].clone())
+            max_length=self._potential[d].add(self._base_length).clone())
 
     @classmethod
     def plot_state(cls, state):
@@ -100,8 +102,8 @@ class ExplorerEnv:
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
-        s = (f'length: {state.length:d}/{state.max_length:d}\n'
-            f'potential: {state.potential:.2f}')
+        s = (f'length: {state.length:d}/{state.max_length:.0f}\n'
+            f'potential: {state.potential:.0f}')
         ax.annotate(s, (5., 5.), xycoords='axes points')
 
         return fig
