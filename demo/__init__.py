@@ -85,7 +85,7 @@ def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
 
 def run():
     buffer_size = 64
-    batch_size = 4096
+    batch_size = 8192
     n_envs = 512
 
     env = envfunc(n_envs)
@@ -122,6 +122,7 @@ def run():
                 if kl > .02:
                     log.info('kl div exceeded')
                     break
+            learning.update_lr(opt)
             storing.store_latest(run_name, {'agent': agent}, throttle=60)
             stats.gpu.memory(0)
             stats.gpu.vitals(0)

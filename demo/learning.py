@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from rebar import stats
 
 def batch_indices(n_envs, batch_width, device='cuda'):
     indices = torch.randperm(n_envs, device=device)
@@ -99,6 +100,23 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
                 v[s] += gamma**(t - s) * prod_c*dV
     
     return v
+
+def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=180, halflife=10e3):
+    step = np.mean([s['step'] for s in opt.state.values()])
+
+    if (0 < warmup) and (step < warmup): 
+        x = step/warmup
+        lr = (np.exp(5*x) - 1)/(np.exp(5) - 1) * max_lr
+    else:
+        excess = step - warmup
+        decayed = max_lr*(1/2)**(excess/halflife)
+        lr = max(decayed, floor)
+
+    for param_group in opt.param_groups:
+        param_group['lr'] = lr
+
+    stats.mean('learning-rate', lr)
+        
 
 def test_v_trace():
     ratios = torch.tensor([1., 1.])
