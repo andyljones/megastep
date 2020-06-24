@@ -123,8 +123,8 @@ def run():
                     log.info('kl div exceeded')
                     break
             storing.store_latest(run_name, {'agent': agent}, throttle=60)
-            stats.gpu.memory()
-            stats.gpu.performance()
+            stats.gpu.memory(0)
+            stats.gpu.vitals(0)
 
 def demo():
     env = envfunc(1)

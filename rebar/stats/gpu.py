@@ -5,11 +5,11 @@ from subprocess import check_output
 from . import writing
 
 
-def memory(name='default'):
-    total_mem = torch.cuda.get_device_properties('cuda').total_memory
-    writing.max(f'gpu-memory/cache/{name}', torch.cuda.max_memory_cached()/total_mem)
+def memory(device=0):
+    total_mem = torch.cuda.get_device_properties(f'cuda:{device}').total_memory
+    writing.max(f'gpu-memory/cache/{device}', torch.cuda.max_memory_cached(device)/total_mem)
     torch.cuda.reset_max_memory_cached()
-    writing.max(f'gpu-memory/alloc/{name}', torch.cuda.max_memory_allocated()/total_mem)
+    writing.max(f'gpu-memory/alloc/{device}', torch.cuda.max_memory_allocated(device)/total_mem)
     torch.cuda.reset_max_memory_allocated()
     torch.cuda.reset_max_memory_cached()
 
@@ -27,8 +27,18 @@ def dataframe():
     df = df.apply(pd.to_numeric, errors='coerce')
     return df
 
-def performance():
+def vitals(device=None):
     df = dataframe()
+    if device is None:
+        pass
+    elif isinstance(device, int):
+        df = df.loc[[device]]
+    else:
+        df = df.loc[device]
+
     fields = ['compute', 'access', 'fan', 'power', 'temp']
     for (device, field), value in df[fields].stack().iteritems():
         writing.mean(f'gpu/{field}/{device}', value)
+
+    for device in df.index:
+        writing.mean(f'gpu/memory/{device}', 100*df.loc[device, 'memused']/df.loc[device, 'memtotal'])
