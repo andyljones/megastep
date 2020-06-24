@@ -28,61 +28,59 @@ def chunkstats(chunk):
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def step(agent, opt, batch, entropy=1e-2, gamma=.99):
+def step(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     decision = agent(batch.world, value=True)
 
     logits = learning.flatten(decision.logits)
     old_logits = learning.flatten(learning.gather(batch.decision.logits, batch.decision.actions)).sum(-1)
     new_logits = learning.flatten(learning.gather(decision.logits, batch.decision.actions)).sum(-1)
-    ratios = (new_logits - old_logits).exp()
+    ratio = (new_logits - old_logits).exp()
 
     reward = batch.world.reward
     reset = batch.world.reset
     terminal = batch.world.terminal
+    value0 = batch.decision.value
     value = decision.value
-    rewardz = reward
-    valuez = value
 
-    # v = v_trace(ratios, value, reward, reset, terminal, gamma=gamma)
-    v = learning.reward_to_go(reward, value, reset, terminal, gamma=gamma)
-    vz = v
+    rtg = learning.reward_to_go(reward, value, reset, terminal, gamma=gamma)
+    v_clipped = value0 + torch.clamp(value - value0, -clip, +clip)
+    v_loss = .5*torch.max((value - rtg)**2, (v_clipped - rtg)**2).mean()
 
-    adv = learning.generalized_advantages(valuez, rewardz, vz, reset, terminal, gamma=gamma)
+    adv = learning.generalized_advantages(value0, reward, value0, reset, terminal, gamma=gamma)
+    free_adv = ratio[:-1]*adv
+    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
+    p_loss = -torch.min(free_adv, clip_adv).mean()
 
-    v_loss = .5*(vz - valuez).pow(2).mean() 
-    p_loss = (adv*new_logits[:-1]).mean()
-    h_loss = -(logits.exp()*logits)[:-1].sum(-1).mean()
-    loss = v_loss - p_loss - entropy*h_loss
+    h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
+    loss = v_loss + p_loss + entropy*h_loss
     
     opt.zero_grad()
     loss.backward()
     torch.nn.utils.clip_grad_norm_(agent.parameters(), 1.)
 
     opt.step()
-    # agent.scaler.step(v)
 
+    kl_div = -(new_logits - old_logits).mean().detach()
     with stats.defer():
         stats.mean('loss/value', v_loss)
         stats.mean('loss/policy', p_loss)
         stats.mean('loss/entropy', h_loss)
         stats.mean('loss/total', loss)
-        stats.mean('resid-var/v', (v - value).pow(2).mean(), v.pow(2).mean())
-        stats.mean('resid-var/vz', (vz - valuez).pow(2).mean(), vz.pow(2).mean())
+        stats.mean('resid-var/v', (rtg - value).pow(2).mean(), rtg.pow(2).mean())
         stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
-        stats.mean('debug-v/v', v.mean())
+        stats.mean('kl-div', kl_div) 
+        stats.mean('debug-v/v', value.mean())
         stats.mean('debug-v/r-inf', reward.mean()/(1 - gamma))
-        stats.mean('debug-scale/vz', vz.abs().mean())
-        stats.mean('debug-scale/v', v.abs().mean())
-        stats.mean('debug-max/v', v.abs().max())
+        stats.mean('debug-scale/v', value.abs().mean())
+        stats.mean('debug-max/v', value.abs().max())
         stats.mean('debug-scale/adv', adv.abs().mean())
         stats.mean('debug-max/adv', adv.abs().max())
         # stats.rel_gradient_norm('rel-norm-grad', agent)
-        stats.mean('debug-scale/ratios', ratios.mean())
         stats.rate('rate/learner', reset.nelement())
         stats.rate('step-rate/learner', 1)
         stats.cumsum('steps/learner', 1)
-        # stats.last('scaler/mean', agent.scaler.mu)
-        # stats.last('scaler/std', agent.scaler.sigma)
+
+    return kl_div
 
 def run():
     buffer_size = 32
@@ -104,7 +102,7 @@ def run():
 
             state = recurrence.get(agent)
             for _ in range(buffer_size):
-                decision = agent(world[None], sample=True, value=True).squeeze(0)
+                decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
                     decision=decision))
@@ -117,10 +115,18 @@ def run():
 
                 indices = learning.batch_indices(n_envs, batch_size//buffer_size)
                 for idxs in indices:
-                    with recurrence.temp_clear_set(agent, state):
-                        step(agent, opt, chunk[:, idxs])
+                    with recurrence.temp_clear_set(agent, state[:, idxs]):
+                        kl = step(agent, opt, chunk[:, idxs])
+
                     log.info('stepped')
+                    if kl > .02:
+                        log.info('kl div exceeded')
+                        break
                 storing.store(run_name, {'agent': agent}, throttle=60)
+
+
+
+
 
 
 def demo():
