@@ -87,8 +87,6 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 1.)
 
     opt.step()
-    agent.vnorm.step(rtg)
-    agent.advnorm.step(adv)
 
     kl_div = -(new_logits - old_logits).mean().detach()
     with stats.defer():
@@ -102,14 +100,10 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.mean('rtg/mean', rtg.mean())
         stats.mean('rtg/std', rtg.std())
         stats.max('rtg/max', rtg.abs().max())
-        stats.mean('rtg/mu', agent.vnorm.mu())
-        stats.mean('rtg/sigma', agent.vnorm.sigma())
 
         stats.mean('adv/z-mean', adv.mean())
         stats.mean('adv/z-std', adv.std())
         stats.max('adv/z-max', adv.abs().max())
-        stats.mean('adv/mu', agent.advnorm.mu())
-        stats.mean('adv/sigma', agent.advnorm.sigma())
 
         stats.rate('sample-rate/learner', w.reset.nelement())
         stats.rate('step-rate/learner', 1)
@@ -176,17 +170,21 @@ def demo(run=-1, length=None, test=True, N=None):
     agent.load_state_dict(storing.load()['agent'], strict=False)
 
     world = env.reset()
-    steps = 0
+    traces = []
     with recording.ParallelEncoder(env.plot_state, N=N) as encoder, \
             tqdm(total=length) as pbar:
         while True:
             decision = agent(world[None], sample=True, test=test).squeeze(0)
             world = env.step(decision)
             encoder(arrdict.numpyify(env.state()))
-            steps += 1
+            traces.append(arrdict.numpyify(arrdict(
+                state=env.state(0), 
+                world=world[0], 
+                decision=decision[0])))
+
             pbar.update(1)
             if length is None and world.reset.any():
                 break
-            if (steps == length):
+            if (len(traces) == length):
                 break
     return encoder.notebook()

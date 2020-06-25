@@ -47,9 +47,7 @@ class ExplorerEnv:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        #TODO: How to make the collision penalty a potential?
-        collisions = self._core.progress.lt(1).any(-1).float()
-        reward = (potential - self._potential)/self._core.res - .1*collisions
+        reward = (potential - self._potential)/self._core.res 
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -72,8 +70,7 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu(),
-                collision=self._core.progress.clone().unsqueeze(-1)), 
+                imu=self._imu(),), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
@@ -90,8 +87,7 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu(),
-                collision=self._core.progress.clone().unsqueeze(-1)), 
+                imu=self._imu(),), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
