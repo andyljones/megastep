@@ -108,7 +108,6 @@ class IMU:
         return torch.cat([
             self._core.agents.angmomenta[..., None]/360.,
             to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
-
         
 class RandomSpawns(core.Core):
 

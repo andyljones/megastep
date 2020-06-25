@@ -28,11 +28,11 @@ class Agent(nn.Module):
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=128, d_model=width, n_layers=2, n_head=2),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=128, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):

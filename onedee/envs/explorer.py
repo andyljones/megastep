@@ -16,12 +16,14 @@ class ExplorerEnv:
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            imu=self._imu.space,)
+            imu=self._imu.space,
+            age=spaces.MultiImage(self._core.n_agents, 1, 1, self._core.res))
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
+        self._age = torch.full_like(self._tex_to_env, -1).int()
 
-        self._length = core.env_full_like(self._core, 0)
+        self._length = core.env_full_like(self._core, 0).int()
 
         self._potential = core.env_full_like(self._core, 0.)
 
@@ -41,6 +43,8 @@ class ExplorerEnv:
         return result.unsqueeze(2)
 
     def _reward(self, texindices, reset):
+        self._age[texindices] = self._age[texindices].clamp(0, None)
+        self._age += self._seen.int()
         self._seen[texindices] = True
 
         potential = torch.zeros_like(self._potential)
@@ -58,6 +62,7 @@ class ExplorerEnv:
     def _reset(self, reset):
         self._respawner(reset)
         self._seen[reset[self._tex_to_env]] = False
+        self._age[reset[self._tex_to_env]] = -1
         self._length[reset] = 0
         self._potential[reset] = 0
 
@@ -68,12 +73,18 @@ class ExplorerEnv:
         render = self._rgbd.render()
         texindices = self._tex_indices(render)
         return arrdict(
-            obs=arrdict(
-                **self._rgbd(render), 
-                imu=self._imu(),), 
-            reset=reset, 
+            obs=self._observe(render, texindices),
+            reset=torch.zeros_like(reset), 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
+
+    def _observe(self, render, texindices):
+        obs = arrdict(
+                **self._rgbd(render), 
+                imu=self._imu(),
+                age=self._rgbd._downsample(self._age[texindices].div(512.).clamp(0, 1)))
+        self._obs = obs
+        return obs
 
     @torch.no_grad()
     def step(self, decision):
@@ -85,9 +96,7 @@ class ExplorerEnv:
         render = self._rgbd.render()
         texindices = self._tex_indices(render)
         return arrdict(
-            obs=arrdict(
-                **self._rgbd(render), 
-                imu=self._imu(),), 
+            obs=self._observe(render, texindices),
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
@@ -96,7 +105,7 @@ class ExplorerEnv:
         seen = self._seen[self._tex_to_env == d]
         return arrdict(
             **self._core.state(d),
-            obs=self._rgbd.state(d),
+            obs=self._obs[d],
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),
@@ -111,7 +120,9 @@ class ExplorerEnv:
         # modifying this in place will bite me eventually. o for a lens
         state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]), zoom=zoom)
-        plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
+
+        images = {k: v for k, v in state.obs.items() if k != 'imu'}
+        plotting.plot_images(images, [plt.subplot(gs[0, 1])])
 
         s = (f'length: {state.length:d}/{state.max_length:.0f}\n'
             f'potential: {state.potential:.0f}')
