@@ -1,7 +1,9 @@
 #!/opt/conda/bin/python
 import git
+import os
 from rebar import storing
 """The latest commit and run, for copy-pasting into my notes"""
 commit = str(git.Repo().head.commit)[:6]
 run = storing.runs().iloc[-1].run_name
-print(f'(`{commit}`, `{run}`)')
+proj = git.Repo().remotes[0].url.split('/')[-1][:-4]
+print(f'[[{proj}]] (`{commit}`, `{run}`)')

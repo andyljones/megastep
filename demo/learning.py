@@ -134,7 +134,7 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
     
     return v
 
-def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=120, halflife=60*60):
+def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=0, halflife=60*60):
     step = np.mean([s['step'] for s in opt.state.values()]) if opt.state else 0
 
     if (0 < warmup) and (step < warmup): 
