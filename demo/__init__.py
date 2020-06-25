@@ -22,7 +22,7 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=128):
+    def __init__(self, observation_space, action_space, width=192):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
@@ -110,6 +110,9 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.cumsum('count/learner-steps', 1)
         # stats.rel_gradient_norm('rel-norm-grad', agent)
 
+        stats.mean('param/gamma', gamma)
+        stats.mean('param/entropy', entropy)
+
     return kl_div
 
 def run():
@@ -127,9 +130,8 @@ def run():
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
-        buffer = []
-        states = []
-        cycle = 0
+        states, buffer = [], []
+        steps = 0
         indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
@@ -145,12 +147,15 @@ def run():
             
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
+            steps += 1
 
+            gamma = .99 + (.999 - .99)*(1 - (1/2)**(steps/10000))
+            entropy = .01 + (.001 - .01)*(1 - (1/2)**(steps/10000))
             for _ in range(inc_size*n_envs//batch_size):
-                idxs = indices[cycle % len(indices)]
-                cycle += 1
+                idxs = indices[steps % len(indices)]
+                steps += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs])
+                    kl = optimize(agent, opt, chunk[:, idxs], gamma=gamma, entropy=entropy)
 
                 log.info('stepped')
                 if kl > .02:
