@@ -16,8 +16,7 @@ class ExplorerEnv:
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            imu=self._imu.space,
-            collision=spaces.MultiVector(self._core.n_agents, 1))
+            imu=self._imu.space,)
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -26,7 +25,7 @@ class ExplorerEnv:
 
         self._potential = core.env_full_like(self._core, 0.)
 
-        self._base_length = 256
+        self._base_length = torch.randint_like(self._length, 128, 512)
 
         self.device = self._core.device
 
