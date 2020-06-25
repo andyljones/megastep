@@ -158,11 +158,12 @@ def run():
 
             learning.update_lr(opt, max_lr=1e-3)
             entropy = learning.entropy(opt)
+            gamma = learning.gamma(opt)
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[cycle % len(indices)]
                 cycle += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs], entropy)
+                    kl = optimize(agent, opt, chunk[:, idxs], entropy, gamma)
 
                 log.info('stepped')
                 if kl > .02:
@@ -183,7 +184,7 @@ def demo(run=-1, length=None, test=True):
     with recording.ParallelEncoder(env.plot_state) as encoder, \
             tqdm(total=length) as pbar:
         while True:
-            decision = agent(world[None], test=test).squeeze(0)
+            decision = agent(world[None], sample=True, test=test).squeeze(0)
             world = env.step(decision)
             encoder(arrdict.numpyify(env.state()))
             steps += 1
