@@ -16,8 +16,7 @@ class ExplorerEnv:
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            imu=self._imu.space,
-            seen=spaces.MultiImage(self._core.n_agents, 1, 1, self._core.res))
+            imu=self._imu.space,)
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -73,7 +72,7 @@ class ExplorerEnv:
             obs=arrdict(
                 **self._rgbd(render), 
                 imu=self._imu(), 
-                seen=self._rgbd._downsample(self._seen[texindices].float())), 
+                ), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
@@ -90,8 +89,7 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu(), 
-                seen=self._rgbd._downsample(self._seen[texindices].float())), 
+                imu=self._imu()), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
