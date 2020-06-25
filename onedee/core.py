@@ -82,4 +82,4 @@ class Core:
                     agents=arrdict(
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),
-                    progress=self.progress[d])
+                    progress=self.progress[d].clone())

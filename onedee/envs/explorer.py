@@ -16,7 +16,8 @@ class ExplorerEnv:
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            imu=self._imu.space,)
+            imu=self._imu.space,
+            collision=spaces.MultiVector(self._core.n_agents, 1))
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -54,7 +55,6 @@ class ExplorerEnv:
         # Should I render twice so that the last reward is accurate?
         reward[reset] = 0.
 
-        #TODO: Get rid of this and add a reward scaling mechanism to the learner
         return reward
 
     def _reset(self, reset):
@@ -72,7 +72,8 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu()), 
+                imu=self._imu(),
+                collision=self._core.progress.clone().unsqueeze(-1)), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
@@ -89,7 +90,8 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu()), 
+                imu=self._imu(),
+                collision=self._core.progress.clone().unsqueeze(-1)), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))

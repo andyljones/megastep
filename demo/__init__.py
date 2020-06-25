@@ -35,9 +35,6 @@ class Agent(nn.Module):
             Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
 
-        self.vnorm = learning.Normer()
-        self.advnorm = learning.Normer()
-
     def forward(self, world, sample=False, value=False, test=False):
         outputs = arrdict(
             logits=self.policy(world.obs, reset=world.reset))
@@ -73,13 +70,12 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     ratio = (new_logits - old_logits).exp()
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip*agent.vnorm.sigma(), +clip*agent.vnorm.sigma())
+    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
     v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
 
-    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    adv_z = agent.advnorm.norm(adv).clamp(-3, +3)
-    free_adv = ratio[:-1]*adv_z
-    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv_z
+    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma).clamp(-5, +5)
+    free_adv = ratio[:-1]*adv
+    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
     p_loss = -torch.min(free_adv, clip_adv).mean()
 
     h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
@@ -109,9 +105,9 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
         stats.mean('rtg/mu', agent.vnorm.mu())
         stats.mean('rtg/sigma', agent.vnorm.sigma())
 
-        stats.mean('adv/z-mean', adv_z.mean())
-        stats.mean('adv/z-std', adv_z.std())
-        stats.max('adv/z-max', adv_z.abs().max())
+        stats.mean('adv/z-mean', adv.mean())
+        stats.mean('adv/z-std', adv.std())
+        stats.max('adv/z-max', adv.abs().max())
         stats.mean('adv/mu', agent.advnorm.mu())
         stats.mean('adv/sigma', agent.advnorm.sigma())
 
@@ -173,15 +169,15 @@ def run():
             stats.gpu.memory(0)
             stats.gpu.vitals(0)
 
-def demo(run=-1, length=None, test=True):
+def demo(run=-1, length=None, test=True, N=None):
     env = envfunc(1)
     world = env.reset()
     agent = agentfunc().cuda()
-    agent.load_state_dict(storing.load()['agent'])
+    agent.load_state_dict(storing.load()['agent'], strict=False)
 
     world = env.reset()
     steps = 0
-    with recording.ParallelEncoder(env.plot_state) as encoder, \
+    with recording.ParallelEncoder(env.plot_state, N=N) as encoder, \
             tqdm(total=length) as pbar:
         while True:
             decision = agent(world[None], sample=True, test=test).squeeze(0)
