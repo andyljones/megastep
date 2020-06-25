@@ -14,20 +14,16 @@ class ExplorerEnv:
         self._respawner = modules.RandomSpawns(self._core)
 
         self.action_space = self._mover.space
-        self.observation_space = dotdict(
-            **self._rgbd.space,
-            imu=self._imu.space,
-            age=spaces.MultiImage(self._core.n_agents, 1, 1, self._core.res))
+        self.observation_space = self._rgbd.space
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
-        self._age = torch.full_like(self._tex_to_env, -1).int()
 
         self._length = core.env_full_like(self._core, 0).int()
 
         self._potential = core.env_full_like(self._core, 0.)
 
-        self._base_length = torch.randint_like(self._length, 128, 512)
+        self._max_length = 512
 
         self.device = self._core.device
 
@@ -42,9 +38,8 @@ class ExplorerEnv:
         result[mask] = tex_s.to(torch.long) + tex_i.to(torch.long)
         return result.unsqueeze(2)
 
-    def _reward(self, texindices, reset):
-        self._age[texindices] = self._age[texindices].clamp(0, None)
-        self._age += self._seen.int()
+    def _reward(self, render, reset):
+        texindices = self._tex_indices(render)
         self._seen[texindices] = True
 
         potential = torch.zeros_like(self._potential)
@@ -62,7 +57,6 @@ class ExplorerEnv:
     def _reset(self, reset):
         self._respawner(reset)
         self._seen[reset[self._tex_to_env]] = False
-        self._age[reset[self._tex_to_env]] = -1
         self._length[reset] = 0
         self._potential[reset] = 0
 
@@ -71,20 +65,11 @@ class ExplorerEnv:
         reset = core.env_full_like(self._core, True)
         self._reset(reset)
         render = self._rgbd.render()
-        texindices = self._tex_indices(render)
         return arrdict(
-            obs=self._observe(render, texindices),
+            obs=self._rgbd(render),
             reset=torch.zeros_like(reset), 
             terminal=torch.zeros_like(reset), 
-            reward=self._reward(texindices, reset))
-
-    def _observe(self, render, texindices):
-        obs = arrdict(
-                **self._rgbd(render), 
-                imu=self._imu(),
-                age=self._rgbd._downsample(self._age[texindices].div(512.).clamp(0, 1)))
-        self._obs = obs
-        return obs
+            reward=self._reward(render, reset))
 
     @torch.no_grad()
     def step(self, decision):
@@ -94,22 +79,21 @@ class ExplorerEnv:
         reset = (self._length >= self._potential + self._base_length)
         self._reset(reset)
         render = self._rgbd.render()
-        texindices = self._tex_indices(render)
         return arrdict(
-            obs=self._observe(render, texindices),
+            obs=self._rgbd(render),
             reset=reset, 
             terminal=torch.zeros_like(reset), 
-            reward=self._reward(texindices, reset))
+            reward=self._reward(render, reset))
 
     def state(self, d=0):
         seen = self._seen[self._tex_to_env == d]
         return arrdict(
             **self._core.state(d),
-            obs=self._obs[d],
+            obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),
-            max_length=self._potential[d].add(self._base_length[d]).clone())
+            max_length=self._potential[d].add(self._base_length).clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):
