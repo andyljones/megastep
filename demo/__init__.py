@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from .transformer import Transformer
 from torch import nn
+from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -37,11 +38,11 @@ class Agent(nn.Module):
         self.vnorm = learning.Normer()
         self.advnorm = learning.Normer()
 
-    def forward(self, world, sample=False, value=False):
+    def forward(self, world, sample=False, value=False, test=False):
         outputs = arrdict(
             logits=self.policy(world.obs, reset=world.reset))
-        if sample:
-            outputs['actions'] = self.sampler(outputs.logits)
+        if sample or test:
+            outputs['actions'] = self.sampler(outputs.logits, test)
         if value:
             outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
         return outputs
@@ -166,7 +167,7 @@ def run():
             stats.gpu.memory(0)
             stats.gpu.vitals(0)
 
-def demo(run=-1, length=None):
+def demo(run=-1, length=None, test=True):
     env = envfunc(1)
     world = env.reset()
     agent = agentfunc().cuda()
@@ -174,13 +175,15 @@ def demo(run=-1, length=None):
 
     world = env.reset()
     steps = 0
-    with recording.ParallelEncoder(env.plot_state) as encoder:
+    with recording.ParallelEncoder(env.plot_state) as encoder, \
+            tqdm(total=length) as pbar:
         while True:
-            decision = agent(world[None], sample=True).squeeze(0)
+            decision = agent(world[None], test=test).squeeze(0)
             world = env.step(decision)
             encoder(arrdict.numpyify(env.state()))
             steps += 1
-            if steps is None and world.reset.any():
+            pbar.update(1)
+            if length is None and world.reset.any():
                 break
             if (steps == length):
                 break

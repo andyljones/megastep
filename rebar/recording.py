@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 from .parallel import parallel
 import logging
 import time
+import multiprocessing
 
 log = logging.getLogger(__name__)
 
@@ -101,11 +102,23 @@ def _init():
     import signal
     signal.signal(signal.SIGINT, lambda h, f: None)
 
+def _array(f, *args, **kwargs):
+    result = f(*args, **kwargs)
+    if isinstance(result, plt.Figure):
+        arr = array(result)
+        plt.close(result)
+        return arr
+    else:
+        return result
+
 class ParallelEncoder:
 
-    def __init__(self, f, fps=20, N=0):
+    def __init__(self, f, fps=20, N=None):
+        N = multiprocessing.cpu_count()//4 if N is None else N
         self._encoder = Encoder(fps)
-        self._pool = parallel(f, progress=False, N=N, initializer=_init)
+        self._f = f
+        self._pool = parallel(_array, progress=False, N=N, initializer=_init)
+        self._queuelen = N
 
     def __enter__(self):
         self._futures = {}
@@ -120,10 +133,6 @@ class ParallelEncoder:
         while True:
             if (self._contiguous in self._futures) and self._futures[self._contiguous].done():
                 result = self._futures[self._contiguous].result()
-                if isinstance(result, plt.Figure):
-                    fig = result
-                    result = array(fig)
-                    plt.close(fig)
                 self._encoder(result)
                 del self._futures[self._contiguous]
                 self._contiguous += 1
@@ -133,7 +142,7 @@ class ParallelEncoder:
     def _wait(self):
         while self._futures:
             self._process_done()
-            time.sleep(.1)
+            time.sleep(.01)
 
     def __exit__(self, t, v, tb):
         self._wait()
@@ -141,7 +150,10 @@ class ParallelEncoder:
         self._pool.__exit__(t, v, tb)
 
     def __call__(self, *args, **kwargs):
-        self._futures[self._submitted] = self._submit(*args, **kwargs)
+        while len(self._futures) > self._queuelen:
+            self._process_done()
+
+        self._futures[self._submitted] = self._submit(self._f, *args, **kwargs)
         self._submitted += 1
         self._process_done()
 

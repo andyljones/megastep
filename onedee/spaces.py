@@ -129,8 +129,11 @@ class MultiDiscreteOutput(nn.Module):
         y = self.core(x).reshape(*x.shape[:-1], *self.shape)
         return F.log_softmax(y, -1)
 
-    def sample(self, logits):
-        return torch.distributions.Categorical(logits=logits).sample()
+    def sample(self, logits, test=False):
+        if test:
+            return logits.argmax(-1)
+        else:
+            return torch.distributions.Categorical(logits=logits).sample()
 
 class DictOutput(nn.Module):
 
