@@ -46,7 +46,8 @@ class ExplorerEnv:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        reward = (potential - self._potential)/self._core.res 
+        collisions = self._core.progress.lt(1).any(-1).float()
+        reward = (potential - self._potential)/self._core.res  - .25*collisions
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -99,7 +100,7 @@ class ExplorerEnv:
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),
-            max_length=self._potential[d].add(self._base_length).clone())
+            max_length=self._potential[d].add(self._base_length[d]).clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):

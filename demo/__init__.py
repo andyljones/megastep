@@ -120,7 +120,7 @@ def run():
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=0)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
@@ -146,14 +146,11 @@ def run():
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
 
-            learning.update_lr(opt, max_lr=1e-3)
-            entropy = learning.entropy(opt)
-            gamma = learning.gamma(opt)
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[cycle % len(indices)]
                 cycle += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs], entropy, gamma)
+                    kl = optimize(agent, opt, chunk[:, idxs], entropy=.01, gamma=.999)
 
                 log.info('stepped')
                 if kl > .02:

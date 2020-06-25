@@ -134,7 +134,7 @@ def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=
     
     return v
 
-def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=0, halflife=5*60):
+def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=0, halflife=15*60):
     step = np.mean([s['step'] for s in opt.state.values()]) if opt.state else 0
 
     if (0 < warmup) and (step < warmup): 
@@ -150,13 +150,13 @@ def update_lr(opt, max_lr=3e-4, floor=1e-5, warmup=0, halflife=5*60):
 
     stats.mean('param/lr', lr)
 
-def entropy(opt, initial=.01, halflife=5*60):
+def entropy(opt, initial=.01, halflife=15*60):
     step = np.mean([s['step'] for s in opt.state.values()]) if opt.state else 0
     entropy = initial*(1/2)**(step/halflife)
     stats.mean('param/entropy', entropy)
     return entropy
 
-def gamma(opt, initial=.99, final=.999, halflife=5*60):
+def gamma(opt, initial=.99, final=.9999, halflife=15*60):
     step = np.mean([s['step'] for s in opt.state.values()]) if opt.state else 0
     gamma = (final - initial)*(1 - 1/2**(step/halflife)) + initial
     stats.mean('param/gamma', gamma)
