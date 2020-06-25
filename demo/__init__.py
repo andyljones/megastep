@@ -1,9 +1,9 @@
 import torch
 from . import learning
-from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence
+from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
 import onedee
-from onedee import recording, spaces
+from onedee import spaces
 import cubicasa
 import numpy as np
 import pandas as pd
@@ -166,16 +166,22 @@ def run():
             stats.gpu.memory(0)
             stats.gpu.vitals(0)
 
-def demo():
+def demo(run=-1, length=None):
     env = envfunc(1)
     world = env.reset()
     agent = agentfunc().cuda()
+    agent.load_state_dict(storing.load()['agent'])
 
-    states = []
     world = env.reset()
-    for _ in range(128):
-        decision = agent(world[None], sample=True).squeeze(0)
-        world = env.step(decision)
-        states.append(env.state(0))
-    states = arrdict.numpyify(states)
-    recording.replay(env.plot_state, states)
+    steps = 0
+    with recording.ParallelEncoder(env.plot_state) as encoder:
+        while True:
+            decision = agent(world[None], sample=True).squeeze(0)
+            world = env.step(decision)
+            encoder(arrdict.numpyify(env.state()))
+            steps += 1
+            if steps is None and world.reset.any():
+                break
+            if (steps == length):
+                break
+    return encoder.notebook()

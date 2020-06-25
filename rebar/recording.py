@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 from .parallel import parallel
 import logging
+import time
 
 log = logging.getLogger(__name__)
 
@@ -94,7 +95,65 @@ def save(video, path):
         video = video.value
     Path(path).write_text(video)
 
-def parallel_encode(f, *indexable, canceller=None, fps=20, N=0, n_frames=None, **kwargs):
+def _init():
+    # Suppress keyboard interrupt of workers, since exiting the context 
+    # manager in the parent will shut them down.
+    import signal
+    signal.signal(signal.SIGINT, lambda h, f: None)
+
+class ParallelEncoder:
+
+    def __init__(self, f, fps=20, N=0):
+        self._encoder = Encoder(fps)
+        self._pool = parallel(f, progress=False, N=N, initializer=_init)
+
+    def __enter__(self):
+        self._futures = {}
+        self._submitted = 0
+        self._contiguous = 0
+
+        self._encoder.__enter__()
+        self._submit = self._pool.__enter__()
+        return self
+
+    def _process_done(self):
+        while True:
+            if (self._contiguous in self._futures) and self._futures[self._contiguous].done():
+                result = self._futures[self._contiguous].result()
+                if isinstance(result, plt.Figure):
+                    fig = result
+                    result = array(fig)
+                    plt.close(fig)
+                self._encoder(result)
+                del self._futures[self._contiguous]
+                self._contiguous += 1
+            else:
+                break
+
+    def _wait(self):
+        while self._futures:
+            self._process_done()
+            time.sleep(.1)
+
+    def __exit__(self, t, v, tb):
+        self._wait()
+        self._encoder.__exit__(t, v, tb)
+        self._pool.__exit__(t, v, tb)
+
+    def __call__(self, *args, **kwargs):
+        self._futures[self._submitted] = self._submit(*args, **kwargs)
+        self._submitted += 1
+        self._process_done()
+
+    def result(self):
+        self._wait()
+        return self._encoder.value
+
+    def notebook(self):
+        return notebook(self.result())
+
+
+def encode(f, *indexable, fps=20, N=0, n_frames=None, **kwargs):
     """To use this with N > 0, you need to return an array and - if it's a new figure each time - 
     close it afterwards"""
     n_frames = len(indexable[0]) if n_frames is None else n_frames
@@ -122,8 +181,3 @@ def parallel_encode(f, *indexable, canceller=None, fps=20, N=0, n_frames=None, *
             if contiguous == n_frames:
                 log.info('Encoding finished')
                 return encoder
-
-
-            if canceller and canceller.is_set():
-                log.info('Canceller set, breaking')
-                return None
