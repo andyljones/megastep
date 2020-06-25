@@ -16,6 +16,9 @@ def store_latest(run_name, objs, throttle=0):
 
     return True
 
+def runs():
+    return paths.runs()
+
 def stored(run_name=-1):
     ps = paths.subdirectory(run_name, 'storing').glob('*.pkl')
     infos = []
