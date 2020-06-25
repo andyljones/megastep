@@ -85,13 +85,14 @@ class RGBDObserver:
 
     def _downsample(self, screen):
         core = self._core
-        return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample).mean(-1)
+        return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample)
 
     def __call__(self, render=None):
         render = self.render() if render is None else render
+        depth = ((render.distances - self._core.agent_radius)/self._max_depth).clamp(0, 1)
         self._last_obs = arrdict(
-            rgb=self._downsample(render.screen),
-            d=1 - self._downsample(render.distances.div(self._max_depth).clamp(0, 1)).unsqueeze(3))
+            rgb=self._downsample(render.screen).mean(-1),
+            d=self._downsample(depth).max(-1).values.unsqueeze(3))
         return self._last_obs
     
     def state(self, d):
