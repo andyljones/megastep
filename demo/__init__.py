@@ -22,17 +22,17 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=128):
+    def __init__(self, observation_space, action_space, width=256):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
 
         self.vnorm = learning.Normer()
@@ -125,7 +125,7 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
 def run():
     buffer_size = 64
     batch_size = 8192
-    n_envs = 1024
+    n_envs = 16384
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()

@@ -71,8 +71,7 @@ class ExplorerEnv:
         return arrdict(
             obs=arrdict(
                 **self._rgbd(render), 
-                imu=self._imu(), 
-                ), 
+                imu=self._imu()), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(texindices, reset))
