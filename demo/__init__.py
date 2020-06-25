@@ -22,17 +22,17 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=256):
+    def __init__(self, observation_space, action_space, width=128):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=256, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):
@@ -150,7 +150,7 @@ def run():
                 idxs = indices[cycle % len(indices)]
                 cycle += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs], entropy=.01, gamma=.999)
+                    kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')
                 if kl > .02:
@@ -167,6 +167,7 @@ def demo(run=-1, length=None, test=True, N=None):
     agent.load_state_dict(storing.load()['agent'], strict=False)
 
     world = env.reset()
+    steps = 0
     traces = []
     with recording.ParallelEncoder(env.plot_state, N=N) as encoder, \
             tqdm(total=length) as pbar:
@@ -178,10 +179,11 @@ def demo(run=-1, length=None, test=True, N=None):
                 state=env.state(0), 
                 world=world[0], 
                 decision=decision[0])))
-
+            steps += 1
             pbar.update(1)
             if length is None and world.reset.any():
                 break
-            if (len(traces) == length):
+            if (steps == length):
                 break
-    return encoder.notebook()
+    traces = arrdict.stack(traces)
+    encoder.notebook()
