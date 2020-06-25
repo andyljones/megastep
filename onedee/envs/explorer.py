@@ -47,7 +47,8 @@ class ExplorerEnv:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        reward = (potential - self._potential)
+        #TODO: How to make the collision penalty a potential?
+        reward = (potential - self._potential) - (self._core.progress < 1).any(-1).float()
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -78,15 +79,13 @@ class ExplorerEnv:
         self._mover(decision)
         self._length += 1
 
-        terminal = (self._core.progress < 1).any(-1)
-
-        reset = terminal | (self._length >= self._potential + self._base_length)
+        reset = (self._length >= self._potential + self._base_length)
         self._reset(reset)
         render = self._rgbd.render()
         return arrdict(
             obs=arrdict(**self._rgbd(render), imu=self._imu()), 
             reset=reset, 
-            terminal=terminal, 
+            terminal=torch.zeros_like(reset), 
             reward=self._reward(render, reset))
 
     def state(self, d=0):
