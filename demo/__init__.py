@@ -124,13 +124,13 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
 
 def run():
     buffer_size = 128
-    inc_size = 8
-    batch_size = 8192
+    inc_size = 16
+    batch_size = 16384
     n_envs = 1024
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
+    opt = torch.optim.Adam(agent.parameters(), lr=0)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
@@ -156,7 +156,7 @@ def run():
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
 
-            learning.update_lr(opt)
+            learning.update_lr(opt, max_lr=1e-3)
             entropy = learning.entropy(opt)
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[cycle % len(indices)]
