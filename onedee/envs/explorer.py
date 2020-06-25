@@ -18,12 +18,10 @@ class ExplorerEnv:
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
-
-        self._length = core.env_full_like(self._core, 0).int()
-
         self._potential = core.env_full_like(self._core, 0.)
 
-        self._max_length = 512
+        self._length = core.env_full_like(self._core, 0).int()
+        self._max_length = torch.randint_like(self._length, 256, 768)
 
         self.device = self._core.device
 
@@ -76,7 +74,7 @@ class ExplorerEnv:
         self._mover(decision)
         self._length += 1
 
-        reset = (self._length >= self._potential + self._base_length)
+        reset = (self._length >= self._max_length)
         self._reset(reset)
         render = self._rgbd.render()
         return arrdict(
@@ -93,7 +91,7 @@ class ExplorerEnv:
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),
-            max_length=self._potential[d].add(self._base_length).clone())
+            max_length=self._max_length[d].clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):
