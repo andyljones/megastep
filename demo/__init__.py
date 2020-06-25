@@ -123,9 +123,10 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 64
+    buffer_size = 128
+    inc_size = 8
     batch_size = 8192
-    n_envs = 16384
+    n_envs = 1024
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -137,11 +138,14 @@ def run():
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
         buffer = []
+        states = []
+        cycle = 0
+        indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
-
-            state = recurrence.get(agent)
-            for _ in range(buffer_size):
+            states.append(recurrence.get(agent))
+            states = states[-buffer_size//inc_size:]
+            for _ in range(inc_size):
                 decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
@@ -150,13 +154,14 @@ def run():
                 world = env.step(decision)
             
             chunk = arrdict.stack(buffer)
-            chunkstats(chunk)
+            chunkstats(chunk[-inc_size:])
 
-            indices = learning.batch_indices(n_envs, batch_size//buffer_size)
             learning.update_lr(opt)
             entropy = learning.entropy(opt)
-            for idxs in indices:
-                with recurrence.temp_clear_set(agent, state[:, idxs]):
+            for _ in range(inc_size*n_envs//batch_size):
+                idxs = indices[cycle % len(indices)]
+                cycle += 1
+                with recurrence.temp_clear_set(agent, states[0][:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs], entropy)
 
                 log.info('stepped')
