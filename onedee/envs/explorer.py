@@ -47,6 +47,9 @@ class ExplorerEnv:
         reward = (potential - self._potential)
         self._potential = potential
 
+        # Should I render twice so that the last reward is accurate?
+        reward[reset] = 0.
+
         #TODO: Get rid of this and add a reward scaling mechanism to the learner
         return reward/self._core.res
 
@@ -72,13 +75,15 @@ class ExplorerEnv:
         self._mover(decision)
         self._length += 1
 
-        reset = self._length >= self._potential + self._base_length
+        terminal = (self._core.progress < 1).any(-1)
+
+        reset = terminal | (self._length >= self._potential + self._base_length)
         self._reset(reset)
         render = self._observer.render()
         return arrdict(
             obs=self._observer(render), 
             reset=reset, 
-            terminal=torch.zeros_like(reset), 
+            terminal=terminal, 
             reward=self._reward(render, reset))
 
     def state(self, d=0):

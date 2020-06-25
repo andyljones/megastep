@@ -53,6 +53,7 @@ class Core:
         self.cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
         self.agents = init_agents(self.cuda, self.n_envs, self.n_agents, self.device)
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
+        self.progress = torch.ones((self.n_envs, self.n_agents), device=self.device)
 
         super().__init__()
 
@@ -80,4 +81,5 @@ class Core:
                             baked=baked).clone(),
                     agents=arrdict(
                             angles=self.agents.angles[d], 
-                            positions=self.agents.positions[d]).clone(),)
+                            positions=self.agents.positions[d]).clone(),
+                    progress=self.progress[d])

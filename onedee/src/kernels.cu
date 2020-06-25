@@ -174,7 +174,6 @@ __host__ TT normalize_degrees(TT a) {
     return (((a % 360.f) + 180.f) % 360.f) - 180.f;
 }
 
-using Progress = TensorProxy<float, 2>; 
 
 __global__ void collision_kernel(
                 int DF, Positions::PTA positions, Momenta::PTA momenta, 
@@ -209,12 +208,11 @@ __global__ void collision_kernel(
     }
 }
 
-__host__ void physics(const Scene& scene, Agents& agents) {
+__host__ void physics(const Scene& scene, Agents& agents, Progress progress) {
     const uint N = agents.angles.size(0);
     const uint D = agents.angles.size(1);
     const uint F = scene.frame.size(0);
 
-    const auto progress(Progress::ones({N, D}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
         D*F, agents.positions.pta(), agents.momenta.pta(), scene.lines.pta(), progress.pta());

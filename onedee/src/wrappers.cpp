@@ -10,7 +10,7 @@ using namespace std::string_literals;
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 // TODO: Is this still needed? Can't remember why I added it 
-void _physics(const Scene& scene, Agents& agents) { return physics(scene, agents); }
+void _physics(const Scene& scene, Agents& agents, TT progress) { return physics(scene, agents, progress); }
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
