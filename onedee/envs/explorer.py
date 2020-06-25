@@ -47,7 +47,8 @@ class ExplorerEnv:
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
         #TODO: How to make the collision penalty a potential?
-        reward = (potential - self._potential)/self._core.res - .1*(1 - self._progress).sum(-1)
+        collisions = self._core.progress.lt(1).float()
+        reward = (potential - self._potential)/self._core.res - .1*collisions
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
