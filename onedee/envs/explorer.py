@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from .. import modules, core, plotting
+from .. import modules, core, plotting, spaces
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 
@@ -16,7 +16,8 @@ class ExplorerEnv:
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            imu=self._imu.space)
+            imu=self._imu.space,
+            seen=spaces.MultiImage(self._core.n_agents, 1, 1, self._core.res))
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -40,22 +41,21 @@ class ExplorerEnv:
         result[mask] = tex_s.to(torch.long) + tex_i.to(torch.long)
         return result.unsqueeze(2)
 
-    def _reward(self, render, reset):
-        texindices = self._tex_indices(render)
+    def _reward(self, texindices, reset):
         self._seen[texindices] = True
 
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
         #TODO: How to make the collision penalty a potential?
-        reward = (potential - self._potential) - (self._core.progress < 1).any(-1).float()
+        reward = (potential - self._potential)/self._core.res
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
         reward[reset] = 0.
 
         #TODO: Get rid of this and add a reward scaling mechanism to the learner
-        return reward/self._core.res
+        return reward
 
     def _reset(self, reset):
         self._respawner(reset)
@@ -68,11 +68,15 @@ class ExplorerEnv:
         reset = core.env_full_like(self._core, True)
         self._reset(reset)
         render = self._rgbd.render()
+        texindices = self._tex_indices(render)
         return arrdict(
-            obs=arrdict(**self._rgbd(render), imu=self._imu()), 
+            obs=arrdict(
+                **self._rgbd(render), 
+                imu=self._imu(), 
+                seen=self._rgbd._downsample(self._seen[texindices].float())), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
-            reward=self._reward(render, reset))
+            reward=self._reward(texindices, reset))
 
     @torch.no_grad()
     def step(self, decision):
@@ -82,11 +86,15 @@ class ExplorerEnv:
         reset = (self._length >= self._potential + self._base_length)
         self._reset(reset)
         render = self._rgbd.render()
+        texindices = self._tex_indices(render)
         return arrdict(
-            obs=arrdict(**self._rgbd(render), imu=self._imu()), 
+            obs=arrdict(
+                **self._rgbd(render), 
+                imu=self._imu(), 
+                seen=self._rgbd._downsample(self._seen[texindices].float())), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
-            reward=self._reward(render, reset))
+            reward=self._reward(texindices, reset))
 
     def state(self, d=0):
         seen = self._seen[self._tex_to_env == d]
