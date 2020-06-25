@@ -92,14 +92,14 @@ class ExplorerEnv:
             max_length=self._potential[d].add(self._base_length).clone())
 
     @classmethod
-    def plot_state(cls, state):
+    def plot_state(cls, state, zoom=False):
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
         alpha = .1 + .9*state.seen.astype(float)
         # modifying this in place will bite me eventually. o for a lens
         state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]), zoom=zoom)
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
         s = (f'length: {state.length:d}/{state.max_length:.0f}\n'

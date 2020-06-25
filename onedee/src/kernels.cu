@@ -136,7 +136,7 @@ __device__ float collision(Point p, Point v, Line l) {
     // Follows http://ericleong.me/research/circle-line/#moving-circle-and-static-line-segment
 
     // Make the agent a bit bigger so that the near vision plane doesn't go through walls
-    const auto r = 1.1f*AGENT_RADIUS;
+    const auto r = 1.001f*AGENT_RADIUS;
     auto x = 1.f;
 
     // Test for passing through `l`
@@ -363,8 +363,8 @@ __global__ void raycast_kernel(
 
         // Use the agent radius as the near plane
         const bool hit = (0 <= q.t) & (q.t <= 1);
-        // 1e-3 offset here is to suppress z fighting
-        const bool better = (AGENT_RADIUS/rlen < q.s) & (q.s < nearest_s - 1.e-3f);
+        // 1e-4 offset here is to suppress z fighting
+        const bool better = (AGENT_RADIUS/rlen < q.s) & (q.s < nearest_s - 1.e-4f);
         if (hit & better) {
             nearest_s = q.s;
 

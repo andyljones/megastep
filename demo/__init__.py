@@ -27,11 +27,11 @@ class Agent(nn.Module):
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=96, d_model=width, n_layers=2, n_head=2),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=64, d_model=width, n_layers=2, n_head=2),
+            Transformer(mem_len=96, d_model=width, n_layers=2, n_head=2),
             spaces.ValueOutput(width, 1))
 
         self.vnorm = learning.Normer()
@@ -122,7 +122,7 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 64
+    buffer_size = 96
     batch_size = 8192
     n_envs = 1024
 

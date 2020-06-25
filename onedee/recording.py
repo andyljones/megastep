@@ -24,8 +24,8 @@ def _init():
     import signal
     signal.signal(signal.SIGINT, lambda h, f: None)
 
-def _array(plot, state):
-    fig = plot(state)
+def _array(plot, state, **kwargs):
+    fig = plot(state, **kwargs)
     arr = plots.array(fig)
     plt.close(fig)
     return arr
@@ -75,10 +75,10 @@ def notebook(run_name=-1, idx=-1):
     path = list(paths.glob('test', 'recording', pattern='*.mp4'))[idx]
     return recording.notebook(path.read_bytes())
 
-def replay(plot, states, fps=20):
+def replay(plot, states, fps=20, **kwargs):
     with parallel.parallel(_array, progress=False, N=os.cpu_count()//4, initializer=_init) as tasker,\
             recording.Encoder(fps) as encoder:
-        futures = [tasker(plot, numpyify(state)) for state in states]
+        futures = [tasker(plot, numpyify(state), **kwargs) for state in states]
         for future in tqdm(futures):
             encoder(future.result())
     return recording.notebook(encoder.value)

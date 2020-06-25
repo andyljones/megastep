@@ -78,8 +78,8 @@ def plot_lights(diagram, state):
     for light in state.scene.lights:
         diagram.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
 
-def extent(state, cull, radius=VIEW_RADIUS):
-    if cull:
+def extent(state, zoom, radius=VIEW_RADIUS):
+    if zoom:
         r, t = state.agents.positions.max(0) + radius 
         l, b = state.agents.positions.min(0) - radius
     else:
@@ -91,10 +91,10 @@ def extent(state, cull, radius=VIEW_RADIUS):
 
     return (cx-w, cx+w), (cy-w, cy+w)
 
-def plot_lines(diagram, state, cull=True):
+def plot_lines(diagram, state, zoom=True):
     lines, colors = line_arrays(state)
 
-    (l, r), (b, t) = extent(state, cull)
+    (l, r), (b, t) = extent(state, zoom)
     xs, ys = lines[:, :, 0], lines[:, :, 1]
     mask = (l < xs) & (xs < r) & (b < ys) & (ys < t)
     mask = mask.any(-1)
@@ -102,8 +102,8 @@ def plot_lines(diagram, state, cull=True):
     seen = mpl.collections.LineCollection(lines[mask], colors=colors[mask], linestyle='solid', linewidth=2)
     diagram.add_collection(seen)
 
-def adjust_view(diagram, state, cull=True):
-    xs, ys = extent(state, cull)
+def adjust_view(diagram, state, zoom=True):
+    xs, ys = extent(state, zoom)
 
     diagram.set_xlim(*xs)
     diagram.set_ylim(*ys)
@@ -137,13 +137,13 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         ax.plot(*line.T, color=color)
     return ax
 
-def plot_core(state, ax=None):
+def plot_core(state, ax=None, zoom=False):
     _, ax = plt.subplots() if ax is None else (None, ax)
 
     plot_lights(ax, state)
-    plot_lines(ax, state, cull=False)
+    plot_lines(ax, state, zoom=zoom)
     plot_fov(ax, state, 1)
-    adjust_view(ax, state, cull=False)
+    adjust_view(ax, state, zoom=zoom)
 
     ax.set_xticks([])
     ax.set_yticks([])
