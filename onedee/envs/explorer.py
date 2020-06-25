@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from .. import modules, core, plotting
-from rebar import arrdict
+from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 
 class ExplorerEnv: 
@@ -9,11 +9,14 @@ class ExplorerEnv:
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.MomentumMovement(self._core)
-        self._observer = modules.RGBDObserver(self._core)
+        self._rgbd = modules.RGBD(self._core)
+        self._imu = modules.IMU(self._core)
         self._respawner = modules.RandomSpawns(self._core)
 
-        self.action_space = self._mover.action_space
-        self.observation_space = self._observer.observation_space
+        self.action_space = self._mover.space
+        self.observation_space = dotdict(
+            **self._rgbd.space,
+            imu=self._imu.space)
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -63,9 +66,9 @@ class ExplorerEnv:
     def reset(self):
         reset = core.env_full_like(self._core, True)
         self._reset(reset)
-        render = self._observer.render()
+        render = self._rgbd.render()
         return arrdict(
-            obs=self._observer(render), 
+            obs=arrdict(**self._rgbd(render), imu=self._imu()), 
             reset=reset, 
             terminal=torch.zeros_like(reset), 
             reward=self._reward(render, reset))
@@ -79,9 +82,9 @@ class ExplorerEnv:
 
         reset = terminal | (self._length >= self._potential + self._base_length)
         self._reset(reset)
-        render = self._observer.render()
+        render = self._rgbd.render()
         return arrdict(
-            obs=self._observer(render), 
+            obs=arrdict(**self._rgbd(render), imu=self._imu()), 
             reset=reset, 
             terminal=terminal, 
             reward=self._reward(render, reset))
@@ -90,7 +93,7 @@ class ExplorerEnv:
         seen = self._seen[self._tex_to_env == d]
         return arrdict(
             **self._core.state(d),
-            obs=self._observer.state(d),
+            obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),
             length=self._length[d].clone(),

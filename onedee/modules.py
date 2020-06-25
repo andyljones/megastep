@@ -29,7 +29,7 @@ class SimpleMovement:
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
 
-        self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
+        self.space = spaces.MultiDiscrete(core.n_agents, 7)
 
     def __call__(self, decision):
         core = self._core
@@ -52,7 +52,7 @@ class MomentumMovement:
 
         self._decay = decay
 
-        self.action_space = spaces.MultiDiscrete(core.n_agents, 7)
+        self.space = spaces.MultiDiscrete(core.n_agents, 7)
 
     def __call__(self, decision):
         core = self._core
@@ -67,11 +67,11 @@ def unpack(d):
         return d
     return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
         
-class RGBDObserver:
+class RGBD:
 
     def __init__(self, core, *args, max_depth=10, **kwargs):
         self._core = core
-        self.observation_space = arrdict(
+        self.space = arrdict(
             rgb=spaces.MultiImage(core.n_agents, 3, 1, core.res),
             d=spaces.MultiImage(core.n_agents, 1, 1, core.res),)
         self._max_depth = max_depth
@@ -97,6 +97,18 @@ class RGBDObserver:
     
     def state(self, d):
         return self._last_obs[d].clone()
+
+class IMU:
+
+    def __init__(self, core):
+        self._core = core
+        self.space = spaces.MultiVector(core.n_agents, 3)
+
+    def __call__(self):
+        return torch.cat([
+            self._core.agents.angmomenta[..., None]/360.,
+            to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
+
         
 class RandomSpawns(core.Core):
 
