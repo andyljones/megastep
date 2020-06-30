@@ -6,17 +6,17 @@ import matplotlib.pyplot as plt
 
 class Waypoint: 
 
-    def __init__(self, *args, max_length=256, **kwargs):
+    def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.SimpleMovement(self._core)
-        self._observer = modules.RGBD(self._core)
+        self._rgbd = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
         self._goals = modules.RandomGoals(self._core)
         self._lengths = modules.RandomLengths(self._core, max_length)
 
         self.action_space = self._mover.space
         self.observation_space = arrdict(
-            **self._observer.space,
+            **self._rgbd.space,
             waypoint=spaces.MultiVector(self._core.n_agents, 2))
 
     def _reset(self, reset):
@@ -26,7 +26,7 @@ class Waypoint:
         return reset
     
     def _observe(self):
-        obs = self._observer().copy()
+        obs = self._rgbd().copy()
         delta = self._goals.current - self._core.agents.positions
         relative = modules.to_local_frame(self._core.agents.angles, delta)
         obs['waypoint'] = relative
@@ -57,7 +57,7 @@ class Waypoint:
     def state(self, d=0):
         return arrdict(
             **self._core.state(d),
-            obs=self._observer.state(d),
+            obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
 
     @classmethod
@@ -82,10 +82,11 @@ class Waypoint:
 
 class PointGoal:
 
-    def __init__(self, *args, max_length=256, **kwargs):
+    def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)
-        self._mover = modules.SimpleMovement(self._core)
-        self._observer = modules.RGBD(self._core)
+        self._mover = modules.MomentumMovement(self._core)
+        self._rgbd = modules.RGBD(self._core)
+        self._imu = modules.IMU(self._core)
         self._respawner = modules.RandomSpawns(self._core)
         self._goals = modules.RandomGoals(self._core)
         self._lengths = modules.RandomLengths(self._core, max_length)
@@ -96,7 +97,8 @@ class PointGoal:
 
         self.action_space = self._mover.space
         self.observation_space = arrdict(
-            **self._observer.space,
+            **self._rgbd.space,
+            imu=self._imu.space,
             waypoint=spaces.MultiVector(self._core.n_agents, 2))
 
     def _reset(self, reset):
@@ -110,10 +112,11 @@ class PointGoal:
         return reset
     
     def _observe(self):
-        obs = self._observer().copy()
+        obs = self._rgbd().copy()
         delta = self._goals.current - self._spawns.positions
         relative = modules.to_local_frame(self._spawns.angles, delta)
         obs['waypoint'] = relative
+        obs['imu'] = self._imu()
         return obs.clone()
 
     @torch.no_grad()
@@ -141,7 +144,7 @@ class PointGoal:
     def state(self, d=0):
         return arrdict(
             **self._core.state(d),
-            obs=self._observer.state(d),
+            obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
 
     @classmethod
