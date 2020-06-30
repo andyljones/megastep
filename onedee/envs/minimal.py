@@ -18,7 +18,7 @@ class Minimal:
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.SimpleMovement(self._core)
-        self._observer = modules.RGBDObserver(self._core)
+        self._observer = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
 
         self.action_space = self._mover.action_space
@@ -26,7 +26,7 @@ class Minimal:
 
     @torch.no_grad()
     def reset(self):
-        self._respawner(core.env_full_like(self._core, True))
+        self._respawner(core.full(True))
         return arrdict(
             obs=self._observer(),
             reward=zeros(self.n_envs, self.device),

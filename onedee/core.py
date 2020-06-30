@@ -25,14 +25,6 @@ def select(x, d):
     e = s+x.widths[d]
     return x.vals[s:e]
 
-def env_full_like(core, x):
-    """Returns a (n_env,) tensor on the device full of `obj`.
-    
-    This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
-    """
-    dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
-    return torch.full((core.n_envs,), x, device=core.device, dtype=dtypes[type(x)])
-
 class Core: 
 
     def __init__(self, geometries, n_agents=1, res=64, supersample=8, fov=130, fps=10):
@@ -83,3 +75,11 @@ class Core:
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),
                     progress=self.progress[d].clone())
+
+    def env_full(self, x):
+        """Returns a (n_env,) tensor on the device full of `obj`.
+        
+        This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
+        """
+        dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
+        return torch.full((self.n_envs,), x, device=self.device, dtype=dtypes[type(x)])
