@@ -18,9 +18,9 @@ class Explorer:
 
         self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
-        self._potential = core.full(0.)
+        self._potential = self._core.env_full(0.)
 
-        self._length = core.full(0)
+        self._length = self._core.env_full(0)
         self._max_length = torch.randint_like(self._length, 256, 768)
 
         self.device = self._core.device
@@ -60,7 +60,7 @@ class Explorer:
 
     @torch.no_grad()
     def reset(self):
-        reset = core.full(True)
+        reset = self._core.env_full(True)
         self._reset(reset)
         render = self._rgbd.render()
         return arrdict(

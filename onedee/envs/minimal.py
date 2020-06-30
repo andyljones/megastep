@@ -3,15 +3,6 @@ from rebar import arrdict
 from .. import spaces, modules, core, plotting
 import matplotlib.pyplot as plt
 
-def falses(n_envs, device):
-    return torch.zeros((n_envs,), dtype=torch.bool, device=device)
-
-def trues(n_envs, device):
-    return torch.ones((n_envs,), dtype=torch.bool, device=device)
-
-def zeros(n_envs, device):
-    return torch.ones((n_envs,), dtype=torch.float, device=device)
-
 class Minimal:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
 
@@ -26,21 +17,21 @@ class Minimal:
 
     @torch.no_grad()
     def reset(self):
-        self._respawner(core.full(True))
+        self._respawner(core.env_full(True))
         return arrdict(
             obs=self._observer(),
-            reward=zeros(self.n_envs, self.device),
-            reset=trues(self.n_envs, self.device),
-            terminal=trues(self.n_envs, self.device),)
+            reward=self._core.env_full(0.),
+            reset=self._core.env_full(True),
+            terminal=self._core.env_full(False),)
 
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
         return arrdict(
             obs=self._observer(),            
-            reward=zeros(self.n_envs, self.device),
-            reset=falses(self.n_envs, self.device),
-            terminal=falses(self.n_envs, self.device),)
+            reward=self._core.env_full(0.),
+            reset=self._core.env_full(True),
+            terminal=self._core.env_full(False),)
 
     def state(self, d=0):
         return arrdict(

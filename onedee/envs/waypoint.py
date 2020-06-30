@@ -34,11 +34,11 @@ class Waypoint:
 
     @torch.no_grad()
     def reset(self):
-        reset = core.env_full(True)
+        reset = self._core.env_full(True)
         reset = self._reset(reset)
         return arrdict(
             obs=self._observe(),
-            reward=core.env_full(0.),
+            reward=self._core.env_full(0.),
             reset=reset,
             terminal=reset)
 
@@ -121,11 +121,11 @@ class PointGoal:
 
     @torch.no_grad()
     def reset(self):
-        reset = core.env_full(True)
+        reset = self._core.env_full(True)
         reset = self._reset(reset)
         return arrdict(
             obs=self._observe(),
-            reward=core.env_full(0.),
+            reward=self._core.env_full(0.),
             reset=reset,
             terminal=reset)
 
