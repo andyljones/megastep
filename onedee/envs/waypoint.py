@@ -22,7 +22,7 @@ class WaypointEnv:
     def _reset(self, reset):
         reset = self._lengths(reset)
         self._respawner(reset)
-        self._goals(reset, 5.)
+        self._goals(reset, 1.)
         return reset
     
     def _observe(self):
