@@ -9,12 +9,12 @@ class WaypointEnv:
     def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)
         self._mover = modules.SimpleMovement(self._core)
-        self._observer = modules.RGBDObserver(self._core)
+        self._observer = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
 
-        self.action_space = self._mover.action_space
+        self.action_space = self._mover.space
         self.observation_space = arrdict(
-            **self._observer.observation_space,
+            **self._observer.space,
             waypoint=spaces.MultiVector(self._core.n_agents, 2))
 
         self._waypoints = torch.full((self._core.n_envs, self._core.n_agents, 2), np.nan, dtype=torch.float, device=self._core.device)

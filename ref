@@ -6,4 +6,4 @@ from rebar import storing
 commit = str(git.Repo().head.commit)[:6]
 run = storing.runs().iloc[-1].run_name
 proj = git.Repo().remotes[0].url.split('/')[-1][:-4]
-print(f'[[{proj}]] (`{commit}`, `{run}`)')
+print(f'[[{proj}#Results]] (`{commit}`, `{run}`)')

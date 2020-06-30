@@ -165,11 +165,12 @@ def run():
             stats.gpu.memory(0)
             stats.gpu.vitals(0)
 
-def demo(run=-1, length=None, test=True, N=None):
-    env = envfunc(1)
+def demo(run=-1, length=None, test=True, N=None, env=None, agent=None):
+    env = envfunc(1) if env is None else env
     world = env.reset()
-    agent = agentfunc().cuda()
-    agent.load_state_dict(storing.load()['agent'], strict=False)
+    if agent is None:
+        agent = agentfunc().cuda()
+        agent.load_state_dict(storing.load()['agent'], strict=False)
 
     world = env.reset()
     steps = 0

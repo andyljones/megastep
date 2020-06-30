@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from rebar import arrdict
 from rebar.arrdict import cat, stack, tensorify
-from . import spaces, core, plotting
+from . import spaces, plotting
 import matplotlib.pyplot as plt
 
 def to_local_frame(angles, p):
@@ -36,7 +36,7 @@ class SimpleMovement:
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
-        core.cuda.physics(core.scene, core.agents)
+        core.cuda.physics(core.scene, core.agents, core.progress)
 
 class MomentumMovement:
 
@@ -108,28 +108,35 @@ class IMU:
         return torch.cat([
             self._core.agents.angmomenta[..., None]/360.,
             to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
+
+def to_center_coords(indices, shape, res):
+    i, j = indices[..., 0] + .5, indices[..., 1]
+    xy = res*np.stack([j, shape[0] - i], -1)
+    return xy
+
+def random_open_points(core, n_points):
+    points = []
+    for g in core.geometries:
+        sample = np.stack((g.masks > 0).nonzero(), -1)
+
+        # There might be fewer posible spawns than we're asking for
+        n_possible = min(len(sample)//core.n_agents, n_points)
+        sample = sample[core.random.choice(np.arange(len(sample)), (n_possible, core.n_agents), replace=True)]
+
+        # So repeat the sample until we've got enough
+        sample = np.concatenate([sample]*int(n_points/len(sample)+1))[:-n_points:]
+        points.append(to_center_coords(sample, g.masks.shape, g.res))
+    return stack(points)
         
-class RandomSpawns(core.Core):
+class RandomSpawns:
 
     def __init__(self, core, *args, n_spawns=100, **kwargs):
         self._core = core
 
-        assert core.n_agents == 1
         self._n_spawns = n_spawns
-
-        spawns = []
-        for g in core.geometries:
-            sample = np.stack((g.masks > 0).nonzero(), -1)
-            sample = sample[core.random.choice(np.arange(len(sample)), n_spawns)]
-            
-            i, j = sample.T + .5
-            xy = g.res*np.stack([j, g.masks.shape[0] - i], -1)
-
-            spawns.append(arrdict({
-                'positions': xy[:, None],
-                'angles': core.random.uniform(-180, +180, (n_spawns, core.n_agents))}))
-
-        self._spawns = tensorify(stack(spawns)).to(core.device)
+        positions = random_open_points(core, n_spawns)
+        angles = core.random.uniform(-180, +180, (len(core.geometries), n_spawns, core.n_agents))
+        self._spawns = tensorify(arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
         core = self._core
@@ -140,3 +147,7 @@ class RandomSpawns(core.Core):
         core.agents.momenta[required] = 0.
         core.agents.angmomenta[required] = 0.
 
+class RandomDestinations:
+
+    def __init__(self, core, *args, n_dests=100, **kwargs):
+        pass
