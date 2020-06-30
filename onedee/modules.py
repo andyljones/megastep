@@ -114,17 +114,18 @@ def to_center_coords(indices, shape, res):
     xy = res*np.stack([j, shape[0] - i], -1)
     return xy
 
-def random_open_points(core, n_points):
+def random_empty_positions(core, n_points):
     points = []
     for g in core.geometries:
         sample = np.stack((g.masks > 0).nonzero(), -1)
 
-        # There might be fewer posible spawns than we're asking for
+        # There might be fewer open points than we're asking for
         n_possible = min(len(sample)//core.n_agents, n_points)
         sample = sample[core.random.choice(np.arange(len(sample)), (n_possible, core.n_agents), replace=True)]
 
         # So repeat the sample until we've got enough
-        sample = np.concatenate([sample]*int(n_points/len(sample)+1))[:-n_points:]
+        sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
+        sample = np.random.permutation(sample)
         points.append(to_center_coords(sample, g.masks.shape, g.res))
     return stack(points)
         
@@ -133,21 +134,50 @@ class RandomSpawns:
     def __init__(self, core, *args, n_spawns=100, **kwargs):
         self._core = core
 
-        self._n_spawns = n_spawns
-        positions = random_open_points(core, n_spawns)
+        positions = random_empty_positions(core, n_spawns)
         angles = core.random.uniform(-180, +180, (len(core.geometries), n_spawns, core.n_agents))
         self._spawns = tensorify(arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
         core = self._core
         required = reset.nonzero().squeeze(-1)
-        choices = torch.randint_like(required, 0, self._n_spawns)
+        choices = torch.randint_like(required, 0, self._spawns.angles.shape[1])
         core.agents.angles[required] = self._spawns.angles[required, choices] 
         core.agents.positions[required] = self._spawns.positions[required, choices] 
         core.agents.momenta[required] = 0.
         core.agents.angmomenta[required] = 0.
 
-class RandomDestinations:
+class RandomGoals:
 
-    def __init__(self, core, *args, n_dests=100, **kwargs):
-        pass
+    def __init__(self, core, *args, n_goals=1000, **kwargs):
+        self._core = core
+
+        self._n_goals = n_goals
+        self._goals = tensorify(random_empty_positions(core, n_goals)).to(core.device)
+        self.current = torch.full_like(self._goals[:, 0], np.nan)
+
+    def __call__(self, reset, distance, temperature=1):
+        if not reset.any():
+            return self._goals.new_empty((0, *self._goals.shape[2:]))
+        d = (self._goals[reset] - self._core.agents.positions[reset, None]).pow(2).sum(-1).pow(.5).mean(-1)
+
+        masses = (d/distance).clamp(1e-2, 1e2).pow(temperature)
+        probs = masses/masses.sum(1, keepdim=True)
+
+        sample = torch.distributions.Categorical(probs=probs).sample()
+
+        self.current[reset] = self._goals[reset.nonzero().squeeze(-1), sample]
+
+class RandomLengths:
+
+    def __init__(self, core, max_length=512, min_length=None):
+        min_length = max_length//2 if min_length is None else min_length
+        self._max_lengths = torch.randint(min_length, max_length, (core.n_envs,), dtype=torch.int, device=core.device)
+        self._lengths = torch.zeros_like(self._max_lengths)
+    
+    def __call__(self, reset=None):
+        self._lengths += 1
+        reset = torch.zeros_like(self._lengths, dtype=torch.bool) if reset is None else reset
+        reset = (self._lengths >= self._max_lengths) | reset
+        self._lengths[reset] = 0
+        return reset
