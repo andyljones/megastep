@@ -15,7 +15,7 @@ def _dataframe(traj):
 def dataframe(traj, **kwargs):
     return pd.concat({'.'.join(k): v for k, v in _dataframe({**traj, **kwargs})}, 1)
 
-class FSMEnv:
+class FSM:
 
     def __init__(self, n_envs, fsm, device='cuda'):
         self.n_envs = n_envs
@@ -184,7 +184,7 @@ def fsm(f):
 
     name = f.__name__
     __all__.append(name)
-    return type(name, (FSMEnv,), {'__init__': init})
+    return type(name, (FSM,), {'__init__': init})
 
 @fsm
 def ObliviousConstantReward():

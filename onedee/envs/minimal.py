@@ -12,7 +12,7 @@ def trues(n_envs, device):
 def zeros(n_envs, device):
     return torch.ones((n_envs,), dtype=torch.float, device=device)
 
-class MinimalSimEnv:
+class Minimal:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
 
     def __init__(self, *args, **kwargs):

@@ -15,10 +15,8 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.RandomChain(n_envs, n=10)
-    return onedee.ExplorerEnv(cubicasa.sample(n_envs))
-    # return onedee.WaypointEnv([cubicasa.column()]*n_envs)
-    ds = cubicasa.sample(n_envs)
-    return onedee.ExplorerEnv(ds)
+    return onedee.PointGoal(cubicasa.sample(n_envs))
+    # return onedee.ExplorerEnv(cubicasa.sample(n_envs))
 
 class Agent(nn.Module):
 

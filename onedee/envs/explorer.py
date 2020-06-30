@@ -4,7 +4,7 @@ from .. import modules, core, plotting, spaces
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 
-class ExplorerEnv: 
+class Explorer: 
 
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, **kwargs)
