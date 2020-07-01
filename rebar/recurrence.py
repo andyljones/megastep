@@ -80,4 +80,3 @@ class Sequential(nn.Sequential):
         for module in self:
             input = module(input, **kwargs)
         return input
-

@@ -1,5 +1,5 @@
 import torch
-from . import learning
+from . import learning, lstm
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
 import onedee
@@ -7,7 +7,6 @@ from onedee import spaces
 import cubicasa
 import numpy as np
 import pandas as pd
-from .transformer import Transformer
 from torch import nn
 from tqdm.auto import tqdm
 
@@ -26,11 +25,11 @@ class Agent(nn.Module):
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=128, d_model=width, n_layers=2, n_head=2),
+            lstm.LSTM(d_model=width),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            Transformer(mem_len=128, d_model=width, n_layers=2, n_head=2),
+            lstm.LSTM(d_model=width),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):

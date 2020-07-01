@@ -30,8 +30,8 @@ class Waypoint:
         self._mover = modules.SimpleMovement(self._core)
         self._rgbd = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
-        self._goals = modules.RandomGoals(self._core)
         self._lengths = modules.RandomLengths(self._core, max_length)
+        self._goals = RandomGoals(self._core)
 
         self.action_space = self._mover.space
         self.observation_space = arrdict(
@@ -107,8 +107,8 @@ class PointGoal:
         self._rgbd = modules.RGBD(self._core)
         self._imu = modules.IMU(self._core)
         self._respawner = modules.RandomSpawns(self._core)
-        self._goals = modules.RandomGoals(self._core)
         self._lengths = modules.RandomLengths(self._core, max_length)
+        self._goals = RandomGoals(self._core)
 
         self._spawns = arrdict(
             angles=torch.zeros_like(self._core.agents.angles),
