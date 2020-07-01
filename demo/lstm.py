@@ -1,6 +1,30 @@
 import torch
 from torch import nn
 from rebar import recurrence
+from torch.nn.utils.rnn import PackedSequence
+
+def pack(x, reset):
+    ext = reset.clone()
+    ext[0] = True
+    ext = ext.T.flatten()
+
+    idxs = ext.nonzero().squeeze()
+
+    b = ext.cumsum(0)-1
+    t = torch.arange(len(ext)) - idxs[b]
+
+    ends = torch.cat([idxs, torch.tensor([len(ext)])])
+    l = (ends[1:] - ends[:-1])[b]
+
+    T, B = reset.shape
+    assert T**2 * B < 2**32 - 1
+
+    order = torch.argsort(t*B*T + b*T + (T-l))
+
+    vals = x.reshape(-1, *x.shape[2:])[order]
+    sizes = torch.histc(l, l.max()+1)
+
+    return PackedSequence(vals, sizes)
 
 class LSTM(nn.Module):
 
@@ -20,7 +44,8 @@ class LSTM(nn.Module):
         h0 = self._h.get(lambda: x.new_zeros(1, B, self._d_model))
         c0 = self._c.get(lambda: x.new_zeros(1, B, self._d_model))
 
-        y, (hn, cn) = self.lstm(x, (h0, c0))
+        p = pack(x, reset)
+        y, (hn, cn) = self.lstm(p, (h0, c0))
         self._h.set(hn.detach())
         self._c.set(cn.detach())
 

@@ -146,7 +146,7 @@ class PointGoal:
             obs=self._observe(),
             reward=self._core.env_full(0.),
             reset=reset,
-            terminal=reset)
+            terminal=self._core.env_full(False))
 
     @torch.no_grad()
     def step(self, decision):
