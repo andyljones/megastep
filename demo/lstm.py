@@ -11,9 +11,9 @@ def pack(x, reset):
     idxs = ext.nonzero().squeeze()
 
     b = ext.cumsum(0)-1
-    t = torch.arange(len(ext)) - idxs[b]
+    t = torch.arange(len(ext), device=idxs.device) - idxs[b]
 
-    ends = torch.cat([idxs, torch.tensor([len(ext)])])
+    ends = torch.cat([idxs, torch.full_like(idxs[:1], len(idxs))])
     l = (ends[1:] - ends[:-1])[b]
 
     T, B = reset.shape
@@ -22,9 +22,9 @@ def pack(x, reset):
     order = torch.argsort(t*B*T + b*T + (T-l))
 
     vals = x.reshape(-1, *x.shape[2:])[order]
-    sizes = torch.histc(l, l.max()+1)
+    sizes = torch.flip(torch.flip(torch.histc(l, l.max()+1), (0,)).cumsum(0), (0,))
 
-    return PackedSequence(vals, sizes)
+    return PackedSequence(vals, sizes.cpu())
 
 class LSTM(nn.Module):
 
@@ -45,9 +45,16 @@ class LSTM(nn.Module):
         c0 = self._c.get(lambda: x.new_zeros(1, B, self._d_model))
 
         p = pack(x, reset)
+
+        J = p.batch_sizes[0]
+        hp = h0.new_zeros((1, J, self._d_model))
+        hp[:, :B] = h0
+        cp = h0.new_zeros((1, J, self._d_model))
+        cp[:, :B] = c0
+
         y, (hn, cn) = self.lstm(p, (h0, c0))
-        self._h.set(hn.detach())
-        self._c.set(cn.detach())
+        self._h.set(hn[:, :B].detach())
+        self._c.set(cn[:, :B].detach())
 
         return y 
 
