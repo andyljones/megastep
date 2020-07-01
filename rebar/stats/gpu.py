@@ -3,6 +3,7 @@ import pandas as pd
 from io import BytesIO
 from subprocess import check_output
 from . import writing
+import time
 
 
 def memory(device=0):
@@ -27,7 +28,14 @@ def dataframe():
     df = df.apply(pd.to_numeric, errors='coerce')
     return df
 
-def vitals(device=None):
+_last = -1
+def vitals(device=None, throttle=0):
+    # This is a fairly expensive op, so let's avoid doing it too often
+    global _last
+    if time.time() - _last < throttle:
+        return
+    _last = time.time()
+
     df = dataframe()
     if device is None:
         pass

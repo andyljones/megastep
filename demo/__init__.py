@@ -113,10 +113,9 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 128
-    inc_size = 16
+    buffer_size = 32
     batch_size = 16384
-    n_envs = 1024
+    n_envs = 4096
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -127,14 +126,12 @@ def run():
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
-        states, buffer = [], []
-        steps = 0
         indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
-            states.append(recurrence.get(agent))
-            states = states[-buffer_size//inc_size:]
-            for _ in range(inc_size):
+            buffer = []
+            state = recurrence.get(agent)
+            for _ in range(buffer_size):
                 decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
@@ -143,13 +140,10 @@ def run():
                 world = env.step(decision)
             
             chunk = arrdict.stack(buffer)
-            chunkstats(chunk[-inc_size:])
-            steps += 1
+            chunkstats(chunk)
 
-            for _ in range(inc_size*n_envs//batch_size):
-                idxs = indices[steps % len(indices)]
-                steps += 1
-                with recurrence.temp_clear_set(agent, states[0][:, idxs]):
+            for idxs in indices:
+                with recurrence.temp_clear_set(agent, state[:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')
@@ -158,7 +152,7 @@ def run():
                     break
             storing.store_latest(run_name, {'agent': agent}, throttle=60)
             stats.gpu.memory(0)
-            stats.gpu.vitals(0)
+            stats.gpu.vitals(0, throttle=15)
 
 def demo(run=-1, length=None, test=True, N=None, env=None, agent=None):
     env = envfunc(1) if env is None else env
