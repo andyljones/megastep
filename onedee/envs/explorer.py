@@ -20,8 +20,7 @@ class Explorer:
         self._seen = torch.full_like(self._tex_to_env, False)
         self._potential = self._core.env_full(0.)
 
-        self._length = self._core.env_full(0)
-        self._max_length = torch.randint_like(self._length, 256, 768)
+        self._lengths = modules.RandomLengths(self._core)
 
         self.device = self._core.device
 
@@ -52,16 +51,16 @@ class Explorer:
 
         return reward
 
-    def _reset(self, reset):
+    def _reset(self, reset=None):
+        reset = self._lengths(reset)
         self._respawner(reset)
         self._seen[reset[self._tex_to_env]] = False
-        self._length[reset] = 0
         self._potential[reset] = 0
+        return reset
 
     @torch.no_grad()
     def reset(self):
-        reset = self._core.env_full(True)
-        self._reset(reset)
+        reset = self._reset(self._core.env_full(True))
         render = self._rgbd.render()
         return arrdict(
             obs=self._rgbd(render),
@@ -72,10 +71,8 @@ class Explorer:
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
-        self._length += 1
 
-        reset = (self._length >= self._max_length)
-        self._reset(reset)
+        reset = self._reset()
         render = self._rgbd.render()
         return arrdict(
             obs=self._rgbd(render),
@@ -90,8 +87,7 @@ class Explorer:
             obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),
-            length=self._length[d].clone(),
-            max_length=self._max_length[d].clone())
+            **self._lengths.state(d))
 
     @classmethod
     def plot_state(cls, state, zoom=False):

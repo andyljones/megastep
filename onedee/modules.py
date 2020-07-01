@@ -159,3 +159,6 @@ class RandomLengths:
         reset = (self._lengths >= self._max_lengths) | reset
         self._lengths[reset] = 0
         return reset
+
+    def state(self, d):
+        return arrdict(length=self._lengths[d], max_length=self._max_lengths[d]).clone()
