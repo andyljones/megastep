@@ -4,6 +4,25 @@ from .. import modules, core, spaces, plotting
 from rebar import arrdict
 import matplotlib.pyplot as plt
 
+class RandomGoals:
+
+    def __init__(self, core, *args, n_goals=10, **kwargs):
+        self._core = core
+
+        self._n_goals = n_goals
+        self._goals = arrdict.tensorify(modules.random_empty_positions(core, n_goals)).to(core.device)
+        self.current = torch.full_like(self._goals[:, 0], np.nan)
+
+    def __call__(self, reset, distance, temperature=10, clip=2):
+        if not reset.any():
+            return self._goals.new_empty((0, *self._goals.shape[2:]))
+        d = (self._goals[reset] - self._core.agents.positions[reset, None]).pow(2).sum(-1).pow(.5).mean(-1)
+
+        logits = -(d/distance).log10().clamp(-clip, +clip).abs().mul(temperature)
+        sample = torch.distributions.Categorical(logits=logits).sample()
+
+        self.current[reset] = self._goals[reset.nonzero().squeeze(-1), sample]
+
 class Waypoint: 
 
     def __init__(self, *args, max_length=512, **kwargs):

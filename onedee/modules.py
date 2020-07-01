@@ -61,7 +61,6 @@ class MomentumMovement:
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
         core.cuda.physics(core.scene, core.agents, core.progress)
 
-
 def unpack(d):
     if isinstance(d, torch.Tensor):
         return d
@@ -146,25 +145,6 @@ class RandomSpawns:
         core.agents.positions[required] = self._spawns.positions[required, choices] 
         core.agents.momenta[required] = 0.
         core.agents.angmomenta[required] = 0.
-
-class RandomGoals:
-
-    def __init__(self, core, *args, n_goals=10, **kwargs):
-        self._core = core
-
-        self._n_goals = n_goals
-        self._goals = tensorify(random_empty_positions(core, n_goals)).to(core.device)
-        self.current = torch.full_like(self._goals[:, 0], np.nan)
-
-    def __call__(self, reset, distance, temperature=10, clip=2):
-        if not reset.any():
-            return self._goals.new_empty((0, *self._goals.shape[2:]))
-        d = (self._goals[reset] - self._core.agents.positions[reset, None]).pow(2).sum(-1).pow(.5).mean(-1)
-
-        logits = -(d/distance).log10().clamp(-clip, +clip).abs().mul(temperature)
-        sample = torch.distributions.Categorical(logits=logits).sample()
-
-        self.current[reset] = self._goals[reset.nonzero().squeeze(-1), sample]
 
 class RandomLengths:
 
