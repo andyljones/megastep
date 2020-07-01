@@ -13,16 +13,16 @@ def pack(x, reset):
     b = ext.cumsum(0)-1
     t = torch.arange(len(ext), device=idxs.device) - idxs[b]
 
-    ends = torch.cat([idxs, torch.full_like(idxs[:1], len(idxs))])
-    l = (ends[1:] - ends[:-1])[b]
+    ends = torch.cat([idxs, torch.full_like(idxs[:1], len(b))])
+    l = (ends[1:] - ends[:-1])
 
     T, B = reset.shape
     assert T**2 * B < 2**32 - 1
 
-    order = torch.argsort(t*B*T + b*T + (T-l))
+    order = torch.argsort(t*B*T + b*T + (T-l[b]))
 
     vals = x.reshape(-1, *x.shape[2:])[order]
-    sizes = torch.flip(torch.flip(torch.histc(l, l.max()+1), (0,)).cumsum(0), (0,))
+    sizes = torch.flip(torch.flip(torch.histc(l-1, l.max(), 0, l.max()), (0,)).cumsum(0), (0,))
 
     return PackedSequence(vals, sizes.cpu())
 
@@ -52,11 +52,11 @@ class LSTM(nn.Module):
         cp = h0.new_zeros((1, J, self._d_model))
         cp[:, :B] = c0
 
-        y, (hn, cn) = self.lstm(p, (h0, c0))
+        y, (hn, cn) = self.lstm(p, (hp, cp))
         self._h.set(hn[:, :B].detach())
         self._c.set(cn[:, :B].detach())
 
-        return y 
+        return y.data[:T*B].reshape(T, B, self._d_model)
 
 
 
