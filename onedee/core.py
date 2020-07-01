@@ -1,9 +1,8 @@
 import numpy as np
-from . import common, scenery, plotting
+from . import common, scenery
 import torch
 import logging
-from rebar import dotdict, arrdict
-from rebar.arrdict import tensorify, numpyify, cat
+from rebar import arrdict
 
 log = logging.getLogger(__name__)
 

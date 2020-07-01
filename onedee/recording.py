@@ -1,10 +1,6 @@
 import time
-import pickle
-from rebar import recording
-from rebar.arrdict import stack, numpyify
-from rebar import paths, parallel, plots, recording
+from rebar import paths, parallel, plots, recording, arrdict
 import logging
-import threading
 import matplotlib.pyplot as plt
 import os
 from functools import wraps
@@ -32,7 +28,7 @@ def _array(plot, state, **kwargs):
 
 def _encode(tasker, plot, states, fps):
     log.info('Started encoding recording')
-    states = numpyify(stack(states))
+    states = arrdict.numpyify(arrdict.stack(states))
     futures = [tasker(plot, states[i]) for i in range(length(states))]
     with recording.Encoder(fps) as encoder:
         for future in futures:
@@ -78,7 +74,7 @@ def notebook(run_name=-1, idx=-1):
 def replay(plot, states, fps=20, **kwargs):
     with parallel.parallel(_array, progress=False, N=os.cpu_count()//4, initializer=_init) as tasker,\
             recording.Encoder(fps) as encoder:
-        futures = [tasker(plot, numpyify(state), **kwargs) for state in states]
+        futures = [tasker(plot, arrdict.numpyify(state), **kwargs) for state in states]
         for future in tqdm(futures):
             encoder(future.result())
     return recording.notebook(encoder.value)

@@ -1,9 +1,7 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from rebar.arrdict import cat, stack, tensorify
-from . import spaces, plotting
-import matplotlib.pyplot as plt
+from . import spaces
 
 def to_local_frame(angles, p):
     a = np.pi/180*angles
@@ -126,7 +124,7 @@ def random_empty_positions(core, n_points):
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
         sample = np.random.permutation(sample)
         points.append(to_center_coords(sample, g.masks.shape, g.res))
-    return stack(points)
+    return arrdict.stack(points)
         
 class RandomSpawns:
 
@@ -135,7 +133,7 @@ class RandomSpawns:
 
         positions = random_empty_positions(core, n_spawns)
         angles = core.random.uniform(-180, +180, (len(core.geometries), n_spawns, core.n_agents))
-        self._spawns = tensorify(arrdict(positions=positions, angles=angles)).to(core.device)
+        self._spawns = arrdict.tensorify(arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
         core = self._core

@@ -2,8 +2,7 @@ import matplotlib as mpl
 import numpy as np
 import torch
 from . import common
-from rebar.arrdict import tensorify, cat
-from rebar import dotdict, arrdict
+from rebar import arrdict
 
 # Ten bland colors from https://medialab.github.io/iwanthue/
 COLORS = [
@@ -88,10 +87,10 @@ def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random):
             'linewidths': len(lines),
             'textures': textures,
             'texwidths': texwidths}))
-    data = cat(data)
+    data = arrdict.cat(data)
     data['frame'] = agent_frame()
     
-    scene = cuda.Scene(**tensorify(data).to(device))
+    scene = cuda.Scene(**arrdict.tensorify(data).to(device))
     cuda.bake(scene, n_agents)
 
     return scene

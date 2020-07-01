@@ -147,13 +147,11 @@ def run():
             chunkstats(chunk[-inc_size:])
             steps += 1
 
-            gamma = .99 + (.999 - .99)*(1 - (1/2)**(steps/10000))
-            entropy = .01 + (.001 - .01)*(1 - (1/2)**(steps/10000))
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs], gamma=gamma, entropy=entropy)
+                    kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')
                 if kl > .02:

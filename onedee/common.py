@@ -3,7 +3,6 @@ from functools import wraps
 from pkg_resources import resource_filename
 import torch.utils.cpp_extension
 import torch
-from rebar import dotdict, arrdict
 
 AGENT_WIDTH = .15
 TEXTURE_RES = .05

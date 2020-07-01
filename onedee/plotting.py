@@ -2,10 +2,7 @@ import torch
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import chain
-from matplotlib.animation import FuncAnimation
 from . import common
-from IPython.display import display
 
 VIEW_RADIUS = 5
 

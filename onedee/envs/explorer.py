@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from .. import modules, core, plotting, spaces
-from rebar import arrdict, dotdict
+from .. import modules, core, plotting
+from rebar import arrdict
 import matplotlib.pyplot as plt
 
 class Explorer: 
