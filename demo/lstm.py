@@ -19,42 +19,51 @@ class Packer:
         ends = torch.cat([idxs, torch.full_like(idxs[:1], len(b))])
         l = (ends[1:] - ends[:-1])
 
-        T, B = reset.shape
+        T = reset.size(0)
+        B = len(idxs)
+        L = T+1
         assert T**2 * B < 2**32 - 1
 
-        self._order = torch.argsort(t*B*T + b*T + (T-l[b]))
+        self._b = b
+        self._t = t
+        self._order = torch.argsort(t*B*L + b*L + (L-l[b]-1))
         self._sizes = torch.flip(torch.flip(torch.histc(l-1, l.max(), 0, l.max()), (0,)).cumsum(0), (0,))
 
-    def pack_input(self, x):
-        vals = x.reshape(-1, *x.shape[2:])[self._order]
+    def pack_data(self, x):
+        vals = x.transpose(0, 1).reshape(-1, *x.shape[2:])[self._order]
         return PackedSequence(vals, self._sizes.cpu())
 
     def pack_state(self, h):
         T, B = self._reset.shape
-        initial = self._order[::T][~self._reset[0]]
-        hp = h.new_zeros((1, self._sizes[0], self._d_model))
-        hp[initial] = h[~self._reset[0]]
+        J = self._sizes[0]
+        mask = (self._order[:J] % T == 0) & ~self._reset.T.flatten()[self._order[:J]]
+        hp = h.new_zeros((1, self._sizes[0], *h.shape[2:]))
+        hp[:, mask] = h[:, ~self._reset[0]]
         return hp
 
     def pack(self, x, h, c):
-        return self.pack_input(x), (self.pack_state(h), self.pack_state(c))
+        return self.pack_data(x), (self.pack_state(h), self.pack_state(c))
 
-    def unpack_output(self, y):
+    def unpack_data(self, xp):
         T, B = self._reset.shape
+        x = xp.data.new_zeros(T*B, *xp.data.shape[1:])
+        x[self._order] = xp.data
+        return x.reshape(B, T, *xp.data.shape[1:]).transpose(0, 1)
 
-        u = y.new_zeros(T*B, *y.shape[1:])
-        u[self._order] = y
-
-        return u.reshape(T, B)
-
-    def unpack_state(self, h):
+    def unpack_state(self, hp):
         T, B = self._reset.shape
-        final = self._order[T-1::T]
-        return h[final]
+        mask = (self._order % T == T-1)
+        left_idxs = (self._order//T)[mask]
+        right_idxs = self._b[self._order][mask]
 
-    def unpack(self, y, hc):
-        h, c = hc
-        return self.unpack_output(y), (self.unpack_state(h), self.unpack_state(c))
+        h = hp.new_zeros((1, B, *hp.shape[2:]))
+        h[:, left_idxs] = hp[:, right_idxs]
+        return h
+
+    def unpack(self, xp, hcp):
+        hp, cp = hcp
+        return self.unpack_data(xp), (self.unpack_state(hp), self.unpack_state(cp))
+
 
 class LSTM(nn.Module):
 
@@ -81,7 +90,30 @@ class LSTM(nn.Module):
         self._h.set(hn.detach())
         self._c.set(cn.detach())
 
-        return y.data[:T*B].reshape(T, B, self._d_model)
+        return y
 
 
+def test_packer():
+    reset = torch.Tensor([
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]]).bool().cuda()
+
+    x = torch.Tensor([
+        [0, 10, 20, 30],
+        [1, 11, 40, 31],
+        [2, 12, 41, 50]]).float().cuda()
+
+    h = torch.Tensor([[1, 2, 3, 4]]).float().cuda()
+
+    packer = Packer(reset)
+    xp, (hp, cp) = packer.pack(x, h, h)
+    xu, (hu, cu) = packer.unpack(xp, (hp, cp))
+
+    torch.testing.assert_allclose(xp.data, torch.tensor([0, 10, 20, 40, 30, 50, 1, 11, 41, 31, 2, 12]).float().cuda())
+    torch.testing.assert_allclose(xp.batch_sizes, torch.tensor([6, 4, 2]))
+    torch.testing.assert_allclose(x, xu)
+
+    torch.testing.assert_allclose(hp, torch.tensor([1, 0, 3, 0, 4, 0]).float().cuda())
+    torch.testing.assert_allclose(hu, torch.tensor([[1, 0, 0, 0]]).float().cuda())
 
