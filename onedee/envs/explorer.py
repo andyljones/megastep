@@ -20,7 +20,7 @@ class Explorer:
         self._seen = torch.full_like(self._tex_to_env, False)
         self._potential = self._core.env_full(0.)
 
-        self._lengths = torch.zeros(self._core.n_env, device=self._core.device, dtype=torch.int)
+        self._lengths = torch.zeros(self._core.n_envs, device=self._core.device, dtype=torch.int)
 
         self.device = self._core.device
 
@@ -43,7 +43,7 @@ class Explorer:
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
         collisions = self._core.progress.lt(1).any(-1).float()
-        reward = (potential - self._potential)/self._core.res  - .25*collisions
+        reward = (potential - self._potential)/self._core.res#  - .25*collisions
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -80,7 +80,7 @@ class Explorer:
         return arrdict(
             obs=self._rgbd(render),
             reset=reset, 
-            terminal=torch.zeros_like(reset), 
+            terminal=reset, 
             reward=self._reward(render, reset))
 
     def state(self, d=0):
@@ -90,7 +90,8 @@ class Explorer:
             obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),
-            **self._lengths.state(d))
+            length=self._lengths[d].clone(),
+            max_length=self._potential[d].add(200).clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):

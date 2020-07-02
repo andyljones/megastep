@@ -11,7 +11,7 @@ class Packer:
         ext[0] = True
         ext = ext.T.flatten()
 
-        idxs = ext.nonzero().squeeze()
+        idxs = ext.nonzero().squeeze(-1)
 
         b = ext.cumsum(0)-1
         t = torch.arange(len(ext), device=idxs.device) - idxs[b]

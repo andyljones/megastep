@@ -1,5 +1,5 @@
 import torch
-from . import learning, lstm
+from . import learning, lstm, transformer
 from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
 import onedee
@@ -13,9 +13,9 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    # return onedee.RandomChain(n_envs, n=10)
-    # return onedee.PointGoal(cubicasa.sample(n_envs))
-    return onedee.Explorer(cubicasa.sample(n_envs))
+    # return onedee.DelayedMatchCoin(n_envs)
+    return onedee.PointGoal(cubicasa.sample(n_envs))
+    # return onedee.Explorer(cubicasa.sample(n_envs))
 
 class Agent(nn.Module):
 
@@ -26,10 +26,12 @@ class Agent(nn.Module):
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
             lstm.LSTM(d_model=width),
+            # transformer.Transformer(mem_len=128, d_model=width),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
             lstm.LSTM(d_model=width),
+            # transformer.Transformer(mem_len=128, d_model=width),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):
@@ -113,7 +115,7 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 32
+    buffer_size = 128
     batch_size = 16384
     n_envs = 4096
 

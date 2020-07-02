@@ -213,36 +213,53 @@ def ObliviousChain(n=2, r=1):
     return b.build()
 
 @fsm
-def ObliviousCoin(reward=1.):
+def ObliviousCoin():
     return (Builder()
         .state('heads', obs=+1., start=1.)
-            .to('end', 0, reward=+reward)
+            .to('end', 0, reward=+1)
         .state('tails', obs=-1., start=1.)
-            .to('end', 0, reward=-reward)
+            .to('end', 0, reward=-1)
         .build())
 
 @fsm
-def ObliviousDelayedCoin(reward=1.):
+def ObliviousDelayedCoin():
     return (Builder()
         .state('heads-1', obs=+.5, start=1.)
             .to('heads-2')
         .state('heads-2', obs=+1.)
-            .to('end', reward=+reward)
+            .to('end', reward=+1)
         .state('tails-1', obs=-.5, start=1.)
             .to('tails-2')
         .state('tails-2', obs=-1.)
-            .to('end', reward=-reward)
+            .to('end', reward=-1)
         .build())
 
 @fsm
-def MatchCoin(reward=1.):
+def DelayedMatchCoin():
+    return (Builder()
+        .state('heads-1', obs=+1., start=1.)
+            .to('heads-2', 0)
+            .to('heads-2', 1)
+        .state('heads-2', obs=0.)
+            .to('end', 0, reward=+1)
+            .to('end', 1, reward=-1)
+        .state('tails-1', obs=0., start=1.)
+            .to('tails-2', 0)
+            .to('tails-2', 1)
+        .state('tails-2', obs=-1.)
+            .to('end', 0, reward=-1)
+            .to('end', 1, reward=+1)
+        .build())
+
+@fsm
+def MatchCoin():
     return (Builder()
         .state('heads', obs=+1., start=1.)
-            .to('end', 0, reward=+reward)
-            .to('end', 1, reward=-reward)
+            .to('end', 0, reward=+1)
+            .to('end', 1, reward=-1)
         .state('tails', obs=-1., start=1.)
-            .to('end', 0, reward=-reward)
-            .to('end', 1, reward=+reward)
+            .to('end', 0, reward=-1)
+            .to('end', 1, reward=+1)
         .build())
 
 @fsm
