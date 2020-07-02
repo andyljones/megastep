@@ -19,7 +19,7 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=192):
+    def __init__(self, observation_space, action_space, width=512):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
@@ -59,7 +59,7 @@ def chunkstats(chunk):
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -150,8 +150,9 @@ def run():
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
+                gamma = .99 + (.999 - .99)*(1 - (1/2)**(steps/500))
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs])
+                    kl = optimize(agent, opt, chunk[:, idxs], gamma=gamma)
 
                 log.info('stepped')
                 if kl > .02:

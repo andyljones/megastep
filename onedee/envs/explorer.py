@@ -42,8 +42,7 @@ class Explorer:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        collisions = self._core.progress.lt(1).any(-1).float()
-        reward = (potential - self._potential)/self._core.res#  - .25*collisions
+        reward = (potential - self._potential)/self._core.res
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -65,7 +64,7 @@ class Explorer:
         return arrdict(
             obs=self._rgbd(render),
             reset=reset, 
-            terminal=reset, 
+            terminal=self._core.env_full(False), 
             reward=self._reward(render, reset))
 
     @torch.no_grad()
@@ -80,7 +79,7 @@ class Explorer:
         return arrdict(
             obs=self._rgbd(render),
             reset=reset, 
-            terminal=reset, 
+            terminal=self._core.env_full(False), 
             reward=self._reward(render, reset))
 
     def state(self, d=0):
