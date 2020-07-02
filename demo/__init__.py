@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.DelayedMatchCoin(n_envs)
-    return onedee.PointGoal(cubicasa.sample(n_envs))
-    # return onedee.Explorer(cubicasa.sample(n_envs))
+    # return onedee.PointGoal(cubicasa.sample(n_envs))
+    return onedee.Explorer(cubicasa.sample(n_envs))
 
 class Agent(nn.Module):
 
@@ -118,6 +118,7 @@ def run():
     buffer_size = 128
     batch_size = 16384
     n_envs = 4096
+    inc_size = batch_size//n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -128,12 +129,14 @@ def run():
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
+        states, buffer = [], []
+        steps = 0
         indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
-            buffer = []
-            state = recurrence.get(agent)
-            for _ in range(buffer_size):
+            states.append(recurrence.get(agent))
+            states = states[-buffer_size//inc_size:]
+            for _ in range(inc_size):
                 decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
@@ -142,10 +145,12 @@ def run():
                 world = env.step(decision)
             
             chunk = arrdict.stack(buffer)
-            chunkstats(chunk)
+            chunkstats(chunk[-inc_size:])
 
-            for idxs in indices:
-                with recurrence.temp_clear_set(agent, state[:, idxs]):
+            for _ in range(inc_size*n_envs//batch_size):
+                idxs = indices[steps % len(indices)]
+                steps += 1
+                with recurrence.temp_clear_set(agent, states[0][:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')

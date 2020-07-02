@@ -64,8 +64,8 @@ class Explorer:
         render = self._rgbd.render()
         return arrdict(
             obs=self._rgbd(render),
-            reset=torch.zeros_like(reset), 
-            terminal=torch.zeros_like(reset), 
+            reset=reset, 
+            terminal=reset, 
             reward=self._reward(render, reset))
 
     @torch.no_grad()
