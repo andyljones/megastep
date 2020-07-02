@@ -1,30 +1,60 @@
 import torch
 from torch import nn
-from rebar import recurrence
+from rebar import recurrence, dotdict
 from torch.nn.utils.rnn import PackedSequence
 
-def pack(x, reset):
-    ext = reset.clone()
-    ext[0] = True
-    ext = ext.T.flatten()
+class Packer:
 
-    idxs = ext.nonzero().squeeze()
+    def __init__(self, reset):
+        self._reset = reset
+        ext = reset.clone()
+        ext[0] = True
+        ext = ext.T.flatten()
 
-    b = ext.cumsum(0)-1
-    t = torch.arange(len(ext), device=idxs.device) - idxs[b]
+        idxs = ext.nonzero().squeeze()
 
-    ends = torch.cat([idxs, torch.full_like(idxs[:1], len(b))])
-    l = (ends[1:] - ends[:-1])
+        b = ext.cumsum(0)-1
+        t = torch.arange(len(ext), device=idxs.device) - idxs[b]
 
-    T, B = reset.shape
-    assert T**2 * B < 2**32 - 1
+        ends = torch.cat([idxs, torch.full_like(idxs[:1], len(b))])
+        l = (ends[1:] - ends[:-1])
 
-    order = torch.argsort(t*B*T + b*T + (T-l[b]))
+        T, B = reset.shape
+        assert T**2 * B < 2**32 - 1
 
-    vals = x.reshape(-1, *x.shape[2:])[order]
-    sizes = torch.flip(torch.flip(torch.histc(l-1, l.max(), 0, l.max()), (0,)).cumsum(0), (0,))
+        self._order = torch.argsort(t*B*T + b*T + (T-l[b]))
+        self._sizes = torch.flip(torch.flip(torch.histc(l-1, l.max(), 0, l.max()), (0,)).cumsum(0), (0,))
 
-    return PackedSequence(vals, sizes.cpu())
+    def pack_input(self, x):
+        vals = x.reshape(-1, *x.shape[2:])[self._order]
+        return PackedSequence(vals, self._sizes.cpu())
+
+    def pack_state(self, h):
+        T, B = self._reset.shape
+        initial = self._order[::T][~self._reset[0]]
+        hp = h.new_zeros((1, self._sizes[0], self._d_model))
+        hp[initial] = h[~self._reset[0]]
+        return hp
+
+    def pack(self, x, h, c):
+        return self.pack_input(x), (self.pack_state(h), self.pack_state(c))
+
+    def unpack_output(self, y):
+        T, B = self._reset.shape
+
+        u = y.new_zeros(T*B, *y.shape[1:])
+        u[self._order] = y
+
+        return u.reshape(T, B)
+
+    def unpack_state(self, h):
+        T, B = self._reset.shape
+        final = self._order[T-1::T]
+        return h[final]
+
+    def unpack(self, y, hc):
+        h, c = hc
+        return self.unpack_output(y), (self.unpack_state(h), self.unpack_state(c))
 
 class LSTM(nn.Module):
 
@@ -44,17 +74,12 @@ class LSTM(nn.Module):
         h0 = self._h.get(lambda: x.new_zeros(1, B, self._d_model))
         c0 = self._c.get(lambda: x.new_zeros(1, B, self._d_model))
 
-        p = pack(x, reset)
+        packer = Packer(reset)
 
-        J = p.batch_sizes[0]
-        hp = h0.new_zeros((1, J, self._d_model))
-        hp[:, :B] = h0
-        cp = h0.new_zeros((1, J, self._d_model))
-        cp[:, :B] = c0
-
-        y, (hn, cn) = self.lstm(p, (hp, cp))
-        self._h.set(hn[:, :B].detach())
-        self._c.set(cn[:, :B].detach())
+        output = self.lstm(*packer.pack(x, h0, c0))
+        y, (hn, cn) = packer.unpack(*output)
+        self._h.set(hn.detach())
+        self._c.set(cn.detach())
 
         return y.data[:T*B].reshape(T, B, self._d_model)
 
