@@ -20,7 +20,7 @@ class Explorer:
         self._seen = torch.full_like(self._tex_to_env, False)
         self._potential = self._core.env_full(0.)
 
-        self._lengths = modules.RandomLengths(self._core)
+        self._lengths = torch.zeros(self._core.n_env, device=self._core.device, dtype=torch.int)
 
         self.device = self._core.device
 
@@ -52,15 +52,15 @@ class Explorer:
         return reward
 
     def _reset(self, reset=None):
-        reset = self._lengths(reset)
         self._respawner(reset)
         self._seen[reset[self._tex_to_env]] = False
         self._potential[reset] = 0
-        return reset
+        self._lengths[reset] = 0
 
     @torch.no_grad()
     def reset(self):
-        reset = self._reset(self._core.env_full(True))
+        reset = self._core.env_full(True)
+        self._reset(reset)
         render = self._rgbd.render()
         return arrdict(
             obs=self._rgbd(render),
@@ -72,7 +72,10 @@ class Explorer:
     def step(self, decision):
         self._mover(decision)
 
-        reset = self._reset()
+        self._lengths += 1
+
+        reset = (self._lengths >= self._potential + 200)
+        self._reset(reset)
         render = self._rgbd.render()
         return arrdict(
             obs=self._rgbd(render),
