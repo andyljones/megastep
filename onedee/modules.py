@@ -38,7 +38,7 @@ class SimpleMovement:
 
 class MomentumMovement:
 
-    def __init__(self, core, *args, accel=5, ang_accel=90, decay=.125, **kwargs):
+    def __init__(self, core, *args, accel=5, ang_accel=90, decay=.125, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
@@ -50,7 +50,7 @@ class MomentumMovement:
 
         self._decay = decay
 
-        self.space = spaces.MultiDiscrete(core.n_agents, 7)
+        self.space = spaces.MultiDiscrete(n_agents or core.n_agents, 7)
 
     def __call__(self, decision):
         core = self._core
@@ -66,11 +66,12 @@ def unpack(d):
         
 class RGBD:
 
-    def __init__(self, core, *args, max_depth=10, **kwargs):
+    def __init__(self, core, *args, n_agents=None, max_depth=10, **kwargs):
+        n_agents = n_agents or core.n_agents
         self._core = core
         self.space = arrdict(
-            rgb=spaces.MultiImage(core.n_agents, 3, 1, core.res),
-            d=spaces.MultiImage(core.n_agents, 1, 1, core.res),)
+            rgb=spaces.MultiImage(n_agents, 3, 1, core.res),
+            d=spaces.MultiImage(n_agents, 1, 1, core.res),)
         self._max_depth = max_depth
 
     def render(self):

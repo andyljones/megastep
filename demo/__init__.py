@@ -14,8 +14,10 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.DelayedMatchCoin(n_envs)
-    # return onedee.PointGoal(cubicasa.sample(n_envs))
-    return onedee.Explorer(cubicasa.sample(n_envs))
+    return onedee.Tag(cubicasa.sample(max(n_envs//2, 2)), n_agents=2)
+    # return onedee.Waypoint(cubicasa.sample(n_envs))
+    return onedee.PointGoal(cubicasa.sample(n_envs))
+    # return onedee.Explorer(cubicasa.sample(n_envs))
 
 class Agent(nn.Module):
 
@@ -150,9 +152,8 @@ def run():
             for _ in range(inc_size*n_envs//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
-                gamma = .99 + (.999 - .99)*(1 - (1/2)**(steps/500))
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
-                    kl = optimize(agent, opt, chunk[:, idxs], gamma=gamma)
+                    kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('stepped')
                 if kl > .02:
@@ -177,16 +178,16 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None):
         while True:
             decision = agent(world[None], sample=True, test=test).squeeze(0)
             world = env.step(decision)
-            encoder(arrdict.numpyify(env.state()))
-            traces.append(arrdict.numpyify(arrdict(
-                state=env.state(0), 
-                world=world[0], 
-                decision=decision[0])))
             steps += 1
             pbar.update(1)
             if length is None and world.reset.any():
                 break
             if (steps == length):
                 break
+            encoder(arrdict.numpyify(env.state()))
+            traces.append(arrdict.numpyify(arrdict(
+                state=env.state(0), 
+                world=world[0], 
+                decision=decision[0])))
     traces = arrdict.stack(traces)
     encoder.notebook()

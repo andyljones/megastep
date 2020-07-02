@@ -27,7 +27,7 @@ class Waypoint:
 
     def __init__(self, *args, max_length=512, **kwargs):
         self._core = core.Core(*args, **kwargs)
-        self._mover = modules.SimpleMovement(self._core)
+        self._mover = modules.MomentumMovement(self._core)
         self._rgbd = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
         self._lengths = modules.RandomLengths(self._core, max_length)
