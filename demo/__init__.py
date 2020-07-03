@@ -22,7 +22,7 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=128):
+    def __init__(self, observation_space, action_space, width=256):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
@@ -46,6 +46,15 @@ class Agent(nn.Module):
             outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
         return outputs
 
+class MultiAgent(nn.Module):
+
+    def __init__(self, *args, n_agents=4, **kwargs):
+        super().__init__()
+        self.agents = nn.ModuleList([Agent(*args, **kwargs) for i in range(n_agents)])
+
+    def forward(self, world, **kwargs):
+        return arrdict.stack([agent(world[:, [i]], **kwargs) for i, agent in enumerate(self.agents)])
+
 def agentfunc():
     env = envfunc(n_envs=1)
     return Agent(env.observation_space, env.action_space).cuda()
@@ -64,10 +73,9 @@ def chunkstats(chunk):
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
-    T = d.logits.size(0)
 
     logits = learning.flatten(d.logits)
     old_logits = learning.flatten(learning.gather(d0.logits, d0.actions)).sum(-1)
@@ -76,14 +84,14 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
     v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
-    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2)[T//2:].mean()
+    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma).clamp(-5, +5)
     free_adv = ratio[:-1]*adv
     clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
-    p_loss = -torch.min(free_adv, clip_adv)[T//2:].mean()
+    p_loss = -torch.min(free_adv, clip_adv).mean()
 
-    h_loss = (logits.exp()*logits)[:-1].sum(-1)[T//2:].mean()
+    h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
     loss = v_loss + p_loss + entropy*h_loss
     
     opt.zero_grad()
@@ -120,7 +128,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 256
+    buffer_size = 128
     n_envs = 4096
     batch_size = n_envs*4
     inc_size = batch_size//n_envs
@@ -148,8 +156,8 @@ def run():
                     decision=decision))
                 buffer = buffer[-buffer_size:]
                 world = env.step(decision)
+                log.info('actor stepped')
 
-            log.info('chunked')
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
 
@@ -159,7 +167,7 @@ def run():
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])
 
-                log.info('stepped')
+                log.info('learner stepped')
                 if kl > .02:
                     log.info('kl div exceeded')
                     break
