@@ -28,13 +28,13 @@ class Agent(nn.Module):
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            # lstm.LSTM(d_model=width),
-            transformer.Transformer(mem_len=128, d_model=width),
+            lstm.LSTM(d_model=width),
+            # transformer.Transformer(mem_len=128, d_model=width),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            # lstm.LSTM(d_model=width),
-            transformer.Transformer(mem_len=128, d_model=width),
+            lstm.LSTM(d_model=width),
+            # transformer.Transformer(mem_len=128, d_model=width),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):
@@ -64,7 +64,7 @@ def chunkstats(chunk):
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -87,8 +87,8 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     
     opt.zero_grad()
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(agent.policy.parameters(), 1.)
-    torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 1.)
+    torch.nn.utils.clip_grad_norm_(agent.policy.parameters(), 40.)
+    torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 40.)
 
     opt.step()
 
@@ -120,14 +120,14 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 32
-    batch_size = 4192
-    n_envs = 2048
+    buffer_size = 64
+    n_envs = 4096
+    batch_size = n_envs*4
     inc_size = batch_size//n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=3e-4)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
@@ -148,11 +148,12 @@ def run():
                     decision=decision))
                 buffer = buffer[-buffer_size:]
                 world = env.step(decision)
-            
+
+            log.info('chunked')
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
 
-            for _ in range(inc_size*n_envs//batch_size):
+            for _ in range((inc_size*n_envs)//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
                 with recurrence.temp_clear_set(agent, states[0][:, idxs]):
