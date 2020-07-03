@@ -27,6 +27,8 @@ class Deathmatch:
         self.action_space = self._mover.space
         self.observation_space = self._rgbd.space
 
+        self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
+
     def _reset(self, reset=None):
         reset = self._lengths(reset)
         self._respawner(reset)
@@ -44,7 +46,10 @@ class Deathmatch:
         success = matchings.sum(2)
         failures = matchings.sum(1)
 
-        return (.5*success.float() - failures.float()).reshape(-1)
+        pos = self._core.agents.positions 
+        outside = (pos < -1).any(-1) | (pos > (self._bounds + 1)).any(-1)
+
+        return (.5*success.float() - failures.float() - outside.float()).reshape(-1)
 
     def _observe(self):
         render = self._rgbd.render()
