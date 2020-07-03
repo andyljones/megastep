@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.DelayedMatchCoin(n_envs)
-    return onedee.Deathmatch(cubicasa.sample(max(n_envs, 4)//4), n_agents=4)
+    return onedee.Deathmatch(cubicasa.sample(((4*n_envs)//4 + 1)), n_agents=4)
     # return onedee.Waypoint(cubicasa.sample(n_envs))
     return onedee.PointGoal(cubicasa.sample(n_envs))
     # return onedee.Explorer(cubicasa.sample(n_envs))
@@ -165,8 +165,8 @@ def run():
             stats.gpu.memory(0)
             stats.gpu.vitals(0, throttle=15)
 
-def demo(run=-1, length=None, test=True, N=None, env=None, agent=None):
-    env = envfunc(1) if env is None else env
+def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
+    env = envfunc(d+1) if env is None else env
     world = env.reset()
     if agent is None:
         agent = agentfunc().cuda()
@@ -188,8 +188,8 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None):
                 break
             encoder(arrdict.numpyify(env.state()))
             traces.append(arrdict.numpyify(arrdict(
-                state=env.state(0), 
-                world=world[0], 
-                decision=decision[0])))
+                state=env.state(d), 
+                world=world[d], 
+                decision=decision[d])))
     traces = arrdict.stack(traces)
     encoder.notebook()

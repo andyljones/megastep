@@ -29,12 +29,14 @@ class Deathmatch:
             health=spaces.MultiVector(1, 1))
 
         self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
-        self._health = self._core.agent_full(10.)
+        self._health = self._core.agent_full(np.nan)
+        self._damage = self._core.agent_full(np.nan)
 
     def _reset(self, reset=None):
         reset = (self._health <= 0) if reset is None else reset
         self._respawner(reset)
         self._health[reset] = 10.
+        self._damage[reset] = 0.
         return reset.reshape(-1)
 
     def _downsample(self, screen):
@@ -48,6 +50,8 @@ class Deathmatch:
         
         hits = matchings.sum(2).float()
         wounds = matchings.sum(1).float()
+
+        self._damage += hits
 
         pos = self._core.agents.positions 
         outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
@@ -89,19 +93,37 @@ class Deathmatch:
     def state(self, d=0):
         return arrdict(
             **self._core.state(d),
-            obs=self._rgbd.state(d),)
+            obs=self._rgbd.state(d),
+            health=self._health[d].clone(),
+            damage=self._damage[d].clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):
         n_agents = len(state.agents.angles)
 
         fig = plt.figure()
-        gs = plt.GridSpec(n_agents, 2, fig, 0, 0, 1, 1)
+        gs = plt.GridSpec(n_agents, 3, fig, 0, 0, 1, 1)
 
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]), zoom=zoom)
+        plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
 
         images = {k: v for k, v in state.obs.items() if k != 'imu'}
-        plotting.plot_images(images, [plt.subplot(gs[i, 1]) for i in range(n_agents)])
+        plotting.plot_images(images, [plt.subplot(gs[i, 2]) for i in range(n_agents)])
+
+        colors = [f'C{i}' for i in range(state.n_agents)]
+
+        ax = plt.subplot(gs[-1, 0])
+        ax.barh(np.arange(state.n_agents), state.health, color=colors)
+        ax.set_ylabel('health')
+        ax.set_yticks(np.arange(state.n_agents))
+        ax.invert_yaxis()
+
+        ax = plt.subplot(gs[-1, 1])
+        ax.barh(np.arange(state.n_agents), state.damage, color=colors)
+        ax.set_ylabel('damage')
+        ax.set_yticks(np.arange(state.n_agents))
+        ax.invert_yaxis()
 
         return fig
 
+    def display(self, d=0):
+        return self.plot_state(arrdict.numpyify(self.state(d=d)))
