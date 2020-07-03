@@ -35,7 +35,7 @@ class Deathmatch:
     def _reset(self, reset=None):
         reset = (self._health <= 0) if reset is None else reset
         self._respawner(reset)
-        self._health[reset] = 10.
+        self._health[reset] = 1.
         self._damage[reset] = 0.
         return reset.reshape(-1)
 
@@ -51,12 +51,13 @@ class Deathmatch:
         hits = matchings.sum(2).float()
         wounds = matchings.sum(1).float()
 
-        self._damage += hits
+        self._damage[:] += hits
 
         pos = self._core.agents.positions 
         outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
 
-        self._health -= wounds + outside
+        self._health[:] += -.05*(wounds + outside) - .001
+        
 
         return hits.reshape(-1)
 
