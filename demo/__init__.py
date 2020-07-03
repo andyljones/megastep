@@ -22,19 +22,19 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=512):
+    def __init__(self, observation_space, action_space, width=128):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            lstm.LSTM(d_model=width),
-            # transformer.Transformer(mem_len=128, d_model=width),
+            # lstm.LSTM(d_model=width),
+            transformer.Transformer(mem_len=128, d_model=width),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
-            lstm.LSTM(d_model=width),
-            # transformer.Transformer(mem_len=128, d_model=width),
+            # lstm.LSTM(d_model=width),
+            transformer.Transformer(mem_len=128, d_model=width),
             spaces.ValueOutput(width, 1))
 
     def forward(self, world, sample=False, value=False, test=False):
@@ -64,7 +64,7 @@ def chunkstats(chunk):
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -120,9 +120,9 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 128
-    batch_size = 16384
-    n_envs = 4096
+    buffer_size = 32
+    batch_size = 4192
+    n_envs = 2048
     inc_size = batch_size//n_envs
 
     env = envfunc(n_envs)

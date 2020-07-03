@@ -20,12 +20,14 @@ class Deathmatch:
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, res=128, fov=60, supersample=4, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1)
+        self._imu = modules.IMU(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)
         self._respawner = modules.RandomSpawns(self._core)
 
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
+            imu=self._imu.space,
             health=spaces.MultiVector(1, 1))
 
         self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
@@ -45,8 +47,10 @@ class Deathmatch:
         return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample)[..., idx]
 
     def _shoot(self, opponents):
+        res = opponents.size(-1)
+        middle = slice(res//2-1, res//2+1)
         agents = torch.arange(self._core.n_agents, device=self._core.device)
-        matchings = (opponents[:, :, None] == agents[None, None, :, None, None]).any(-1).any(-1)
+        matchings = (opponents[:, :, None] == agents[None, None, :, None, None])[..., middle].any(-1).any(-1)
         
         hits = matchings.sum(2).float()
         wounds = matchings.sum(1).float()
@@ -68,7 +72,10 @@ class Deathmatch:
         mask = (0 <= indices) & (obj < self._core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
         hits = self._shoot(opponents)
-        return arrdict(**self._rgbd(render), health=self._health.unsqueeze(-1).clone()), hits
+        return arrdict(
+            **self._rgbd(render), 
+            imu=self._imu(),
+            health=self._health.unsqueeze(-1).clone()), hits
 
     @torch.no_grad()
     def reset(self):
@@ -103,7 +110,7 @@ class Deathmatch:
         n_agents = len(state.agents.angles)
 
         fig = plt.figure()
-        gs = plt.GridSpec(n_agents, 3, fig, 0, 0, 1, 1)
+        gs = plt.GridSpec(n_agents, 3, fig)
 
         plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
 
@@ -117,6 +124,7 @@ class Deathmatch:
         ax.set_ylabel('health')
         ax.set_yticks(np.arange(state.n_agents))
         ax.invert_yaxis()
+        ax.set_xlim(0, 1)
 
         ax = plt.subplot(gs[-1, 1])
         ax.barh(np.arange(state.n_agents), state.damage, color=colors)

@@ -98,9 +98,9 @@ class RGBD:
 
 class IMU:
 
-    def __init__(self, core):
+    def __init__(self, core, n_agents=None):
         self._core = core
-        self.space = spaces.MultiVector(core.n_agents, 3)
+        self.space = spaces.MultiVector(n_agents or core.n_agents, 3)
 
     def __call__(self):
         return torch.cat([
