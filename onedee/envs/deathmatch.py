@@ -15,7 +15,7 @@ def collapse(x):
     B = x.shape[0]
     return x.reshape(B//2, 2, *x.shape[2:])
 
-class Tag:
+class Deathmatch:
 
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, **kwargs)
@@ -44,7 +44,7 @@ class Tag:
         success = matchings.sum(2)
         failures = matchings.sum(1)
 
-        return (success.float() - failures.float()).reshape(-1)
+        return (.5*success.float() - failures.float()).reshape(-1)
 
     def _observe(self):
         render = self._rgbd.render()

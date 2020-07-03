@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
     # return onedee.DelayedMatchCoin(n_envs)
-    return onedee.Tag(cubicasa.sample(max(n_envs//2, 2)), n_agents=2)
+    return onedee.Deathmatch(cubicasa.sample(max(n_envs//4, 4)), n_agents=4)
     # return onedee.Waypoint(cubicasa.sample(n_envs))
     return onedee.PointGoal(cubicasa.sample(n_envs))
     # return onedee.Explorer(cubicasa.sample(n_envs))

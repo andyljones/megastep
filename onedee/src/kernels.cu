@@ -325,7 +325,7 @@ __global__ void raycast_kernel(
 
     const auto n = blockIdx.x;
     const auto r = threadIdx.x;
-    const auto d = threadIdx.y;
+    const auto d = blockIdx.y;
 
     // Generate the ray
     const float a = angles[n][d]/180.f;
@@ -407,7 +407,7 @@ __global__ void shader_kernel(
 
     const auto n = blockIdx.x;
     const auto r = threadIdx.x;
-    const auto d = threadIdx.y;
+    const auto d = blockIdx.y;
     const auto DF = screen.size(1)*F;
 
     auto s0 = 0.f, s1 = 0.f, s2 = 0.f;
@@ -458,12 +458,12 @@ __host__ Render render(const Agents& agents, Scene& scene) {
     auto locations(Locations::empty({N, D, RES}));
     auto dots(Dots::empty({N, D, RES}));
     auto distances(Distances::empty({N, D, RES}));
-    raycast_kernel<<<N, {(uint) RES, D}, 0, stream()>>>(
+    raycast_kernel<<<{N, D}, {(uint) RES}, 0, stream()>>>(
         agents.angles.pta(), agents.positions.pta(), scene.lines.pta(), 
         indices.pta(), locations.pta(), dots.pta(), distances.pta());
 
     auto screen(Screen::empty({N, D, RES, 3}));
-    shader_kernel<<<N, {(uint) RES, D}, 0, stream()>>>(
+    shader_kernel<<<{N, D}, {(uint) RES}, 0, stream()>>>(
         indices.pta(), locations.pta(), dots.pta(),
         scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), F, screen.pta()); 
 
