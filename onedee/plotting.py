@@ -33,7 +33,7 @@ def plot_images(arrs, axes=None):
     axes = plt.subplots(D)[1] if axes is None else axes
     
     # Aspect is height/width
-    aspect = 192*H/W  # TODO: Reverse this
+    aspect = 1/min(D, 4)*W/H
     for a in range(D):
         ax = axes[a]
         ax.imshow(ims[a], aspect=aspect, interpolation='none')

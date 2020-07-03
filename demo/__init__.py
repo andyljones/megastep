@@ -59,7 +59,9 @@ def chunkstats(chunk):
         stats.rate('step-rate/chunks', 1)
         stats.rate('step-rate/actor', chunk.world.reset.size(0))
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
-        stats.mean('traj-reward', chunk.world.reward.sum(), chunk.world.reset.sum())
+        stats.mean('traj-reward/mean', chunk.world.reward.sum(), chunk.world.reset.sum())
+        stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
+        stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
 def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision

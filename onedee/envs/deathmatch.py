@@ -11,14 +11,14 @@ def expand(x):
     return x.reshape(B*A, 1, *x.shape[2:])
 
 @mapping
-def collapse(x):
+def collapse(x, n_agents):
     B = x.shape[0]
-    return x.reshape(B//2, 2, *x.shape[2:])
+    return x.reshape(B//n_agents, n_agents, *x.shape[2:])
 
 class Deathmatch:
 
     def __init__(self, *args, **kwargs):
-        self._core = core.Core(*args, **kwargs)
+        self._core = core.Core(*args, res=128, supersample=4, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)
         self._respawner = modules.RandomSpawns(self._core)
@@ -30,7 +30,7 @@ class Deathmatch:
     def _reset(self, reset=None):
         reset = self._lengths(reset)
         self._respawner(reset)
-        return reset[:, None].repeat_interleave(2, 1).reshape(-1)
+        return reset[:, None].repeat_interleave(self._core.n_agents, 1).reshape(-1)
 
     def _downsample(self, screen):
         core = self._core
@@ -67,7 +67,7 @@ class Deathmatch:
     @torch.no_grad()
     def step(self, decision):
         reset = self._reset()
-        self._mover(collapse(decision))
+        self._mover(collapse(decision, self._core.n_agents))
         obs, opponents = self._observe()
         return arrdict(
             obs=expand(obs),
