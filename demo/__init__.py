@@ -67,6 +67,7 @@ def chunkstats(chunk):
 def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
+    T = d.logits.size(0)
 
     logits = learning.flatten(d.logits)
     old_logits = learning.flatten(learning.gather(d0.logits, d0.actions)).sum(-1)
@@ -75,14 +76,14 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
 
     rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
     v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
-    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
+    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2)[T//2:].mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma).clamp(-5, +5)
     free_adv = ratio[:-1]*adv
     clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
-    p_loss = -torch.min(free_adv, clip_adv).mean()
+    p_loss = -torch.min(free_adv, clip_adv)[T//2:].mean()
 
-    h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
+    h_loss = (logits.exp()*logits)[:-1].sum(-1)[T//2:].mean()
     loss = v_loss + p_loss + entropy*h_loss
     
     opt.zero_grad()
@@ -103,7 +104,6 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
 
         stats.mean('rtg/mean', rtg.mean())
         stats.mean('rtg/std', rtg.std())
-        stats.max('rtg/max', rtg.abs().max())
 
         stats.mean('adv/z-mean', adv.mean())
         stats.mean('adv/z-std', adv.std())
@@ -120,7 +120,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 64
+    buffer_size = 256
     n_envs = 4096
     batch_size = n_envs*4
     inc_size = batch_size//n_envs

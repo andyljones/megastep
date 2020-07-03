@@ -62,7 +62,6 @@ class Deathmatch:
 
         self._health[:] += -.05*(wounds + outside) - .001
         
-
         return hits.reshape(-1)
 
     def _observe(self):
