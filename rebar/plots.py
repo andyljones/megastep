@@ -232,6 +232,10 @@ def review(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
     stream.update(rule=rule)
 
+def compare(run_names, prefix='', rule='60s'):
+    pass
+
+
 def test_stream():
     times = pd.TimedeltaIndex([0, 60e3, 120e3])
     dfs = [
