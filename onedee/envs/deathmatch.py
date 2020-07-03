@@ -1,7 +1,7 @@
 import torch
-from .. import modules, core, plotting
+from .. import modules, core, plotting, spaces
 from rebar.arrdict import mapping
-from rebar import arrdict
+from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -25,7 +25,9 @@ class Deathmatch:
         self._lengths = modules.RandomLengths(self._core)
 
         self.action_space = self._mover.space
-        self.observation_space = self._rgbd.space
+        self.observation_space = dotdict(
+            **self._rgbd.space,
+            pain=spaces.MultiVector(1, 1))
 
         self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
 
@@ -47,9 +49,11 @@ class Deathmatch:
         failures = matchings.sum(1)
 
         pos = self._core.agents.positions 
-        outside = (pos < -1).any(-1) | (pos > (self._bounds + 1)).any(-1)
+        outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
 
-        return (.5*success.float() - failures.float() - outside.float()).reshape(-1)
+        pain = (failures.float() + outside.float()).reshape(-1)
+
+        return .5*success.float().reshape(-1) - pain, pain
 
     def _observe(self):
         render = self._rgbd.render()
@@ -57,15 +61,16 @@ class Deathmatch:
         obj = indices//len(self._core.scene.frame)
         mask = (0 <= indices) & (obj < self._core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
-        return arrdict(**self._rgbd(render)), opponents
+        reward, pain = self._reward(opponents)
+        return arrdict(**self._rgbd(render), pain=pain[:, None, None]), reward
 
     @torch.no_grad()
     def reset(self):
         reset = self._reset(self._core.env_full(True))
-        obs, opponents = self._observe()
+        obs, reward = self._observe()
         return arrdict(
             obs=expand(obs),
-            reward=self._reward(opponents),
+            reward=reward,
             reset=reset,
             terminal=reset,)
 
@@ -73,10 +78,10 @@ class Deathmatch:
     def step(self, decision):
         reset = self._reset()
         self._mover(collapse(decision, self._core.n_agents))
-        obs, opponents = self._observe()
+        obs, reward = self._observe()
         return arrdict(
             obs=expand(obs),
-            reward=self._reward(opponents),
+            reward=reward,
             reset=reset,
             terminal=reset,)
 
