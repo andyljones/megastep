@@ -18,42 +18,43 @@ def collapse(x, n_agents):
 class Deathmatch:
 
     def __init__(self, *args, **kwargs):
-        self._core = core.Core(*args, res=128, supersample=4, **kwargs)
+        self._core = core.Core(*args, res=128, fov=60, supersample=4, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1)
-        self._mover = modules.SimpleMovement(self._core, n_agents=1)
+        self._mover = modules.MomentumMovement(self._core, n_agents=1)
         self._respawner = modules.RandomSpawns(self._core)
-        self._lengths = modules.RandomLengths(self._core)
 
         self.action_space = self._mover.space
         self.observation_space = dotdict(
             **self._rgbd.space,
-            pain=spaces.MultiVector(1, 1))
+            health=spaces.MultiVector(1, 1))
 
         self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
+        self._health = self._core.agent_full(10.)
 
     def _reset(self, reset=None):
-        reset = self._lengths(reset)
+        reset = (self._health <= 0) if reset is None else reset
         self._respawner(reset)
-        return reset[:, None].repeat_interleave(self._core.n_agents, 1).reshape(-1)
+        self._health[reset] = 10.
+        return reset.reshape(-1)
 
     def _downsample(self, screen):
         core = self._core
         idx = core.supersample//2
         return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample)[..., idx]
 
-    def _reward(self, opponents):
+    def _shoot(self, opponents):
         agents = torch.arange(self._core.n_agents, device=self._core.device)
         matchings = (opponents[:, :, None] == agents[None, None, :, None, None]).any(-1).any(-1)
         
-        success = matchings.sum(2)
-        failures = matchings.sum(1)
+        hits = matchings.sum(2).float()
+        wounds = matchings.sum(1).float()
 
         pos = self._core.agents.positions 
         outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
 
-        pain = (failures.float() + outside.float()).reshape(-1)
+        self._health -= wounds + outside
 
-        return .5*success.float().reshape(-1) - pain, pain
+        return hits.reshape(-1)
 
     def _observe(self):
         render = self._rgbd.render()
@@ -61,12 +62,12 @@ class Deathmatch:
         obj = indices//len(self._core.scene.frame)
         mask = (0 <= indices) & (obj < self._core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
-        reward, pain = self._reward(opponents)
-        return arrdict(**self._rgbd(render), pain=pain[:, None, None]), reward
+        hits = self._shoot(opponents)
+        return arrdict(**self._rgbd(render), health=self._health.unsqueeze(-1).clone()), hits
 
     @torch.no_grad()
     def reset(self):
-        reset = self._reset(self._core.env_full(True))
+        reset = self._reset(self._core.agent_full(True))
         obs, reward = self._observe()
         return arrdict(
             obs=expand(obs),

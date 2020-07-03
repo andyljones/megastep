@@ -82,3 +82,11 @@ class Core:
         """
         dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
         return torch.full((self.n_envs,), x, device=self.device, dtype=dtypes[type(x)])
+
+    def agent_full(self, x):
+        """Returns a (n_env,) tensor on the device full of `obj`.
+        
+        This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
+        """
+        dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
+        return torch.full((self.n_envs, self.n_agents), x, device=self.device, dtype=dtypes[type(x)])

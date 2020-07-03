@@ -138,10 +138,10 @@ class RandomSpawns:
 
     def __call__(self, reset):
         core = self._core
-        required = reset.nonzero().squeeze(-1)
-        choices = torch.randint_like(required, 0, self._spawns.angles.shape[1])
-        core.agents.angles[required] = self._spawns.angles[required, choices] 
-        core.agents.positions[required] = self._spawns.positions[required, choices] 
+        required = reset.nonzero(as_tuple=True)
+        choices = torch.randint_like(required[0], 0, self._spawns.angles.shape[1])
+        core.agents.angles[required] = self._spawns.angles[(*required, choices)] 
+        core.agents.positions[required] = self._spawns.positions[(*required, choices)] 
         core.agents.momenta[required] = 0.
         core.agents.angmomenta[required] = 0.
 
