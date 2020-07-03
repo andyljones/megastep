@@ -20,7 +20,7 @@ class Deathmatch:
     def __init__(self, *args, **kwargs):
         self._core = core.Core(*args, res=128, supersample=4, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1)
-        self._mover = modules.MomentumMovement(self._core, n_agents=1)
+        self._mover = modules.SimpleMovement(self._core, n_agents=1)
         self._respawner = modules.RandomSpawns(self._core)
         self._lengths = modules.RandomLengths(self._core)
 

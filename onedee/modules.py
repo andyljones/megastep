@@ -17,7 +17,7 @@ def to_global_frame(angles, p):
 
 class SimpleMovement:
 
-    def __init__(self, core, *args, accel=10, ang_accel=180, **kwargs):
+    def __init__(self, core, *args, accel=10, ang_accel=180, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
@@ -27,7 +27,7 @@ class SimpleMovement:
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
 
-        self.space = spaces.MultiDiscrete(core.n_agents, 7)
+        self.space = spaces.MultiDiscrete(n_agents or core.n_agents, 7)
 
     def __call__(self, decision):
         core = self._core
