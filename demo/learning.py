@@ -1,9 +1,11 @@
 import torch
 import numpy as np
 
-def batch_indices(n_envs, batch_width, device='cuda'):
-    indices = torch.randperm(n_envs, device=device)
-    indices = [indices[i:i+batch_width] for i in range(0, n_envs, batch_width)]
+def batch_indices(chunk, batch_size):
+    T, B = chunk.world.reset.shape
+    batch_width = batch_size//T
+    indices = torch.randperm(B, device=chunk.world.reset.device)
+    indices = [indices[i:i+batch_width] for i in range(0, B, batch_width)]
     return indices
 
 def gather(arr, indices):

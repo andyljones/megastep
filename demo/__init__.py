@@ -77,7 +77,8 @@ def agentfunc():
     env = envfunc(n_envs=1)
     return Agent(env.observation_space, env.action_space).cuda()
 
-def chunkstats(chunk):
+def as_chunk(buffer):
+    chunk = arrdict.stack(buffer)
     with stats.defer():
         stats.rate('sample-rate/actor', chunk.world.reset.nelement())
         stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
@@ -91,6 +92,7 @@ def chunkstats(chunk):
         stats.mean('traj-reward/mean', chunk.world.reward.sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
+    return chunk
 
 def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     w, d0 = batch.world, batch.decision
@@ -148,21 +150,19 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 32
+    buffer_size = 128
     n_envs = 4096
-    batch_size = 1*n_envs
+    batch_size = 16*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
+    opt = torch.optim.Adam(agent.parameters(), lr=1e-3, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
-        steps = 0
-        indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
             buffer = []
@@ -176,12 +176,9 @@ def run():
                 world = env.step(decision)
                 log.info('actor stepped')
 
-            chunk = arrdict.stack(buffer)
-            chunkstats(chunk)
+            chunk = as_chunk(buffer)
             
-            for _ in range((buffer_size*n_envs)//batch_size):
-                idxs = indices[steps % len(indices)]
-                steps += 1
+            for idxs in learning.batch_indices(chunk, batch_size):
                 with recurrence.temp_clear_set(agent, state[:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])
 
