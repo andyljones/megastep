@@ -80,11 +80,11 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     logits = learning.flatten(d.logits)
     old_logits = learning.flatten(learning.gather(d0.logits, d0.actions)).sum(-1)
     new_logits = learning.flatten(learning.gather(d.logits, d0.actions)).sum(-1)
-    ratio = (new_logits - old_logits).exp()
+    ratio = (new_logits - old_logits).exp().clamp(.05, 20)
 
-    rtg = learning.reward_to_go(w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
-    v_clipped = d0.value + torch.clamp(d.value - d0.value, -clip, +clip)
-    v_loss = .5*torch.max((d.value - rtg)**2, (v_clipped - rtg)**2).mean()
+    v_target = learning.v_trace(ratio, d.value, w.reward, w.reset, w.terminal, gamma=gamma)
+    v_clipped = d0.value + torch.clamp(d.value - d0.value, -10, +10)
+    v_loss = .5*torch.max((d.value - v_target)**2, (v_clipped - v_target)**2).mean()
 
     adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma).clamp(-5, +5)
     free_adv = ratio[:-1]*adv
@@ -96,8 +96,8 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     
     opt.zero_grad()
     loss.backward()
-    torch.nn.utils.clip_grad_norm_(agent.policy.parameters(), 40.)
-    torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 40.)
+    torch.nn.utils.clip_grad_norm_(agent.policy.parameters(), 100.)
+    torch.nn.utils.clip_grad_norm_(agent.value.parameters(), 100.)
 
     opt.step()
 
@@ -106,12 +106,12 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
         stats.mean('loss/value', v_loss)
         stats.mean('loss/policy', p_loss)
         stats.mean('loss/entropy', h_loss)
-        stats.mean('resid-var/v', (rtg - d.value).pow(2).mean(), rtg.pow(2).mean())
+        stats.mean('resid-var/v', (v_target - d.value).pow(2).mean(), v_target.pow(2).mean())
         stats.mean('rel-entropy', -(logits.exp()*logits).sum(-1).mean()/np.log(logits.shape[-1]))
         stats.mean('kl-div', kl_div) 
 
-        stats.mean('rtg/mean', rtg.mean())
-        stats.mean('rtg/std', rtg.std())
+        stats.mean('v-target/mean', v_target.mean())
+        stats.mean('v-target/std', v_target.std())
 
         stats.mean('adv/z-mean', adv.mean())
         stats.mean('adv/z-std', adv.std())
@@ -128,7 +128,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 128
+    buffer_size = 32
     n_envs = 4096
     batch_size = n_envs*4
     inc_size = batch_size//n_envs
@@ -160,7 +160,7 @@ def run():
 
             chunk = arrdict.stack(buffer)
             chunkstats(chunk[-inc_size:])
-
+            
             for _ in range((inc_size*n_envs)//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1

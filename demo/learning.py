@@ -56,6 +56,100 @@ def generalized_advantages(value, reward, v, reset, terminal, gamma, lambd=.97):
     dV = deltas(value, reward, v, reset, terminal, gamma=gamma)
     return present_value(dV, torch.zeros_like(dV[-1]), reset, lambd*gamma).detach()
 
+def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
+    rho = ratios.clamp(0, max_rho)
+    c = ratios.clamp(0, max_c)
+    dV = rho[:-1]*deltas(value, reward, value, reset, terminal, gamma=gamma)
+
+    discount = (1 - reset.int())[1:]*gamma
+
+    A = value[:-1] + dV - discount*c[:-1]*value[1:]
+    B = discount*c[:-1]
+
+    v = torch.zeros_like(value)
+    v[-1] = value[-1]
+    for t in reversed(range(len(v)-1)):
+        v[t] = A[t] + B[t]*v[t+1]
+
+    return v.detach()
+
+def explicit_v_trace(ratios, value, reward, reset, terminal, gamma=.99, max_rho=1, max_c=1):
+    rho = ratios.clamp(0, max_rho)
+    c = ratios.clamp(0, max_c)
+
+    v = value.clone()
+    for s in range(len(v)-1):
+        for t in range(s, len(v)-1):
+            prod_c = c[s:t].prod()
+            if terminal[t+1]:
+                # If the next state is terminal, then the next value is zero
+                dV = rho[t]*(reward[t+1] - value[t])
+                v[s] += gamma**(t - s) * prod_c*dV
+                break
+            elif reset[t+1]:
+                # If the next state is a reset, assume the next value would've 
+                # explained the intervening reward perfectly
+                break
+            else:
+                dV = rho[t]*(reward[t+1] + gamma*value[t+1] - value[t])
+                v[s] += gamma**(t - s) * prod_c*dV
+    return v
+
+def test_v_trace():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    gamma = 1.
+
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
+    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, False])
+    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([3., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, True])
+    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([2., 4.]))
+
+def test_v_trace_explicit():
+    ratios = torch.tensor([1., 1.])
+    reward = torch.tensor([1., 2.])
+    value = torch.tensor([3., 4.])
+    gamma = 1.
+
+    reset = torch.tensor([False, False])
+    terminal = torch.tensor([False, False])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([6., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, False])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+    torch.testing.assert_allclose(actual, torch.tensor([3., 4.]))
+
+    reset = torch.tensor([False, True])
+    terminal = torch.tensor([False, True])
+    actual = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+
+def test_v_trace_equivalent(R=100, T=10):
+    for _ in range(R):
+        ratios = torch.rand((T,))
+        value = torch.rand((T,))
+        reward = torch.rand((T,))
+        reset = torch.rand((T,)) > .8
+        terminal = reset & (torch.rand((T,)) > .5)
+        gamma = torch.rand(())
+
+        expected = explicit_v_trace(ratios, value, reward, reset, terminal, gamma)
+        actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+
+        torch.testing.assert_allclose(expected, actual)
+
 def test_reward_to_go():
     reward = torch.tensor([1., 2.])
     value = torch.tensor([3., 4.])
