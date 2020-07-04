@@ -73,7 +73,7 @@ def chunkstats(chunk):
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -131,11 +131,11 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
 def run():
     buffer_size = 32
     n_envs = 4096
-    batch_size = 8*n_envs
+    batch_size = 16*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-3, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
