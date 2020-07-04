@@ -130,7 +130,7 @@ class Deathmatch:
 
         ax = plt.subplot(gs[-1, 1])
         ax.barh(np.arange(state.n_agents), state.damage, color=colors)
-        ax.set_ylabel('damage')
+        ax.set_ylabel('inflicted')
         ax.set_yticks(np.arange(state.n_agents))
         ax.invert_yaxis()
 

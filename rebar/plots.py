@@ -232,8 +232,8 @@ def review(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
     stream.update(rule=rule)
 
-def compare(run_names, prefix='', rule='60s'):
-    pass
+def compare(run_names=[-1], prefix='', rule='60s'):
+    return pd.concat({run: stats.Reader(run, prefix).resample(rule) for run in run_names}, 1)
 
 
 def test_stream():
