@@ -4,6 +4,7 @@ from rebar.arrdict import mapping
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib as mpl
 
 @mapping
 def expand(x):
@@ -54,11 +55,12 @@ class Deathmatch:
         middle = slice(res//2-1, res//2+1)
         agents = torch.arange(self._core.n_agents, device=self._core.device)
         matchings = (opponents[:, :, None] == agents[None, None, :, None, None])[..., middle].any(-1).any(-1)
+        self._matchings = matchings
         
         hits = matchings.sum(2).float()
         wounds = matchings.sum(1).float()
 
-        self._damage[:] += hits
+        self._damage[:] += .05*hits
 
         pos = self._core.agents.positions 
         outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
@@ -100,12 +102,13 @@ class Deathmatch:
             reset=reset,
             terminal=reset,)
 
-    def state(self, d=0):
+    def state(self, e=0):
         return arrdict(
-            **self._core.state(d),
-            obs=self._rgbd.state(d),
-            health=self._health[d].clone(),
-            damage=self._damage[d].clone())
+            **self._core.state(e),
+            obs=self._rgbd.state(e),
+            health=self._health[e].clone(),
+            damage=self._damage[e].clone(),
+            matchings=self._matchings[e].clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):
@@ -114,7 +117,7 @@ class Deathmatch:
         fig = plt.figure()
         gs = plt.GridSpec(n_agents, 3, fig)
 
-        plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
+        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
 
         images = {k: v for k, v in state.obs.items() if k != 'imu'}
         plotting.plot_images(images, [plt.subplot(gs[i, 2]) for i in range(n_agents)])
@@ -134,7 +137,13 @@ class Deathmatch:
         ax.set_yticks(np.arange(state.n_agents))
         ax.invert_yaxis()
 
+        origin, dest = state.matchings.nonzero()
+        lines = state.agents.positions[np.stack([origin, dest], 1)]
+        colors = np.array(colors)[origin]
+        lines = mpl.collections.LineCollection(lines, color=colors, linewidth=1)
+        plan.add_collection(lines)
+
         return fig
 
-    def display(self, d=0):
-        return self.plot_state(arrdict.numpyify(self.state(d=d)))
+    def display(self, e=0):
+        return self.plot_state(arrdict.numpyify(self.state(e=e)))
