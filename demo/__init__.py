@@ -150,7 +150,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 def run():
     buffer_size = 32
     n_envs = 4096
-    batch_size = 16*n_envs
+    batch_size = 1*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
