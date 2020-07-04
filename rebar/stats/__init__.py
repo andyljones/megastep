@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from functools import partial
 from torch import nn
 import logging
+import pandas as pd
+from .. import paths
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +50,9 @@ def funcduty(name):
             return result
         return g
     return factory
+
+def compare(run_names=[-1], prefix='', rule='60s'):
+    return pd.concat({paths.resolve(run): Reader(run, prefix).resample(rule) for run in run_names}, 1)
 
 ## TESTS
 

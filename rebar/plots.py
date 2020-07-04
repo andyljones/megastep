@@ -5,7 +5,7 @@ from bokeh import plotting as bop, io as boi
 from bokeh import models as bom, events as boe, layouts as bol
 from bokeh.palettes import Category10_10
 from itertools import cycle
-from . import stats
+from . import stats, paths
 from contextlib import contextmanager
 from IPython.display import clear_output
 
@@ -231,10 +231,6 @@ def view(run_name=-1, prefix='', rule='60s'):
 def review(run_name=-1, prefix='', rule='60s'):
     stream = Stream(run_name, prefix)
     stream.update(rule=rule)
-
-def compare(run_names=[-1], prefix='', rule='60s'):
-    return pd.concat({run: stats.Reader(run, prefix).resample(rule) for run in run_names}, 1)
-
 
 def test_stream():
     times = pd.TimedeltaIndex([0, 60e3, 120e3])

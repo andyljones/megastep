@@ -64,15 +64,6 @@ class Agent(nn.Module):
             outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
         return outputs
 
-class MultiAgent(nn.Module):
-
-    def __init__(self, *args, n_agents=4, **kwargs):
-        super().__init__()
-        self.agents = nn.ModuleList([Agent(*args, **kwargs) for i in range(n_agents)])
-
-    def forward(self, world, **kwargs):
-        return arrdict.stack([agent(world[:, [i]], **kwargs) for i, agent in enumerate(self.agents)])
-
 def agentfunc():
     env = envfunc(n_envs=1)
     return Agent(env.observation_space, env.action_space).cuda()
@@ -150,15 +141,15 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 128
+    buffer_size = 32
     n_envs = 4096
     batch_size = 16*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=1e-3, amsgrad=True)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-3, amsgrad=True)
 
-    run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
+    run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
     paths.clear(run_name)
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
