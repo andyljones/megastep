@@ -64,10 +64,11 @@ def chunkstats(chunk):
         stats.rate('sample-rate/actor', chunk.world.reset.nelement())
         stats.mean('traj-length', chunk.world.reset.nelement(), chunk.world.reset.sum())
         stats.cumsum('count/traj', chunk.world.reset.sum())
-        stats.cumsum('count/actor', chunk.world.reset.size(0))
+        stats.cumsum('count/world', chunk.world.reset.size(0))
         stats.cumsum('count/chunks', 1)
+        stats.cumsum('count/samples', chunk.world.reset.nelement())
         stats.rate('step-rate/chunks', 1)
-        stats.rate('step-rate/actor', chunk.world.reset.size(0))
+        stats.rate('step-rate/world', chunk.world.reset.size(0))
         stats.mean('step-reward', chunk.world.reward.sum(), chunk.world.reward.nelement())
         stats.mean('traj-reward/mean', chunk.world.reward.sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
@@ -128,6 +129,12 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 
     return kl_div
 
+def update_lr(opt, steps):
+    lr = min(steps/100, 1)*3e-3
+    for group in opt.param_groups:
+        group['lr'] = lr
+    stats.mean('param/lr', lr)
+
 def run():
     buffer_size = 32
     n_envs = 4096
@@ -160,6 +167,7 @@ def run():
             chunk = arrdict.stack(buffer)
             chunkstats(chunk)
             
+            update_lr(opt, steps)
             for _ in range((buffer_size*n_envs)//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
