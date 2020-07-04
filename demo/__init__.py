@@ -20,6 +20,18 @@ def envfunc(n_envs=1024):
     return onedee.PointGoal(cubicasa.sample(n_envs))
     # return onedee.Explorer(cubicasa.sample(n_envs))
 
+def init_lstm(lstm, forget=1.):
+    nn.init.orthogonal_(2**-.5 * lstm.weight_ih_l0)
+    nn.init.orthogonal_(2**-.5 * lstm.weight_hh_l0)
+
+    # Order is input, forget, cell, output
+    for bias in [lstm.bias_ih_l0, lstm.bias_hh_l0]:
+        i, f, c, o = bias.chunk(4, 0)
+        nn.init.constant_(i, 0)
+        nn.init.constant_(f, forget/2.)
+        nn.init.constant_(c, 0)
+        nn.init.constant_(o, 0)
+
 class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=256):
@@ -36,6 +48,12 @@ class Agent(nn.Module):
             lstm.LSTM(d_model=width),
             # transformer.Transformer(mem_len=128, d_model=width),
             spaces.ValueOutput(width, 1))
+
+        self.apply(self._init)
+
+    def _init(self, m):
+        if isinstance(m, nn.LSTM):
+            init_lstm(m)
 
     def forward(self, world, sample=False, value=False, test=False):
         outputs = arrdict(
@@ -129,12 +147,6 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 
     return kl_div
 
-def update_lr(opt, steps):
-    lr = min(steps/100, 1)*3e-3
-    for group in opt.param_groups:
-        group['lr'] = lr
-    stats.mean('param/lr', lr)
-
 def run():
     buffer_size = 32
     n_envs = 4096
@@ -142,7 +154,7 @@ def run():
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    opt = torch.optim.Adam(agent.parameters(), lr=1e-3, amsgrad=True)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} test'
     paths.clear(run_name)
@@ -167,7 +179,6 @@ def run():
             chunk = arrdict.stack(buffer)
             chunkstats(chunk)
             
-            update_lr(opt, steps)
             for _ in range((buffer_size*n_envs)//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
