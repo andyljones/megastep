@@ -34,6 +34,9 @@ class Deathmatch:
         self._health = self._core.agent_full(np.nan)
         self._damage = self._core.agent_full(np.nan)
 
+        self.n_envs = self._core.n_envs*self._core.n_agents
+        self.device = self._core.device
+
     def _reset(self, reset=None):
         reset = (self._health <= 0) if reset is None else reset
         self._respawner(reset)

@@ -73,7 +73,7 @@ def chunkstats(chunk):
         stats.mean('traj-reward/positive', chunk.world.reward.clamp(0, None).sum(), chunk.world.reset.sum())
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
 
-def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-3, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -86,9 +86,10 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     v_clipped = d0.value + torch.clamp(d.value - d0.value, -10, +10)
     v_loss = .5*torch.max((d.value - v_target)**2, (v_clipped - v_target)**2).mean()
 
-    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma).clamp(-5, +5)
-    free_adv = ratio[:-1]*adv
-    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*adv
+    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
+    normed_adv = (adv - adv.mean())/(1e-3 + adv.std())
+    free_adv = ratio[:-1]*normed_adv
+    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*normed_adv
     p_loss = -torch.min(free_adv, clip_adv).mean()
 
     h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
@@ -130,8 +131,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 def run():
     buffer_size = 32
     n_envs = 4096
-    batch_size = n_envs*4
-    inc_size = batch_size//n_envs
+    batch_size = 8*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -142,14 +142,13 @@ def run():
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
         
-        states, buffer = [], []
         steps = 0
         indices = learning.batch_indices(n_envs, batch_size//buffer_size)
         world = env.reset()
         while True:
-            states.append(recurrence.get(agent))
-            states = states[-buffer_size//inc_size:]
-            for _ in range(inc_size):
+            buffer = []
+            state = recurrence.get(agent)
+            for _ in range(buffer_size):
                 decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
@@ -159,12 +158,12 @@ def run():
                 log.info('actor stepped')
 
             chunk = arrdict.stack(buffer)
-            chunkstats(chunk[-inc_size:])
+            chunkstats(chunk)
             
-            for _ in range((inc_size*n_envs)//batch_size):
+            for _ in range((buffer_size*n_envs)//batch_size):
                 idxs = indices[steps % len(indices)]
                 steps += 1
-                with recurrence.temp_clear_set(agent, states[0][:, idxs]):
+                with recurrence.temp_clear_set(agent, state[:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])
 
                 log.info('learner stepped')
