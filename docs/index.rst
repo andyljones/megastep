@@ -3,10 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to onedee's documentation!
-==================================
+######
+onedee
+######
 
+*********
+Tutorials
+*********
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/env-minimal
+   tutorials/env-single-agent
+   tutorials/env-competitive
+   tutorials/train
+
+********
+API Docs
+********
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-      test
+
+   api
+

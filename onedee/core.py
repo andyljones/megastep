@@ -25,6 +25,7 @@ def select(x, d):
     return x.vals[s:e]
 
 class Core: 
+    """The core rendering and physics interface"""
 
     def __init__(self, geometries, n_agents=1, res=64, supersample=8, fov=130, fps=10):
         self.geometries = geometries 
