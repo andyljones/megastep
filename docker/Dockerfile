@@ -51,7 +51,7 @@ RUN conda install -y numpy pytorch torchvision pandas -c pytorch && \
     pip install scipy psutil jupyter tqdm seaborn bokeh matplotlib setproctitle wurlitzer ipython==7.5 av flake8 \
         beautifulsoup4 shapely rasterio gym rope gitpython jupyterthemes \ 
         # Docs
-        sphinx python-docs-theme
+        sphinx sphinx-rtd-theme
 
 # Install my backend Jupyter extensions
 # aljpy needs to be before noterminal
