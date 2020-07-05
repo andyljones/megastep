@@ -34,7 +34,8 @@ class MultiVectorIntake(nn.Module):
                         nn.Linear(C, width), nn.ReLU(),
                         nn.Linear(width, width), nn.ReLU())
         self.proj = nn.Sequential(
-                        nn.Linear(A*width, width), nn.ReLU())
+                        nn.Linear(A*width, width), nn.ReLU(),
+                        nn.Linear(width, width), nn.ReLU())
         
     def forward(self, obs, **kwargs):
         T, B, A, C = obs.shape
@@ -54,15 +55,17 @@ class MultiImageIntake(nn.Module):
         A, C, H, W = space.shape
 
         self.conv = nn.Sequential(
-                        nn.Conv2d(C, 16, (1, 8), stride=(1, 4)), nn.ReLU(),
+                        nn.Conv2d(C, 16, (1, 8), stride=(1, 2)), nn.ReLU(),
                         nn.Conv2d(16, 32, (1, 4), stride=(1, 2)), nn.ReLU(),
-                        nn.Conv2d(32, 32, (1, 3), stride=(1, 2)), nn.ReLU())
+                        nn.Conv2d(32, 64, (1, 4), stride=(1, 2)), nn.ReLU(),
+                        nn.Conv2d(64, 64, (1, 4), stride=(1, 2)), nn.ReLU())
 
         zeros = torch.zeros((A, C, H, W))
         convwidth = self.conv(zeros).nelement()
 
         self.proj = nn.Sequential(
-                        nn.Linear(convwidth, width), nn.ReLU())
+                        nn.Linear(convwidth, width), nn.ReLU(),
+                        nn.Linear(width, width), nn.ReLU())
 
     def forward(self, obs, **kwargs):
         T, B, A, C, H, W = obs.shape
@@ -120,7 +123,9 @@ class MultiDiscreteOutput(nn.Module):
     def __init__(self, space, width):
         super().__init__()
         shape = space.shape
-        self.core = nn.Linear(width, int(np.prod(shape)))
+        self.core = nn.Sequential(
+            nn.Linear(width, width), nn.ReLU(),
+            nn.Linear(width, int(np.prod(shape))))
         self.shape = shape
     
     def forward(self, x, **kwargs):
@@ -149,10 +154,16 @@ class DictOutput(nn.Module):
     def sample(self, l):
         return self._dtype({k: v.sample(l[k]) for k, v in self.outputs.items()})
 
-class ValueOutput(nn.Linear):
+class ValueOutput(nn.Module):
+
+    def __init__(self, width):
+        super().__init__()
+        self.core = nn.Sequential(
+            nn.Linear(width, width), nn.ReLU(),
+            nn.Linear(width, 1))
 
     def forward(self, x, **kwargs):
-        return super().forward(x)
+        return self.core.forward(x).squeeze(-1)
 
 def output(space, width):
     if isinstance(space, dict):

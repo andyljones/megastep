@@ -41,13 +41,11 @@ class Agent(nn.Module):
         self.policy = recurrence.Sequential(
             spaces.intake(observation_space, width),
             lstm.LSTM(d_model=width),
-            # transformer.Transformer(mem_len=128, d_model=width),
             out)
         self.value = recurrence.Sequential(
             spaces.intake(observation_space, width),
             lstm.LSTM(d_model=width),
-            # transformer.Transformer(mem_len=128, d_model=width),
-            spaces.ValueOutput(width, 1))
+            spaces.ValueOutput(width))
 
         self.apply(self._init)
 
@@ -61,7 +59,7 @@ class Agent(nn.Module):
         if sample or test:
             outputs['actions'] = self.sampler(outputs.logits, test)
         if value:
-            outputs['value'] = self.value(world.obs, reset=world.reset).squeeze(-1)
+            outputs['value'] = self.value(world.obs, reset=world.reset)
         return outputs
 
 def agentfunc():
