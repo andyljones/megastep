@@ -34,7 +34,7 @@ def init_lstm(lstm, forget=1.):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=256):
+    def __init__(self, observation_space, action_space, width=512):
         super().__init__()
         out = spaces.output(action_space, width)
         self.sampler = out.sample
@@ -98,7 +98,7 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     v_clipped = d0.value + torch.clamp(d.value - d0.value, -10, +10)
     v_loss = .5*torch.max((d.value - v_target)**2, (v_clipped - v_target)**2).mean()
 
-    adv = learning.generalized_advantages(d0.value, w.reward, d0.value, w.reset, w.terminal, gamma=gamma)
+    adv = learning.generalized_advantages(d.value, w.reward, d.value, w.reset, w.terminal, gamma=gamma)
     normed_adv = (adv - adv.mean())/(1e-3 + adv.std())
     free_adv = ratio[:-1]*normed_adv
     clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*normed_adv
@@ -140,23 +140,14 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 
     return kl_div
 
-def update_lr(opt):
-    (step,) = {s['step'] for s in opt.state.values()} or {0}
-    lr = min(step/1e3, 1)*1e-3
-    for g in opt.param_groups:
-        g['lr'] = lr
-    stats.mean('param/lr', lr)
-
-
 def run():
     buffer_size = 64
     n_envs = 4096
-    batch_size = 16*n_envs
+    batch_size = 4*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    agent.load_state_dict(storing.load('2020-07-04 092220 test')['agent'])
-    opt = torch.optim.Adam(agent.parameters(), lr=0., amsgrad=True)
+    opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
     paths.clear(run_name)
@@ -178,7 +169,6 @@ def run():
 
             chunk = as_chunk(buffer)
             
-            update_lr(opt)
             for idxs in learning.batch_indices(chunk, batch_size):
                 with recurrence.temp_clear_set(agent, state[:, idxs]):
                     kl = optimize(agent, opt, chunk[:, idxs])

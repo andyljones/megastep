@@ -38,7 +38,7 @@ class SimpleMovement:
 
 class MomentumMovement:
 
-    def __init__(self, core, *args, accel=5, ang_accel=90, decay=.125, n_agents=None, **kwargs):
+    def __init__(self, core, *args, accel=5, ang_accel=180, decay=.125, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
