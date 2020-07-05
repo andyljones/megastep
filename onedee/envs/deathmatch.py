@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib as mpl
 
+CLEARANCE = 1.
+
 @mapping
 def expand(x):
     B, A = x.shape[:2]
@@ -63,7 +65,7 @@ class Deathmatch:
         self._damage[:] += .05*hits
 
         pos = self._core.agents.positions 
-        outside = (pos < -1).any(-1) | (pos > (self._bounds[:, None] + 1)).any(-1)
+        outside = (pos < -CLEARANCE).any(-1) | (pos > (self._bounds[:, None] + CLEARANCE)).any(-1)
 
         self._health[:] += -.05*(wounds + outside) - .001
         
@@ -108,7 +110,8 @@ class Deathmatch:
             obs=self._rgbd.state(e),
             health=self._health[e].clone(),
             damage=self._damage[e].clone(),
-            matchings=self._matchings[e].clone())
+            matchings=self._matchings[e].clone(),
+            bounds=self._bounds[e].clone())
 
     @classmethod
     def plot_state(cls, state, zoom=False):
@@ -120,13 +123,23 @@ class Deathmatch:
 
         colors = [f'C{i}' for i in range(state.n_agents)]
 
-        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
+        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :-1]), zoom=zoom)
+
+        # Add hits
         origin, dest = state.matchings.nonzero()
         lines = state.agents.positions[np.stack([origin, dest], 1)]
         linecolors = np.array(colors)[origin]
         lines = mpl.collections.LineCollection(lines, color=linecolors, linewidth=1)
         plan.add_collection(lines)
 
+        # Add bounding box
+        size = state.bounds[::-1] + 2*CLEARANCE
+        bounds = mpl.patches.Rectangle(
+            (-CLEARANCE, -CLEARANCE), *size, 
+            linewidth=1, edgecolor='k', facecolor=(0., 0., 0., 0.))
+        plan.add_artist(bounds)
+
+        # Add observations
         images = {k: v for k, v in state.obs.items() if k != 'imu'}
         plotting.plot_images(images, [plt.subplot(gs[i, -1]) for i in range(n_agents)])
 
