@@ -222,6 +222,7 @@ __host__ void physics(const Scene& scene, Agents& agents, Progress progress) {
     agents.positions.t.set_(agents.positions.t + progress.t.unsqueeze(-1)*agents.momenta.t/FPS);
     agents.momenta.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
     agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angmomenta.t/FPS));
+    agents.angmomenta.t.masked_fill_(progress.t < 1, 0.f);
 }
 
 // RENDERING - BAKING
