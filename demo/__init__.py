@@ -194,7 +194,7 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
     with recording.ParallelEncoder(env.plot_state, N=N) as encoder, \
             tqdm(total=length) as pbar:
         while True:
-            decision = agent(world[None], sample=True, test=test).squeeze(0)
+            decision = agent(world[None], sample=True, test=test, value=True).squeeze(0)
             world = env.step(decision)
             steps += 1
             pbar.update(1)
@@ -202,9 +202,10 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
                 break
             if (steps == length):
                 break
-            encoder(arrdict.numpyify(env.state()))
+            state = env.state(d)
+            encoder(arrdict.numpyify(arrdict(**state, decision=decision)))
             traces.append(arrdict.numpyify(arrdict(
-                state=env.state(d), 
+                state=state, 
                 world=world[d], 
                 decision=decision[d])))
     traces = arrdict.stack(traces)

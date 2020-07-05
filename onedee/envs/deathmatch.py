@@ -113,35 +113,42 @@ class Deathmatch:
     @classmethod
     def plot_state(cls, state, zoom=False):
         n_agents = len(state.agents.angles)
+        show_value = 'decision' in state
 
         fig = plt.figure()
-        gs = plt.GridSpec(n_agents, 3, fig)
-
-        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
-
-        images = {k: v for k, v in state.obs.items() if k != 'imu'}
-        plotting.plot_images(images, [plt.subplot(gs[i, 2]) for i in range(n_agents)])
+        gs = plt.GridSpec(n_agents, 4 if show_value else 3, fig)
 
         colors = [f'C{i}' for i in range(state.n_agents)]
+
+        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :2]), zoom=zoom)
+        origin, dest = state.matchings.nonzero()
+        lines = state.agents.positions[np.stack([origin, dest], 1)]
+        linecolors = np.array(colors)[origin]
+        lines = mpl.collections.LineCollection(lines, color=linecolors, linewidth=1)
+        plan.add_collection(lines)
+
+        images = {k: v for k, v in state.obs.items() if k != 'imu'}
+        plotting.plot_images(images, [plt.subplot(gs[i, -1]) for i in range(n_agents)])
 
         ax = plt.subplot(gs[-1, 0])
         ax.barh(np.arange(state.n_agents), state.health, color=colors)
         ax.set_ylabel('health')
-        ax.set_yticks(np.arange(state.n_agents))
+        ax.set_yticks([])
         ax.invert_yaxis()
         ax.set_xlim(0, 1)
 
         ax = plt.subplot(gs[-1, 1])
         ax.barh(np.arange(state.n_agents), state.damage, color=colors)
         ax.set_ylabel('inflicted')
-        ax.set_yticks(np.arange(state.n_agents))
+        ax.set_yticks([])
         ax.invert_yaxis()
 
-        origin, dest = state.matchings.nonzero()
-        lines = state.agents.positions[np.stack([origin, dest], 1)]
-        colors = np.array(colors)[origin]
-        lines = mpl.collections.LineCollection(lines, color=colors, linewidth=1)
-        plan.add_collection(lines)
+        if show_value:
+            ax = plt.subplot(gs[-1, 2])
+            ax.barh(np.arange(state.n_agents), state.decision.value, color=colors)
+            ax.set_ylabel('value')
+            ax.set_yticks([])
+            ax.invert_yaxis()
 
         return fig
 
