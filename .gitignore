@@ -6,3 +6,6 @@ __pycache__
 .ipynb_checkpoints
 .*.ipynb
 workspace.code-workspace
+docs/_build
+docs/_static
+docs/_templates
