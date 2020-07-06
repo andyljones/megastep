@@ -14,18 +14,6 @@ log = logging.getLogger(__name__)
 def envfunc(n_envs=1024):
     return envs.Deathmatch(cubicasa.sample(max(n_envs, 4)//4), n_agents=4)
 
-def init_lstm(lstm, forget=1.):
-    nn.init.orthogonal_(2**-.5 * lstm.weight_ih_l0)
-    nn.init.orthogonal_(2**-.5 * lstm.weight_hh_l0)
-
-    # Order is input, forget, cell, output
-    for bias in [lstm.bias_ih_l0, lstm.bias_hh_l0]:
-        i, f, c, o = bias.chunk(4, 0)
-        nn.init.constant_(i, 0)
-        nn.init.constant_(f, forget/2.)
-        nn.init.constant_(c, 0)
-        nn.init.constant_(o, 0)
-
 class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=512):
@@ -40,12 +28,6 @@ class Agent(nn.Module):
             parts.intake(observation_space, width),
             lstm.LSTM(d_model=width),
             parts.ValueOutput(width))
-
-        self.apply(self._init)
-
-    def _init(self, m):
-        if isinstance(m, nn.LSTM):
-            init_lstm(m)
 
     def forward(self, world, sample=False, value=False, test=False):
         outputs = arrdict(

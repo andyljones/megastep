@@ -60,6 +60,10 @@ I consider megastep to be feature complete, but I'm happy to provide pointers an
 * Agents seem prone to flying into corners. This might be an accidental behaviour, or it might indicate a problem with the engine. At least one prior version of the Explorer env had an issue with agents learning to fly really hard at walls so they could clip through it and collect the reward for seeing the other side.
 * The Deathmatch env learns excruciatingly slowly. This might be due to the sparse reward compared to the Explorer env, or it might be due to a bug in my training algorithm, or it might be that I'm not using population-based training, or it might be bad hyperparameters, or it might be due to a bug in the environment. Reinforcement learning, what fun!
 
+## Alternatives
+* **[Sample Factory](https://github.com/alex-petrenko/sample-factory)**
+* **[Multiagent Particle Env](https://github.com/openai/multiagent-particle-envs)**
+
 ## Commands
 Build docs: `sphinx-build -b html docs docs/_build`
 Serve docs: `docker exec -it onedee python -m http.server --directory /code/docs/_build 9095`
