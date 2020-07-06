@@ -115,9 +115,9 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 32
+    buffer_size = 48
     n_envs = 4096
-    batch_size = 32*n_envs
+    batch_size = 12*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
@@ -133,7 +133,7 @@ def run():
             buffer = []
             state = recurrence.get(agent)
             for _ in range(buffer_size):
-                decision = agent(world[None], sample=True, value=True).squeeze(0).detach().float()
+                decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
                 buffer.append(arrdict(
                     world=world,
                     decision=decision))
