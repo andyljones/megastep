@@ -129,7 +129,7 @@ class Deathmatch:
         origin, dest = state.matchings.nonzero()
         lines = state.agents.positions[np.stack([origin, dest], 1)]
         linecolors = np.array(colors)[origin]
-        lines = mpl.collections.LineCollection(lines, color=linecolors, linewidth=1)
+        lines = mpl.collections.LineCollection(lines, color=linecolors, linewidth=1, alpha=.5)
         plan.add_collection(lines)
 
         # Add bounding box

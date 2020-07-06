@@ -1,11 +1,16 @@
-.. onedee documentation master file, created by
-   sphinx-quickstart on Sun Jul  5 13:43:43 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+########
+megastep
+########
 
-######
-onedee
-######
+**megastep** helps you build 1-million FPS reinforcement learning environments.
+
+Here's a simple [deathmatch](onedee/envs/deathmatch.py) example. It took 150 lines of 
+code and 
+
+Features:
+   * It's a minimal, modular library.
+   * Environments run with thousands of copies in parallel on the GPU.
+   * 
 
 *********
 Tutorials
