@@ -47,14 +47,15 @@ Now follow this logic through to its natural conclusion and you'll find yourself
 ## Future Directions
 There are many directions that I could plausibly take this project in, but the combination of [The Bitter Lesson](http://incompleteideas.net/IncIdeas/BitterLesson.html), [Scaling Laws for Natural Language Models](https://arxiv.org/pdf/2001.08361.pdf) and [GPT-3](https://arxiv.org/abs/2005.14165) have convinced me that I should aim my efforts at the compute side of things rather than the simulation side of things. 
 
-That's me though! If you're interested in taking megastep forward, some neat things to do:
+That's me though! If you're interested in taking megastep forward, here are some research directions I had queued up:
 
   * Add better physics. Right now the physics is that there are dynamic circles and static lines, and if two objects collide they stop moving. With better physics, you could plausibly recreate [OpenAI's Hide & Seek](https://openai.com/blog/emergent-tool-use/) work.
   * Demonstrate transfer learning across sims. Can behaviour learned in a fast, cheap simulation like this one be transferred to an expensive sim like [AirSim](https://microsoft.github.io/AirSim/)?
   * Generative geometric modelling. Deepmind have a cool paper on learning priors about the world [from egomotion alone](https://deepmind.com/blog/article/neural-scene-representation-and-rendering). Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator?
   * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs shouldn't be GPU accelerated too.
+  * 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of off-policy algorithms?
 
-I consider megastep to be feature complete, but I'm happy to provide pointers and my own thoughts on these topics to anyone who's interested.
+I consider megastep to be feature complete, but I'm happy to provide pointers and my own thoughts on these topics to anyone who's interested in forking it to build something greater.
 
 ## Possible Bugs
 * Agents seem prone to flying into corners. This might be an accidental behaviour, or it might indicate a problem with the engine. At least one prior version of the Explorer env had an issue with agents learning to fly really hard at walls so they could clip through it and collect the reward for seeing the other side.

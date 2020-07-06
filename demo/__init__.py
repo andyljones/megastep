@@ -16,7 +16,7 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=512):
+    def __init__(self, observation_space, action_space, width=256):
         super().__init__()
         out = parts.output(action_space, width)
         self.sampler = out.sample
@@ -115,13 +115,12 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
     return kl_div
 
 def run():
-    buffer_size = 64
+    buffer_size = 32
     n_envs = 4096
-    batch_size = 4*n_envs
+    batch_size = 32*n_envs
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
-    agent.load_state_dict(storing.load(run_name=-1)['agent'])
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
@@ -134,7 +133,7 @@ def run():
             buffer = []
             state = recurrence.get(agent)
             for _ in range(buffer_size):
-                decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
+                decision = agent(world[None], sample=True, value=True).squeeze(0).detach().float()
                 buffer.append(arrdict(
                     world=world,
                     decision=decision))
