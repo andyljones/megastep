@@ -279,13 +279,13 @@ __global__ void baking_kernel(
     }
 }
 
-__host__ void bake(Scene& scene, int D) {
+__host__ void bake(Scene& scene, int A) {
     const uint T = scene.textures.vals.size(0);
     const uint F = scene.frame.size(0);
 
     const auto blocks = (T + BLOCK - 1)/BLOCK;
     baking_kernel<<<blocks, BLOCK, 0, stream()>>>(
-        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), D*F);
+        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), A*F);
 }
 
 // RENDERING - KERNELS

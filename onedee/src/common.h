@@ -5,7 +5,7 @@
 
 using TT = at::Tensor;
 
-#define CHECK_CUDA(x) AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
+#define CHECK_CUDA(x) AT_ASSERTM(x.is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
@@ -104,22 +104,21 @@ struct Ragged {
 
     using PTA = RaggedPackedTensorAccessor<T, D>;
 
-    Ragged(TT vals, TT widths, bool cuda=true) : 
+    Ragged(TT vals, TT widths) : 
         vals(vals), widths(widths), 
         starts(widths.cumsum(0).toType(at::kInt) - widths),
         inverse(inverses(widths)) { 
         
-        if (cuda) {
-            CHECK_INPUT(vals);
-            CHECK_INPUT(widths);
-        } else {
-            CHECK_CONTIGUOUS(vals);
-            CHECK_CONTIGUOUS(widths);
-        }
+        CHECK_INPUT(vals);
+        CHECK_INPUT(widths);
 
         AT_ASSERT(widths.size(0) == starts.size(0));
+        AT_ASSERT(widths.scalar_type() == dtype<int>());
+        AT_ASSERT(widths.ndimension() == 1);
         AT_ASSERT(widths.sum(0).item<int64_t>() == vals.size(0));
         AT_ASSERT(vals.size(0) == inverse.size(0));
+        AT_ASSERT(vals.scalar_type() == dtype<T>());
+        AT_ASSERT(vals.ndimension() == D);
     }
 
     PTA pta() const { return PTA(vals, widths, starts, inverse); }
@@ -148,22 +147,18 @@ using Frame = TensorProxy<float, 3>;
 struct Scene {
     const Lights lights;
     const Lines lines;
-    const Frame frame;
     const Textures textures;
+    const Frame frame;
     const Baked baked;
 
-    Scene(
-        TT lights, TT lightwidths, 
-        TT lines, TT linewidths, 
-        TT textures, TT texwidths, 
-        TT frame) :
-        lights(lights, lightwidths), 
-        lines(lines, linewidths),
-        textures(textures, texwidths),
-        // Weird initialization here is to avoid having to create a AutoNonVariableTypeMode 
-        // guard, because I still don't understand the Variable/Tensor thing
-        baked(1 + 0*textures.select(1, 0).clone(), texwidths),
-        frame(frame) { }
+    // Weird initialization of `baked` here is to avoid having to create a `AutoNonVariableTypeMode` 
+    // guard, because I still don't understand the Variable vs Tensor thing. 
+    // Goal is to create a Tensor of 1s like textures.vals[:, 0]
+    Scene(Lights lights, Lines lines, Textures textures, TT frame) :
+        lights(lights), lines(lines), textures(textures), frame(frame),
+        baked(at::ones_like(textures.vals.select(1, 0)), textures.widths) {
+
+        }
 };
 
 struct Render {
@@ -177,6 +172,6 @@ struct Render {
 using Progress = TensorProxy<float, 2>; 
 
 void initialize(float, int, float, float);
-void bake(Scene& scene, int D);
+void bake(Scene& scene, int A);
 void physics(const Scene& scene, Agents& agents, Progress progress);
 Render render(const Agents& agents, Scene& scene);

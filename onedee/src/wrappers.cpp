@@ -9,12 +9,16 @@ using namespace std::string_literals;
 
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
-// TODO: Is this still needed? Can't remember why I added it 
-void _physics(const Scene& scene, Agents& agents, TT progress) { return physics(scene, agents, progress); }
+/// Proxy for converting the Tensor of `progress` into a TensorProxy
+void _physics(const Scene& scene, Agents& agents, TT progress) {
+    return physics(scene, agents, progress); 
+}
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
     py::class_<T>(m, name.c_str(), py::module_local())
+        .def(py::init<TT, TT>(), 
+            "vals"_a, "widths"_a)
         .def_readonly("vals", &T::vals)
         .def_readonly("widths", &T::widths)
         .def_readonly("starts", &T::starts)
@@ -25,7 +29,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ragged<Textures>(m, "Textures");
     ragged<Lines>(m, "Lines");
     ragged<Baked>(m, "Baked");
-    // ragged<Lights>(m, "Lights"); // Unneeded as replicates an existing type
+    // ragged<Lights>(m, "Lights"); // Forbidden as replicates Textures
 
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 
@@ -39,11 +43,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; });
 
     py::class_<Scene>(m, "Scene", py::module_local()) 
-        .def(py::init<TT, TT, TT, TT, TT, TT, TT>(),
-            "lights"_a, "lightwidths"_a, 
-            "lines"_a, "linewidths"_a,
-            "textures"_a, "texwidths"_a,
-            "frame"_a)
+        .def(py::init<Lights, Lines, Textures, TT>(),
+            "lights"_a, "lines"_a, "textures"_a, "frame"_a)
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
         .def_readonly("lights", &Scene::lights)
         .def_readonly("lines", &Scene::lines)

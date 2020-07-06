@@ -12,12 +12,12 @@ class Minimal:
         self._observer = modules.RGBD(self._core)
         self._respawner = modules.RandomSpawns(self._core)
 
-        self.action_space = self._mover.action_space
-        self.observation_space = self._observer.observation_space
+        self.action_space = self._mover.space
+        self.observation_space = self._observer.space
 
     @torch.no_grad()
     def reset(self):
-        self._respawner(core.env_full(True))
+        self._respawner(self._core.env_full(True))
         return arrdict(
             obs=self._observer(),
             reward=self._core.env_full(0.),
