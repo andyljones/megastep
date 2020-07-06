@@ -120,7 +120,7 @@ __device__ float collision(Point p0, Point v0, Point p1, Point v1) {
     //Follows http://ericleong.me/research/circle-circle/#dynamic-circle-circle-collision
 
     // Make the agent a bit bigger so that the near vision plane doesn't go through walls
-    const auto r = 1.1f*2.f*AGENT_RADIUS;
+    const auto r = 1.001f*2.f*AGENT_RADIUS;
     auto x = 1.f;
 
     const auto a = project(p0, v0 - v1, p1);
@@ -231,7 +231,7 @@ __device__ float ray_y(float r, float R) {
     return (R - 2*r - 1)*HALF_SCREEN_WIDTH/R;
 }
 
-__device__ float light_intensity(Lines::PTA lines, Lights::PTA lights, Point C, int n, int df) {
+__device__ float light_intensity(Lines::PTA lines, Lights::PTA lights, Point C, int n, int af) {
 
     const float LUMINANCE = 2.f;
     float intensity = AMBIENT;
@@ -244,7 +244,7 @@ __device__ float light_intensity(Lines::PTA lines, Lights::PTA lights, Point C, 
         bool unobstructed = true;
 
         // Ignore the dynamic lines at the front of the array
-        for (int l1=df; l1 < num_l; l1++) {
+        for (int l1=af; l1 < num_l; l1++) {
             const Line L(lines[n][l1]);
             const auto p = intersect(I, C - I, L);
 
@@ -264,7 +264,7 @@ __device__ float light_intensity(Lines::PTA lines, Lights::PTA lights, Point C, 
 }
 
 __global__ void baking_kernel(
-    Lines::PTA lines, Lights::PTA lights, Textures::PTA textures, Baked::PTA baked, int df) {
+    Lines::PTA lines, Lights::PTA lights, Textures::PTA textures, Baked::PTA baked, int af) {
 
     const auto t = blockDim.x*blockIdx.x + threadIdx.x;
     if (t < textures.vals.size(0)) {
@@ -274,7 +274,7 @@ __global__ void baking_kernel(
         const auto loc = (t - textures.starts[l0] + .5f)/textures.widths[l0];
         const auto C = Point(lines.vals[l0][0])*(1.f-loc) + Point(lines.vals[l0][1])*loc;
 
-        const auto i = light_intensity(lines, lights, C, n, df);
+        const auto i = light_intensity(lines, lights, C, n, af);
         baked.vals[t] = i;
     }
 }
