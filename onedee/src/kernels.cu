@@ -295,22 +295,22 @@ __global__ void draw_kernel(Angles::PTA angles, Positions::PTA positions, Frame:
 
     const auto e = threadIdx.x;
     const auto f = threadIdx.y;
-    const auto d = threadIdx.z;
+    const auto a = threadIdx.z;
 
-    const auto a = angles[n][d]/180.f;
-    const auto c = cospif(a);
-    const auto s = sinpif(a);
+    const auto ang = angles[n][a]/180.f;
+    const auto c = cospif(ang);
+    const auto s = sinpif(ang);
 
-    const auto px = positions[n][d][0];
-    const auto py = positions[n][d][1];
+    const auto px = positions[n][a][0];
+    const auto py = positions[n][a][1];
 
     // TODO: Stick these in constant memory
     const auto F = frame.size(0);
     const auto fx = frame[f][e][0];
     const auto fy = frame[f][e][1];
 
-    lines[n][d*F + f][e][0] = c*fx - s*fy + px;
-    lines[n][d*F + f][e][1] = s*fx + c*fy + py;
+    lines[n][a*F + f][e][0] = c*fx - s*fy + px;
+    lines[n][a*F + f][e][1] = s*fx + c*fy + py;
 }
 
 
@@ -325,14 +325,14 @@ __global__ void raycast_kernel(
 
     const auto n = blockIdx.x;
     const auto r = threadIdx.x;
-    const auto d = blockIdx.y;
+    const auto a = blockIdx.y;
 
     // Generate the ray
-    const float a = angles[n][d]/180.f;
-    const auto c = cospif(a);
-    const auto s = sinpif(a);
+    const float ang = angles[n][a]/180.f;
+    const auto c = cospif(ang);
+    const auto s = sinpif(ang);
 
-    const Point p(positions[n][d]);
+    const Point p(positions[n][a]);
 
     const float R = indices.size(2);
     const Point u(1.f, ray_y(r, R));
@@ -372,10 +372,10 @@ __global__ void raycast_kernel(
         }
     }
 
-    indices[n][d][r] = nearest_idx;
-    locations[n][d][r] = nearest_loc;
-    dots[n][d][r] = nearest_dot;
-    distances[n][d][r] = nearest_s*rlen;
+    indices[n][a][r] = nearest_idx;
+    locations[n][a][r] = nearest_loc;
+    dots[n][a][r] = nearest_dot;
+    distances[n][a][r] = nearest_s*rlen;
 }
 
 using Screen = TensorProxy<float, 4>;
@@ -407,13 +407,13 @@ __global__ void shader_kernel(
 
     const auto n = blockIdx.x;
     const auto r = threadIdx.x;
-    const auto d = blockIdx.y;
-    const auto DF = screen.size(1)*F;
+    const auto a = blockIdx.y;
+    const auto AF = screen.size(1)*F;
 
     auto s0 = 0.f, s1 = 0.f, s2 = 0.f;
-    const auto l0 = indices[n][d][r];
+    const auto l0 = indices[n][a][r];
     if (l0 >= 0) {
-        const auto loc = locations[n][d][r];
+        const auto loc = locations[n][a][r];
 
         //TODO: Stick this in texture memory
         // Use the tex object API: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#texture-object-api
@@ -427,43 +427,43 @@ __global__ void shader_kernel(
 
         // If it's a dynamic line, calculate the intensity on the fly. Else - if it's static - use the baked version.
         float intensity;
-        if (l0 < DF) {
+        if (l0 < AF) {
             const auto C = Point(lines[n][l0][0])*(1-loc) + Point(lines[n][l0][1])*loc;
-            intensity = light_intensity(lines, lights, C, n, DF);
+            intensity = light_intensity(lines, lights, C, n, AF);
         } else { 
             intensity = f.lw*baked[start][f.l] + f.rw*baked[start][f.r];
         }
 
         // `dots` is the dot with the line; we want the dot with the normal
-        const auto dot = 1 - dots[n][d][r]*dots[n][d][r];
+        const auto dot = 1 - dots[n][a][r]*dots[n][a][r];
         s0 = dot*intensity*(f.lw*tex_l[0] + f.rw*tex_r[0]);
         s1 = dot*intensity*(f.lw*tex_l[1] + f.rw*tex_r[1]);
         s2 = dot*intensity*(f.lw*tex_l[2] + f.rw*tex_r[2]);
     }
-    screen[n][d][r][0] = s0;
-    screen[n][d][r][1] = s1;
-    screen[n][d][r][2] = s2;
+    screen[n][a][r][0] = s0;
+    screen[n][a][r][1] = s1;
+    screen[n][a][r][2] = s2;
 }
 
 __host__ Render render(const Agents& agents, Scene& scene) {
     const uint N = agents.angles.size(0);
-    const uint D = agents.angles.size(1);
+    const uint A = agents.angles.size(1);
     const uint F = scene.frame.size(0);
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
-    draw_kernel<<<N, {2, F, D}, 0, stream()>>>(
+    draw_kernel<<<N, {2, F, A}, 0, stream()>>>(
         agents.angles.pta(), agents.positions.pta(), scene.frame.pta(), scene.lines.pta()); 
 
-    auto indices(Indices::empty({N, D, RES}));
-    auto locations(Locations::empty({N, D, RES}));
-    auto dots(Dots::empty({N, D, RES}));
-    auto distances(Distances::empty({N, D, RES}));
-    raycast_kernel<<<{N, D}, {(uint) RES}, 0, stream()>>>(
+    auto indices(Indices::empty({N, A, RES}));
+    auto locations(Locations::empty({N, A, RES}));
+    auto dots(Dots::empty({N, A, RES}));
+    auto distances(Distances::empty({N, A, RES}));
+    raycast_kernel<<<{N, A}, {(uint) RES}, 0, stream()>>>(
         agents.angles.pta(), agents.positions.pta(), scene.lines.pta(), 
         indices.pta(), locations.pta(), dots.pta(), distances.pta());
 
-    auto screen(Screen::empty({N, D, RES, 3}));
-    shader_kernel<<<{N, D}, {(uint) RES}, 0, stream()>>>(
+    auto screen(Screen::empty({N, A, RES, 3}));
+    shader_kernel<<<{N, A}, {(uint) RES}, 0, stream()>>>(
         indices.pta(), locations.pta(), dots.pta(),
         scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), F, screen.pta()); 
 
