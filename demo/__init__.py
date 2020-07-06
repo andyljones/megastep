@@ -98,11 +98,11 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 
     adv = learning.generalized_advantages(d.value, w.reward, d.value, w.reset, w.terminal, gamma=gamma)
     normed_adv = (adv - adv.mean())/(1e-3 + adv.std())
-    free_adv = ratio[:-1]*normed_adv
-    clip_adv = torch.clamp(ratio[:-1], 1-clip, 1+clip)*normed_adv
+    free_adv = ratio*normed_adv
+    clip_adv = torch.clamp(ratio, 1-clip, 1+clip)*normed_adv
     p_loss = -torch.min(free_adv, clip_adv).mean()
 
-    h_loss = (logits.exp()*logits)[:-1].sum(-1).mean()
+    h_loss = (logits.exp()*logits).sum(-1).mean()
     loss = v_loss + p_loss + entropy*h_loss
     
     opt.zero_grad()
@@ -145,6 +145,7 @@ def run():
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()
+    agent.load_state_dict(storing.load(run_name=-1)['agent'])
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
