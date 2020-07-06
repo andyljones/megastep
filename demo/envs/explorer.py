@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from .. import modules, core, plotting
+from onedee import modules, core, plotting
 from rebar import arrdict
 import matplotlib.pyplot as plt
 

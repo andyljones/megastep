@@ -1,9 +1,7 @@
-from onedee.plotting import n_agent_texels
 import torch
-from . import learning, lstm, transformer
-from rebar import queuing, processes, logging, interrupting, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
+from . import learning, lstm, transformer, envs
+from rebar import logging, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
-import onedee
 from onedee import spaces
 import cubicasa
 import numpy as np
@@ -14,11 +12,7 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    # return onedee.DelayedMatchCoin(n_envs)
-    return onedee.Deathmatch(cubicasa.sample(max(n_envs, 4)//4), n_agents=4)
-    # return onedee.Waypoint(cubicasa.sample(n_envs))
-    return onedee.PointGoal(cubicasa.sample(n_envs))
-    # return onedee.Explorer(cubicasa.sample(n_envs))
+    return envs.Deathmatch(cubicasa.sample(max(n_envs, 4)//4), n_agents=4)
 
 def init_lstm(lstm, forget=1.):
     nn.init.orthogonal_(2**-.5 * lstm.weight_ih_l0)

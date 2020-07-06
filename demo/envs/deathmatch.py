@@ -1,5 +1,5 @@
 import torch
-from .. import modules, core, plotting, spaces
+from onedee import modules, core, plotting, spaces
 from rebar.arrdict import mapping
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt

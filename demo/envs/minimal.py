@@ -1,6 +1,6 @@
 import torch
 from rebar import arrdict
-from .. import modules, core, plotting
+from onedee import modules, core, plotting
 import matplotlib.pyplot as plt
 
 class Minimal:

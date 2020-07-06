@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rebar import arrdict, dotdict
-from .. import spaces
+from . import spaces
 import pandas as pd
 
 __all__ = ['dataframe']
