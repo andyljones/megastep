@@ -1,5 +1,5 @@
 import torch
-from . import learning, lstm, transformer, envs
+from . import learning, lstm, transformer, envs, parts
 from rebar import logging, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
 from onedee import spaces
@@ -30,16 +30,16 @@ class Agent(nn.Module):
 
     def __init__(self, observation_space, action_space, width=512):
         super().__init__()
-        out = spaces.output(action_space, width)
+        out = parts.output(action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
-            spaces.intake(observation_space, width),
+            parts.intake(observation_space, width),
             lstm.LSTM(d_model=width),
             out)
         self.value = recurrence.Sequential(
-            spaces.intake(observation_space, width),
+            parts.intake(observation_space, width),
             lstm.LSTM(d_model=width),
-            spaces.ValueOutput(width))
+            parts.ValueOutput(width))
 
         self.apply(self._init)
 
