@@ -1,10 +1,55 @@
 import numpy as np
-from . import common, scenery
+from . import scenery
 import torch
 import logging
 from rebar import arrdict
+import torch.utils.cpp_extension
+from pkg_resources import resource_filename
+import sysconfig
 
 log = logging.getLogger(__name__)
+
+AGENT_WIDTH = .15
+TEXTURE_RES = .05
+
+# Used for collision radius and near camera plane
+AGENT_RADIUS = 1/2**.5*AGENT_WIDTH
+
+DEBUG = False
+
+def cuda():
+    """Compiles and loads the C++ side of onedee, returning it as a Python module.
+    
+    The best explanation of what's going on here is the `PyTorch C++ extension tutorial
+    <https://pytorch.org/tutorials/advanced/cpp_extension.html>`_ .
+    
+    I have very limited experience with distributing binaries, so while I've _tried_ to reference the library paths
+    in a platform-independent way, there is a good chance they'll turn out to be dependent after all. Sorry. Submit
+    an issue and explain a better way to me!
+    
+    The libraries listed are - I believe - the minimal possible to allow onedee's compilation. The default library
+    set for PyTorch extensions is much larger and slower to compile.
+    """
+    [torch_libdir] = torch.utils.cpp_extension.library_paths()
+    python_libdir = sysconfig.get_config_var('LIBDIR')
+    libpython_ver = sysconfig.get_config_var('LDVERSION')
+    return torch.utils.cpp_extension.load(
+        name='onedeekernels', 
+        sources=[resource_filename(__package__, f'src/{fn}') for fn in ('wrappers.cpp', 'kernels.cu')], 
+        extra_cflags=['-std=c++17'] + (['-g'] if DEBUG else []), 
+        extra_cuda_cflags=['--use_fast_math', '-lineinfo', '-std=c++14'] + (['-g', '-G'] if DEBUG else []),
+        extra_ldflags=[
+            f'-lpython{libpython_ver}', '-ltorch', '-ltorch_python', '-lc10_cuda', '-lc10', 
+            f'-L{torch_libdir}', f'-Wl,-rpath,{torch_libdir}',
+            f'-L{python_libdir}', f'-Wl,-rpath,{python_libdir}'])
+
+def gamma_encode(x): 
+    """Converts to viewable values"""
+    return x**(1/2.2)
+
+def gamma_decode(x):
+    """Converts to interpolatable values"""
+    return x**2.2
 
 def init_agents(cuda, n_envs, n_agents, device='cuda'):
     data = arrdict(
@@ -41,7 +86,7 @@ class Core:
         # TODO: This needs to be propagated to the C++ side
         self.device = torch.device('cuda')
 
-        self.cuda = common.cuda()
+        self.cuda = cuda()
         self.cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
         self.agents = init_agents(self.cuda, self.n_envs, self.n_agents, self.device)
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)

@@ -2,7 +2,7 @@ import torch
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from . import common
+from . import core
 
 VIEW_RADIUS = 5
 
@@ -19,7 +19,7 @@ def imshow_arrays(arrs):
             if layer.shape[0] == 1:
                 layer = layer.repeat(3, 0)
             else:
-                layer = common.gamma_encode(layer)
+                layer = core.gamma_encode(layer)
             layers.append(layer)
         layers = np.concatenate(layers, 1)
         ims[d] = layers.transpose(1, 2, 0)
@@ -68,7 +68,7 @@ def line_arrays(state):
     baked = scene.baked.copy()
     baked[:n_agent_texels(state)] = 1.
 
-    colors = common.gamma_encode(scene.textures*baked[:, None])
+    colors = core.gamma_encode(scene.textures*baked[:, None])
     return lines, colors
 
 def plot_lights(diagram, state):
@@ -112,7 +112,7 @@ def plot_wedge(ax, pose, distance, fov, radians=False, **kwargs):
     scale = 180/np.pi if radians else 1
     left = scale*pose.angles - fov/2
     right = scale*pose.angles + fov/2
-    width = distance - common.AGENT_RADIUS 
+    width = distance - core.AGENT_RADIUS 
     wedge = mpl.patches.Wedge(
                     pose.positions, distance, left, right, width=width, **kwargs)
     ax.add_patch(wedge)
@@ -126,10 +126,10 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
     """Not used directly here, but often useful for code using this module"""
     ax = ax or plt.subplot()
     for angle, position in zip(poses.angles, poses.positions):
-        ax.add_patch(mpl.patches.Circle(position, radius=common.AGENT_RADIUS, edgecolor=color, facecolor=[0,0,0,0]))
+        ax.add_patch(mpl.patches.Circle(position, radius=core.AGENT_RADIUS, edgecolor=color, facecolor=[0,0,0,0]))
 
         scale = 1 if radians else np.pi/180
-        offset = common.AGENT_RADIUS*np.array([np.cos(scale*angle), np.sin(scale*angle)])
+        offset = core.AGENT_RADIUS*np.array([np.cos(scale*angle), np.sin(scale*angle)])
         line = np.stack([position, position + offset])
         ax.plot(*line.T, color=color)
     return ax

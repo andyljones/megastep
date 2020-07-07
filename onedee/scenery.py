@@ -1,7 +1,7 @@
 import matplotlib as mpl
 import numpy as np
 import torch
-from . import common
+from . import core
 from rebar import arrdict
 
 # Ten bland colors from https://medialab.github.io/iwanthue/
@@ -28,7 +28,7 @@ def agent_frame():
             [-1., +.5], [-1., -.5]]
     n = len(corners)
     walls = [[corners[i], corners[(i+1) % n]] for i in range(n)]
-    return common.AGENT_WIDTH/2*np.array(walls)
+    return core.AGENT_WIDTH/2*np.array(walls)
 
 def agent_colors():
     k, g, r = '.25', 'g', 'r'
@@ -36,10 +36,10 @@ def agent_colors():
     return np.stack([mpl.colors.to_rgb(s) for s in colors])
 
 def resolutions(lines):
-    return np.ceil(lengths(lines)/common.TEXTURE_RES).astype(int)
+    return np.ceil(lengths(lines)/core.TEXTURE_RES).astype(int)
 
 def wall_pattern(n, l=.5, random=np.random):
-    p = common.TEXTURE_RES/l
+    p = core.TEXTURE_RES/l
     jumps = random.choice(np.array([0., 1.]), p=np.array([1-p, p]), size=n)
     jumps = jumps*random.normal(size=n)
     value = .5 + .5*(jumps.cumsum() % 1)
@@ -56,7 +56,7 @@ def init_textures(agentlines, agentcolors, walls, random=np.random):
     indices = np.full(texwidths.sum(), 0)
     indices[starts] = 1
     indices = np.cumsum(indices) - 1
-    textures = common.gamma_decode(colors[indices])
+    textures = core.gamma_decode(colors[indices])
 
     # Gives walls an even pattern that makes depth perception easy
     pattern = wall_pattern(textures.shape[0], random=random)
