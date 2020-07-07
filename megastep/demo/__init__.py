@@ -58,7 +58,7 @@ def as_chunk(buffer):
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
     return chunk
 
-def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -115,8 +115,8 @@ def optimize(agent, opt, batch, entropy=1e-3, gamma=.995, clip=.2):
 
 def run():
     buffer_size = 48
-    n_envs = 4096
-    batch_size = 12*n_envs
+    n_envs = 16*1024
+    batch_size = 32*1024
 
     env = envfunc(n_envs)
     agent = agentfunc().cuda()

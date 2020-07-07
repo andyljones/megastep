@@ -12,4 +12,4 @@ mkdir -p test
 cd test
 
 path=$(python -c "import megastep; print(megastep.__file__[:-12])")
-pytest -o python_files=*.py $path
+CUDA_VISIBLE_DEVICES=1 pytest -o python_files=*.py $path

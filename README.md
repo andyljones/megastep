@@ -7,11 +7,11 @@
 ## Examples
 Quoted FPS are for a single RTX 2080 Ti and random actions:
 
-**[Deathmatch](megastep/envs/deathmatch.py)**: 150 lines of Python, 250k FPS.
+**[Deathmatch](megastep/demo/envs/deathmatch.py)**: 150 lines of Python, 250k FPS.
 
-**[Explorer](megastep/envs/explorer.py)**: 100 lines of Python, 1m FPS.
+**[Explorer](megastep/demo/envs/explorer.py)**: 100 lines of Python, 1m FPS.
 
-**[PointGoal](megastep/envs/waypoint.py)**: 100 lines of Python, 2m FPS.
+**[PointGoal](megastep/demo/envs/waypoint.py)**: 100 lines of Python, 2m FPS.
 
 ## Features
 * Run thousands of environments in parallel, entirely on the GPU.
@@ -23,14 +23,15 @@ Quoted FPS are for a single RTX 2080 Ti and random actions:
 * Extensive documentation, tutorials and explanations. 
 
 ## Setup
-**This is a GPU-only package**. Assuming you have Pytorch >1.5 installed,
+**This is a GPU-only package**. 
 ```
 pip install megastep
 ```
 or, for the full demo,
 ```
-pip install megastep[demo]
+pip install megastep[cubicasa,rebar]
 ```
+It's tested on [the 'build' stage of this Docker image](docker/Dockerfile).
 
 ## Documentation
 * Tutorials
