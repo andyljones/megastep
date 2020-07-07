@@ -51,7 +51,7 @@ class Explorer:
         return reward
 
     def _reset(self, reset=None):
-        self._respawner(reset)
+        self._respawner(reset.unsqueeze(-1))
         self._seen[reset[self._tex_to_env]] = False
         self._potential[reset] = 0
         self._lengths[reset] = 0

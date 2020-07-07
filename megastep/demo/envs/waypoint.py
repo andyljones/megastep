@@ -10,7 +10,7 @@ class RandomGoals:
         self._core = core
 
         self._n_goals = n_goals
-        self._goals = arrdict.tensorify(modules.random_empty_positions(core, n_goals)).to(core.device)
+        self._goals = arrdict.tensorify(modules.random_empty_positions(core, n_goals).transpose(0, 2, 1, 3)).to(core.device)
         self.current = torch.full_like(self._goals[:, 0], np.nan)
 
     def __call__(self, reset, distance, temperature=10, clip=2):
@@ -40,7 +40,7 @@ class Waypoint:
 
     def _reset(self, reset):
         reset = self._lengths(reset)
-        self._respawner(reset)
+        self._respawner(reset.unsqueeze(-1))
         self._goals(reset, 1.)
         return reset
     
