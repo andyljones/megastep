@@ -18,7 +18,7 @@ print(sys.path)
 
 # -- Project information -----------------------------------------------------
 
-project = 'onedee'
+project = 'megastep'
 copyright = '2020, Andy L. Jones'
 author = 'Andy L. Jones'
 

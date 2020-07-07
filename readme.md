@@ -5,11 +5,11 @@
 ## Examples
 Quoted FPS are for a single RTX 2080 Ti and random actions:
 
-**[Deathmatch](onedee/envs/deathmatch.py)**: 150 lines of Python, 250k FPS.
+**[Deathmatch](megastep/envs/deathmatch.py)**: 150 lines of Python, 250k FPS.
 
-**[Explorer](onedee/envs/explorer.py)**: 100 lines of Python, 1m FPS.
+**[Explorer](megastep/envs/explorer.py)**: 100 lines of Python, 1m FPS.
 
-**[PointGoal](onedee/envs/waypoint.py)**: 100 lines of Python, 2m FPS.
+**[PointGoal](megastep/envs/waypoint.py)**: 100 lines of Python, 2m FPS.
 
 ## Features
 * Run thousands of environments in parallel, entirely on the GPU.
@@ -52,7 +52,7 @@ That's me though! If you're interested in taking megastep forward, here are some
   * Add better physics. Right now the physics is that there are dynamic circles and static lines, and if two objects collide they stop moving. With better physics, you could plausibly recreate [OpenAI's Hide & Seek](https://openai.com/blog/emergent-tool-use/) work.
   * Demonstrate transfer learning across sims. Can behaviour learned in a fast, cheap simulation like this one be transferred to an expensive sim like [AirSim](https://microsoft.github.io/AirSim/)?
   * Generative geometric modelling. Deepmind have a cool paper on learning priors about the world [from egomotion alone](https://deepmind.com/blog/article/neural-scene-representation-and-rendering). Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator?
-  * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs shouldn't be GPU accelerated too.
+  * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs shouldn't be GPU accelerated too. 
   * 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of off-policy algorithms?
 
 I consider megastep to be feature complete, but I'm happy to provide pointers and my own thoughts on these topics to anyone who's interested in forking it to build something greater.
@@ -67,4 +67,4 @@ I consider megastep to be feature complete, but I'm happy to provide pointers an
 
 ## Commands
 Build docs: `sphinx-build -b html docs docs/_build`
-Serve docs: `docker exec -it onedee python -m http.server --directory /code/docs/_build 9095`
+Serve docs: `docker exec -it megastep python -m http.server --directory /code/docs/_build 9095`

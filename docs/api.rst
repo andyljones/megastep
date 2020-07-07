@@ -2,6 +2,6 @@
 API Documentation
 #################
 
-.. automodule:: onedee.core
+.. automodule:: megastep.core
     :members:
     :undoc-members:

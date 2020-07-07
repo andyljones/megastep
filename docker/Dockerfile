@@ -23,9 +23,12 @@ RUN pip install \
 
 WORKDIR /code
 
+# Demo image
+FROM build AS demo
+
 
 # Dev image
-FROM build AS dev
+FROM demo AS dev
 
 RUN apt-get install -y --no-install-recommends \
         # Needed for sanity
