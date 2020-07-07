@@ -18,7 +18,7 @@ class Minimal:
     @torch.no_grad()
     def reset(self):
         self._respawner(self._core.env_full(True))
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observer(),
             reward=self._core.env_full(0.),
             reset=self._core.env_full(True),
@@ -27,14 +27,14 @@ class Minimal:
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observer(),            
             reward=self._core.env_full(0.),
             reset=self._core.env_full(True),
             terminal=self._core.env_full(False),)
 
     def state(self, d=0):
-        return arrdict(
+        return arrdict.arrdict(
             **self._core.state(d),
             obs=self._observer.state(d))
 

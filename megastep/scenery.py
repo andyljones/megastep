@@ -80,10 +80,10 @@ def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random):
         lights = random_lights(g.lights)
         lines = np.concatenate([agentlines, g.walls])
         textures, texwidths = init_textures(agentlines, agentcolors, g.walls, random) 
-        data.append(arrdict(
-            lights=arrdict(vals=lights, widths=len(lights)),
-            lines=arrdict(vals=lines, widths=len(lines)),
-            textures=arrdict(vals=textures, widths=texwidths)))
+        data.append(arrdict.arrdict(
+            lights=arrdict.arrdict(vals=lights, widths=len(lights)),
+            lines=arrdict.arrdict(vals=lines, widths=len(lines)),
+            textures=arrdict.arrdict(vals=textures, widths=texwidths)))
     data = arrdict.tensorify(arrdict.cat(data)).to(device)
     
     scene = cuda.Scene(

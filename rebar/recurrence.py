@@ -1,4 +1,4 @@
-from .arrdict import arrdict
+from . import arrdict
 from torch import nn
 from contextlib import contextmanager
 
@@ -29,7 +29,7 @@ class State:
 def states(net):
     substates = {k: states(v) for k, v in net.named_children()}
     ownstates = {k: getattr(net, k) for k in dir(net) if isinstance(getattr(net, k), State)}
-    return arrdict({k: v for k, v in {**ownstates, **substates}.items() if v})
+    return arrdict.arrdict({k: v for k, v in {**ownstates, **substates}.items() if v})
 
 def _nonnull(x):
     y = type(x)()

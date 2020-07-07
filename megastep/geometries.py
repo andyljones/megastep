@@ -8,7 +8,7 @@ def box(width=5):
     walls = np.stack(geometry.cyclic_pairs(corners))
     spaces = [corners]
 
-    return arrdict(
+    return arrdict.arrdict(
         walls=walls,
         lights=np.full((1, 2), width/2 + geometry.MARGIN),
         masks=geometry.masks(walls, spaces),
@@ -20,7 +20,7 @@ def column(width=5, column_width=.1):
     walls = np.stack(geometry.cyclic_pairs(column_corners))
     spaces = [width/2**.5 * np.array(corners) + width/2 + geometry.MARGIN]
 
-    return arrdict(
+    return arrdict.arrdict(
         walls=walls,
         lights=2**.5 * np.array(corners) + width/2 + geometry.MARGIN,
         masks=geometry.masks(walls, spaces),

@@ -61,7 +61,7 @@ class Explorer:
         reset = self._core.env_full(True)
         self._reset(reset)
         render = self._rgbd.render()
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._rgbd(render),
             reset=reset, 
             terminal=self._core.env_full(False), 
@@ -76,7 +76,7 @@ class Explorer:
         reset = (self._lengths >= self._potential + 200)
         self._reset(reset)
         render = self._rgbd.render()
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._rgbd(render),
             reset=reset, 
             terminal=self._core.env_full(False), 
@@ -84,7 +84,7 @@ class Explorer:
 
     def state(self, d=0):
         seen = self._seen[self._tex_to_env == d]
-        return arrdict(
+        return arrdict.arrdict(
             **self._core.state(d),
             obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),

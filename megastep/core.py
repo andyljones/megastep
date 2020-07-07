@@ -52,7 +52,7 @@ def gamma_decode(x):
     return x**2.2
 
 def init_agents(cuda, n_envs, n_agents, device='cuda'):
-    data = arrdict(
+    data = arrdict.arrdict(
             angles=torch.zeros((n_envs, n_agents)),
             positions=torch.zeros((n_envs, n_agents, 2)),
             angmomenta=torch.zeros((n_envs, n_agents)),
@@ -106,9 +106,9 @@ class Core:
         options = ('n_envs', 'n_agents', 'res', 'supersample', 'fov', 'agent_radius', 'fps')
         options = {k: getattr(self, k) for k in options}
 
-        return arrdict(
+        return arrdict.arrdict(
                     **options,
-                    scene=arrdict(
+                    scene=arrdict.arrdict(
                             frame=self.scene.frame,
                             lines=select(self.scene.lines, d),
                             lights=select(self.scene.lights, d),
@@ -116,7 +116,7 @@ class Core:
                             widths=scene.textures.widths[lines_s:lines_e],
                             textures=textures,
                             baked=baked).clone(),
-                    agents=arrdict(
+                    agents=arrdict.arrdict(
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),
                     progress=self.progress[d].clone())

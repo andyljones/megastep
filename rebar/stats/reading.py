@@ -46,7 +46,7 @@ class Reader:
             if field.startswith(self._prefix):
                 current = [self._arrs[category, field]] if (category, field) in self._arrs else []
                 self._arrs[category, field] = np.concatenate(current + new)
-        return arrdict(self._arrs)
+        return arrdict.arrdict(self._arrs)
 
     def pandas(self):
         arrs = self.arrays()
@@ -56,7 +56,7 @@ class Reader:
             df = pd.DataFrame.from_records(arr, index='_time')
             df.index.name = 'time'
             dfs[category, field] = df
-        return arrdict(dfs)
+        return arrdict.arrdict(dfs)
         
     def resample(self, rule='60s', **kwargs):
         kwargs = {'rule': rule, **kwargs}

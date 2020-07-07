@@ -28,7 +28,7 @@ class Deathmatch:
         self._respawner = modules.RandomSpawns(self._core)
 
         self.action_space = self._mover.space
-        self.observation_space = dotdict(
+        self.observation_space = dotdict.dotdict(
             **self._rgbd.space,
             imu=self._imu.space,
             health=spaces.MultiVector(1, 1))
@@ -78,7 +78,7 @@ class Deathmatch:
         mask = (0 <= indices) & (obj < self._core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
         hits = self._shoot(opponents)
-        return arrdict(
+        return arrdict.arrdict(
             **self._rgbd(render), 
             imu=self._imu(),
             health=self._health.unsqueeze(-1).clone()), hits
@@ -87,7 +87,7 @@ class Deathmatch:
     def reset(self):
         reset = self._reset(self._core.agent_full(True))
         obs, reward = self._observe()
-        return arrdict(
+        return arrdict.arrdict(
             obs=expand(obs),
             reward=reward,
             reset=reset,
@@ -98,14 +98,14 @@ class Deathmatch:
         reset = self._reset()
         self._mover(collapse(decision, self._core.n_agents))
         obs, reward = self._observe()
-        return arrdict(
+        return arrdict.arrdict(
             obs=expand(obs),
             reward=reward,
             reset=reset,
             terminal=reset,)
 
     def state(self, e=0):
-        return arrdict(
+        return arrdict.arrdict(
             **self._core.state(e),
             obs=self._rgbd.state(e),
             health=self._health[e].clone(),

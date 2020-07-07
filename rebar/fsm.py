@@ -53,7 +53,7 @@ class FSM:
 
     def reset(self):
         self._reset(self._terminal.new_ones((self.n_envs,)))
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._obs[self._token, None],
             reward=torch.zeros((self.n_envs,), dtype=torch.float, device=self.device),
             reset=torch.ones((self.n_envs), dtype=torch.bool, device=self.device),
@@ -69,7 +69,7 @@ class FSM:
         reset = self._terminal[self._token]
         self._reset(reset)
 
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._obs[self._token, None],
             idx=self._token.clone(),
             reward=reward,
@@ -88,7 +88,7 @@ class FSM:
             if change.pow(2).mean().pow(.5) < eps:
                 break
                 
-        return arrdict(value=value, policy=best.indices)
+        return arrdict.arrdict(value=value, policy=best.indices)
 
     def dataframe(self, **kwargs):
         soln = self.solve(**kwargs)
@@ -122,7 +122,7 @@ class State:
 
     def to(self, state, action=0, reward=0., weight=1.):
         action = int(action)
-        self._builder._trans.append(dotdict(
+        self._builder._trans.append(dotdict.dotdict(
             prev=self._name, 
             action=action, 
             next=state, 
@@ -145,7 +145,7 @@ class Builder:
     def state(self, name, obs, start=0.):
         if isinstance(obs, (int, float, bool)):
             obs = (obs,)
-        self._obs.append(dotdict(state=name, obs=obs, start=start))
+        self._obs.append(dotdict.dotdict(state=name, obs=obs, start=start))
         return State(name, self)
     
     def build(self):
@@ -180,7 +180,7 @@ class Builder:
 
         assert start.sum() > 0, 'No start state declared'
 
-        return dotdict(
+        return dotdict.dotdict(
             obs=obs, trans=trans, reward=reward, terminal=terminal, start=start, 
             indices=indices, names=names,
             n_states=n_states, n_actions=n_actions, d_obs=d_obs)

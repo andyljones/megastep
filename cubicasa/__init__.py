@@ -119,7 +119,7 @@ def geometry_data(regenerate=False):
     # np.load is kinda slow. 
     raw = gzip.decompress(p.read_bytes())
     with ZipFile(BytesIO(raw)) as zf:
-        flat = dotdict({n[:-4]: fastload(zf.read(n)) for n in zf.namelist()})
+        flat = dotdict.dotdict({n[:-4]: fastload(zf.read(n)) for n in zf.namelist()})
     return unflatten(flat)
 
 _cache = None

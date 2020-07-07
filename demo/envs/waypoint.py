@@ -34,7 +34,7 @@ class Waypoint:
         self._goals = RandomGoals(self._core)
 
         self.action_space = self._mover.space
-        self.observation_space = arrdict(
+        self.observation_space = arrdict.arrdict(
             **self._rgbd.space,
             waypoint=spaces.MultiVector(self._core.n_agents, 2))
 
@@ -55,7 +55,7 @@ class Waypoint:
     def reset(self):
         reset = self._core.env_full(True)
         reset = self._reset(reset)
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observe(),
             reward=self._core.env_full(0.),
             reset=reset,
@@ -67,14 +67,14 @@ class Waypoint:
         distances = (self._goals.current - self._core.agents.positions).pow(2).sum(-1).pow(.5)
         success = distances < .15
         reset = self._reset(success.all(-1))
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observe(),
             reward=success.sum(-1).float(),
             reset=reset,
             terminal=reset)
 
     def state(self, d=0):
-        return arrdict(
+        return arrdict.arrdict(
             **self._core.state(d),
             obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
@@ -97,7 +97,7 @@ class Waypoint:
     def decide(self, world):
         accel = self._mover._actionset.momenta
         actions = (world.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
-        return arrdict(actions=actions)
+        return arrdict.arrdict(actions=actions)
 
 class PointGoal:
 
@@ -110,12 +110,12 @@ class PointGoal:
         self._lengths = modules.RandomLengths(self._core, max_length)
         self._goals = RandomGoals(self._core)
 
-        self._spawns = arrdict(
+        self._spawns = arrdict.arrdict(
             angles=torch.zeros_like(self._core.agents.angles),
             positions=torch.zeros_like(self._core.agents.positions))
 
         self.action_space = self._mover.space
-        self.observation_space = arrdict(
+        self.observation_space = arrdict.arrdict(
             **self._rgbd.space,
             imu=self._imu.space,
             waypoint=spaces.MultiVector(self._core.n_agents, 2))
@@ -142,7 +142,7 @@ class PointGoal:
     def reset(self):
         reset = self._core.env_full(True)
         reset = self._reset(reset)
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observe(),
             reward=self._core.env_full(0.),
             reset=reset,
@@ -154,14 +154,14 @@ class PointGoal:
         distances = (self._goals.current - self._core.agents.positions).pow(2).sum(-1).pow(.5)
         success = distances < .15
         reset = self._reset(success.all(-1))
-        return arrdict(
+        return arrdict.arrdict(
             obs=self._observe(),
             reward=success.sum(-1).float(),
             reset=reset,
             terminal=reset)
 
     def state(self, d=0):
-        return arrdict(
+        return arrdict.arrdict(
             **self._core.state(d),
             obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
@@ -184,4 +184,4 @@ class PointGoal:
     def decide(self, world):
         accel = self._mover._actionset.momenta
         actions = (world.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
-        return arrdict(actions=actions)
+        return arrdict.arrdict(actions=actions)

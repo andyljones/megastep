@@ -1,24 +1,27 @@
+from multiprocessing import Value
 import numpy as np
 from functools import partialmethod
-from .dotdict import mapping, dotdict
+from . import dotdict
 try:
     import torch
     TORCH = True
 except ModuleNotFoundError:
     TORCH = False
 
-@mapping
+@dotdict.mapping
 def tensorify(a):
     a = np.asarray(a)
     if np.issubdtype(a.dtype, np.floating):
         dtype = torch.float
-    if np.issubdtype(a.dtype, np.integer):
+    elif np.issubdtype(a.dtype, np.integer):
         dtype = torch.int
-    if np.issubdtype(a.dtype, np.bool_):
+    elif np.issubdtype(a.dtype, np.bool_):
         dtype = torch.bool
+    else:
+        raise ValueError('Can\'t handle {a.dtype}')
     return torch.as_tensor(np.array(a), dtype=dtype)
 
-@mapping
+@dotdict.mapping
 def numpyify(tensors):
     if isinstance(tensors, tuple):
         return tuple(numpyify(t) for t in tensors)

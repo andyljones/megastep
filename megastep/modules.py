@@ -22,7 +22,7 @@ class SimpleMovement:
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
-        self._actionset = arrdict(
+        self._actionset = arrdict.arrdict(
             momenta=accel/core.fps*momenta,
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
@@ -43,7 +43,7 @@ class MomentumMovement:
         self._core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
-        self._actionset = arrdict(
+        self._actionset = arrdict.arrdict(
             momenta=accel/core.fps*momenta,
             angmomenta=ang_accel/core.fps*angmomenta
         ).to(core.device)
@@ -62,14 +62,14 @@ class MomentumMovement:
 def unpack(d):
     if isinstance(d, torch.Tensor):
         return d
-    return arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
+    return arrdict.arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
         
 class RGBD:
 
     def __init__(self, core, *args, n_agents=None, max_depth=10, **kwargs):
         n_agents = n_agents or core.n_agents
         self._core = core
-        self.space = arrdict(
+        self.space = arrdict.arrdict(
             rgb=spaces.MultiImage(n_agents, 3, 1, core.res),
             d=spaces.MultiImage(n_agents, 1, 1, core.res),)
         self._max_depth = max_depth
@@ -77,7 +77,7 @@ class RGBD:
     def render(self):
         core = self._core
         render = unpack(core.cuda.render(core.agents, core.scene))
-        render = arrdict({k: v.unsqueeze(2) for k, v in render.items()})
+        render = arrdict.arrdict({k: v.unsqueeze(2) for k, v in render.items()})
         render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return render
 
@@ -88,7 +88,7 @@ class RGBD:
     def __call__(self, render=None):
         render = self.render() if render is None else render
         depth = ((render.distances - self._core.agent_radius)/self._max_depth).clamp(0, 1)
-        self._last_obs = arrdict(
+        self._last_obs = arrdict.arrdict(
             rgb=self._downsample(render.screen),
             d=self._downsample(depth).unsqueeze(3))
         return self._last_obs
@@ -134,7 +134,7 @@ class RandomSpawns:
 
         positions = random_empty_positions(core, n_spawns)
         angles = core.random.uniform(-180, +180, (len(core.geometries), n_spawns, core.n_agents))
-        self._spawns = arrdict.tensorify(arrdict(positions=positions, angles=angles)).to(core.device)
+        self._spawns = arrdict.tensorify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
         core = self._core
@@ -160,4 +160,4 @@ class RandomLengths:
         return reset
 
     def state(self, d):
-        return arrdict(length=self._lengths[d], max_length=self._max_lengths[d]).clone()
+        return arrdict.arrdict(length=self._lengths[d], max_length=self._max_lengths[d]).clone()

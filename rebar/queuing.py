@@ -8,7 +8,7 @@ import asyncio
 from functools import wraps
 from torch import nn
 import logging
-from .dotdict import dotdict
+from . import dotdict
 
 log = logging.getLogger(__name__)
 
@@ -170,9 +170,9 @@ async def close(intakes, outputs, timeout=5):
 
 def create(x, serial=False):
     if isinstance(x, dict):
-        return dotdict({n: create(v, serial) for n, v in x.items()})
+        return dotdict.dotdict({n: create(v, serial) for n, v in x.items()})
     elif isinstance(x, (list, tuple)):
-        return dotdict({n: create(n, serial) for n in x})
+        return dotdict.dotdict({n: create(n, serial) for n in x})
     elif isinstance(x, str):
         return SerialQueue() if serial else MultiprocessQueue()
     raise ValueError(f'Can\'t handle {type(x)}')

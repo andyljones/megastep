@@ -30,7 +30,7 @@ class Agent(nn.Module):
             parts.ValueOutput(width))
 
     def forward(self, world, sample=False, value=False, test=False):
-        outputs = arrdict(
+        outputs = arrdict.arrdict(
             logits=self.policy(world.obs, reset=world.reset))
         if sample or test:
             outputs['actions'] = self.sampler(outputs.logits, test)
@@ -134,7 +134,7 @@ def run():
             state = recurrence.get(agent)
             for _ in range(buffer_size):
                 decision = agent(world[None], sample=True, value=True).squeeze(0).detach()
-                buffer.append(arrdict(
+                buffer.append(arrdict.arrdict(
                     world=world,
                     decision=decision))
                 buffer = buffer[-buffer_size:]

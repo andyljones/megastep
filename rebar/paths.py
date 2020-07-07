@@ -4,7 +4,7 @@ import shutil
 import multiprocessing as mp
 import pandas as pd
 import re
-from .dotdict import dotdict
+from . import dotdict
 
 ROOT = 'output/traces'
 
@@ -56,7 +56,7 @@ def glob(run_name, group, channel='', pattern='*'):
 def parse(path):
     parts = path.relative_to(ROOT).with_suffix('').parts
     procname, pid = re.match(r'^(.*)-(.*)$', parts[-1]).groups()
-    return dotdict(
+    return dotdict.dotdict(
         run_name=parts[0], 
         group=parts[1], 
         channel='/'.join(parts[2:-1]),
