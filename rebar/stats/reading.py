@@ -3,7 +3,7 @@ import torch
 from .. import numpy, paths, widgets, logging
 import re
 import numpy as np
-from ..arrdict import arrdict
+from .. import arrdict
 from . import categories
 import pandas as pd
 import threading

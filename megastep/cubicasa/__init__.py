@@ -113,7 +113,7 @@ def geometry_data(regenerate=False):
             p.write_bytes(gzip.compress(bs.getvalue()))
         else:
             #TODO: Shift this to Github 
-            url = ''
+            url = 'https://www.dropbox.com/s/3ohut8lvmr8lkwg/cubicasa-geometry.npz.gz?raw=1'
             p.write_bytes(download(url))
 
     # np.load is kinda slow. 

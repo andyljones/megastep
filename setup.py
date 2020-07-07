@@ -16,7 +16,8 @@ setup(
         'torch>=1.5',
         'torchvision>=0.6',
         'tqdm>=4',
-        'matplotlib>=3'],
+        'matplotlib>=3'
+        'ninja>=1.10'],
     extras_require={
         'cubicasa': [
             'beautifulsoup4>=4', 

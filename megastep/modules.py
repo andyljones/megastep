@@ -124,7 +124,7 @@ def random_empty_positions(core, n_points):
         # So repeat the sample until we've got enough
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
         sample = np.random.permutation(sample)
-        points.append(to_center_coords(sample, g.masks.shape, g.res))
+        points.append(to_center_coords(sample, g.masks.shape, g.res).transpose(1, 0, 2))
     return arrdict.stack(points)
         
 class RandomSpawns:
@@ -133,7 +133,7 @@ class RandomSpawns:
         self._core = core
 
         positions = random_empty_positions(core, n_spawns)
-        angles = core.random.uniform(-180, +180, (len(core.geometries), n_spawns, core.n_agents))
+        angles = core.random.uniform(-180, +180, (len(core.geometries), core.n_agents, n_spawns))
         self._spawns = arrdict.tensorify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
