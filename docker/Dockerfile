@@ -13,23 +13,14 @@ RUN curl -o ~/miniconda.sh -O https://repo.anaconda.com/miniconda/Miniconda3-lat
     rm ~/miniconda.sh 
 ENV PATH /opt/conda/bin:$PATH
 
-# Install the Python packages I usually use
-RUN conda install -y numpy pytorch torchvision -c pytorch
-RUN pip install \
-        # Core reqs
-        tqdm matplotlib beautifulsoup4 shapely rasterio \ 
-        # Docs
-        sphinx sphinx-rtd-theme
-
 WORKDIR /code
-
-# Demo image
-FROM build AS demo
 
 
 # Dev image
-FROM demo AS dev
+FROM build AS dev
 
+# Install the Python packages I usually use
+RUN conda install -y numpy pytorch torchvision -c pytorch
 RUN apt-get install -y --no-install-recommends \
         # Needed for sanity
         neovim gdb wget man-db tree silversearcher-ag build-essential \
@@ -46,8 +37,11 @@ RUN git config --global user.name "Andrew Jones" && \
 
 # Install the Python packages I usually use
 # Install Jupyter 7.5 because 7.6.1 has a bunch of lag with autoreload 
-RUN pip install pandas jupyter tqdm seaborn bokeh matplotlib setproctitle wurlitzer ipython==7.5 av flake8 \
-        beautifulsoup4 shapely rasterio gym rope gitpython \ 
+RUN pip install  \
+        # Core reqs
+        tqdm matplotlib beautifulsoup4 shapely rasterio \ 
+        # Things I find useful
+        pandas jupyter seaborn bokeh setproctitle wurlitzer ipython==7.5 av flake8 rope gitpython \ 
         # Docs
         sphinx sphinx-rtd-theme
 

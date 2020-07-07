@@ -1,5 +1,7 @@
 # megastep
 
+<span style="color:red">**This repo is still pre-release. It's public because it makes some bits of testing & distribution setup easier. If you come across it before this warning is removed, don't expect things to work**</span>
+
 **megastep** helps you build 1-million FPS reinforcement learning environments with a single consumer GPU.
 
 ## Examples
@@ -19,6 +21,16 @@ Quoted FPS are for a single RTX 2080 Ti and random actions:
 * A database of 5000 home layouts to explore
 * A minimal, modular library. Not a framework.
 * Extensive documentation, tutorials and explanations. 
+
+## Setup
+**This is a GPU-only package**. Assuming you have Pytorch >1.5 installed,
+```
+pip install megastep
+```
+or, for the full demo,
+```
+pip install megastep[demo]
+```
 
 ## Documentation
 * Tutorials
@@ -66,5 +78,7 @@ I consider megastep to be feature complete, but I'm happy to provide pointers an
 * **[Multiagent Particle Env](https://github.com/openai/multiagent-particle-envs)**
 
 ## Commands
-Build docs: `sphinx-build -b html docs docs/_build`
-Serve docs: `docker exec -it megastep python -m http.server --directory /code/docs/_build 9095`
+* Build docs: `sphinx-build -b html docs docs/_build`
+* Serve docs: `docker exec -it megastep python -m http.server --directory /code/docs/_build 9095`
+* Build build container: `ssh ajones@aj-server.local "docker build --target build -t onedee:build /home/ajones/code/onedee/docker"`
+* Run build container: `docker run -it --rm --name onedeebuild -v /home/ajones/code/onedee:/code onedee:build /bin/bash`

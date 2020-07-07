@@ -184,3 +184,4 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
                 decision=decision[d])))
     traces = arrdict.stack(traces)
     encoder.notebook()
+    return encoder
