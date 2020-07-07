@@ -20,7 +20,6 @@ WORKDIR /code
 FROM build AS dev
 
 # Install the Python packages I usually use
-RUN conda install -y numpy pytorch torchvision -c pytorch
 RUN apt-get install -y --no-install-recommends \
         # Needed for sanity
         neovim gdb wget man-db tree silversearcher-ag build-essential \
@@ -39,7 +38,7 @@ RUN git config --global user.name "Andrew Jones" && \
 # Install Jupyter 7.5 because 7.6.1 has a bunch of lag with autoreload 
 RUN pip install  \
         # Core reqs
-        tqdm matplotlib beautifulsoup4 shapely rasterio \ 
+        numpy torch torchvision tqdm matplotlib beautifulsoup4 shapely rasterio psutil ninja \ 
         # Things I find useful
         pandas jupyter seaborn bokeh setproctitle wurlitzer ipython==7.5 av flake8 rope gitpython \ 
         # Docs
@@ -78,6 +77,6 @@ RUN pip install jupyter_contrib_nbextensions && \
     jupyter nbextension enable autoscroll/main 
 
 # Set up the entrypoint script
-ADD run.sh /usr/bin/
+ADD dev.sh /usr/bin/
 
-ENTRYPOINT ["tini", "--", "run.sh"]
+ENTRYPOINT ["tini", "--", "dev.sh"]

@@ -173,14 +173,17 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
             pbar.update(1)
             if length is None and world.reset.any():
                 break
-            if (steps == length):
-                break
             state = env.state(d)
             encoder(arrdict.numpyify(arrdict.arrdict(**state, decision=decision)))
             traces.append(arrdict.numpyify(arrdict.arrdict(
                 state=state, 
                 world=world[d], 
                 decision=decision[d])))
+            if (steps == length):
+                break
     traces = arrdict.stack(traces)
     encoder.notebook()
     return encoder
+
+def test_demo():
+    demo(env=envfunc(1), agent=agentfunc(), length=1)

@@ -10,13 +10,13 @@ setup(
     author='Andy Jones',
     author_email='andyjones.ed@gmail.com',
     url='www.github.com/andyljones/megastep',
-    packages=find_packages(include=['megastep.*', 'rebar.*', 'cubicasa.*', 'demo.*']),
+    packages=find_packages(include=['megastep*', 'rebar*']),
     install_requires=[
         'numpy>=1.18',
         'torch>=1.5',
         'torchvision>=0.6',
         'tqdm>=4',
-        'matplotlib>=3'
+        'matplotlib>=3',
         'ninja>=1.10'],
     extras_require={
         'cubicasa': [
@@ -31,6 +31,8 @@ setup(
             'psutil>=5',
             'pandas>=1'],
         'docs': [
-            'sphinx>=3'
-        ]}
+            'sphinx>=3'],
+        'test': [
+            'pytest>=5']},
+    package_data={'megastep': ['src/*']}
       )
