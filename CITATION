@@ -1,0 +1,7 @@
+@software{megastep,
+  author = {{Andy L Jones}},
+  title = {megastep},
+  url = {https://www.github.com/andyljones/megastep},
+  version = {0.1},
+  date = {2020-07-07},
+}
