@@ -8,6 +8,9 @@ try:
 except ModuleNotFoundError:
     TORCH = False
 
+# For re-export
+from .dotdict import mapping, starmapping, leaves
+
 @dotdict.mapping
 def tensorify(a):
     a = np.asarray(a)
@@ -62,7 +65,7 @@ def leaves(t):
 
 def _arrdict_factory():
 
-    class _arrdict_base(dotdict):
+    class _arrdict_base(dotdict.dotdict):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)

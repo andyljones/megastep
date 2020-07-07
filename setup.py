@@ -25,7 +25,10 @@ setup(
             'pandas>=1'],
         'rebar': [
             'av>=8',
-            'bokeh>=2'],
+            'bokeh>=2',
+            'ipywidgets>=7',
+            'psutil>=5',
+            'pandas>=1'],
         'docs': [
             'sphinx>=3'
         ]}
