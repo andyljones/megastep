@@ -4,19 +4,18 @@ FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04 as build
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         # Needed for conda
-        curl ca-certificates bzip2 procps \ 
+        curl ca-certificates bzip2 procps  
 
 # Set up conda
 RUN curl -o ~/miniconda.sh -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     chmod +x ~/miniconda.sh && \
-    ~/miniconda.sh -b -p /opt/conda && \
-    rm ~/miniconda.sh && \
-    /opt/conda/bin/conda clean -ya
+    ~/miniconda.sh -b -p/opt/conda && \
+    rm ~/miniconda.sh 
 ENV PATH /opt/conda/bin:$PATH
 
 # Install the Python packages I usually use
 RUN conda install -y numpy pytorch torchvision -c pytorch
-RUN pip install 
+RUN pip install \
         # Core reqs
         tqdm matplotlib beautifulsoup4 shapely rasterio \ 
         # Docs

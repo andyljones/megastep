@@ -79,7 +79,7 @@ class Core:
         self.res = res
         self.supersample = supersample
         self.fov = fov
-        self.agent_radius = common.AGENT_RADIUS
+        self.agent_radius = AGENT_RADIUS
         self.fps = fps
         self.random = np.random.RandomState(1)
 
