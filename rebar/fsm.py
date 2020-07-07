@@ -1,10 +1,21 @@
 import numpy as np
 import torch
 from rebar import arrdict, dotdict
-from . import spaces
 import pandas as pd
 
 __all__ = ['dataframe']
+
+class MultiVector:
+
+    def __init__(self, n_agents, dim):
+        super().__init__()
+        self.shape = (n_agents, dim)
+
+class MultiDiscrete:
+
+    def __init__(self, n_agents, n_actions):
+        super().__init__()
+        self.shape = (n_agents, n_actions)
 
 def _dataframe(traj):
     if isinstance(traj, dict):
@@ -32,8 +43,8 @@ class FSM:
 
         self._token = torch.full((self.n_envs,), -1, dtype=torch.long, device=device)
 
-        self.observation_space = spaces.MultiVector(1, fsm.d_obs) if fsm.d_obs else spaces.MultiEmpty()
-        self.action_space = spaces.MultiDiscrete(1, fsm.n_actions)
+        self.observation_space = MultiVector(1, fsm.d_obs) if fsm.d_obs else spaces.MultiEmpty()
+        self.action_space = MultiDiscrete(1, fsm.n_actions)
 
     def _reset(self, reset):
         if reset.any():
