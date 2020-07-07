@@ -61,11 +61,6 @@ def _arrdict_factory():
 
     class _arrdict_base(dotdict):
 
-        stack = stack
-        cat = cat
-        tensorify = tensorify
-        numpyify = numpyify
-
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 

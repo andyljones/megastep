@@ -177,8 +177,8 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
             if (steps == length):
                 break
             state = env.state(d)
-            encoder(arrdict.numpyify(arrdict(**state, decision=decision)))
-            traces.append(arrdict.numpyify(arrdict(
+            encoder(arrdict.numpyify(arrdict.arrdict(**state, decision=decision)))
+            traces.append(arrdict.numpyify(arrdict.arrdict(
                 state=state, 
                 world=world[d], 
                 decision=decision[d])))
