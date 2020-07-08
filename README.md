@@ -5,7 +5,7 @@
 **megastep** helps you build 1-million FPS reinforcement learning environments with a single consumer GPU.
 
 ## Examples
-Quoted FPS are for a single RTX 2080 Ti and random actions:
+Quoted FPS are for a single RTX 2080 Ti and random actions; visualizations are with a 512-neuron LSTM:
 
 **[Deathmatch](megastep/demo/envs/deathmatch.py)**: 150 lines of Python, 1.2m FPS.
 
