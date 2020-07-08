@@ -52,6 +52,7 @@ def gamma_decode(x):
     return x**2.2
 
 def init_agents(cuda, n_envs, n_agents, device='cuda'):
+    """Creates and returns an Agents datastructure"""
     data = arrdict.arrdict(
             angles=torch.zeros((n_envs, n_agents)),
             positions=torch.zeros((n_envs, n_agents, 2)),
@@ -70,7 +71,11 @@ def select(x, d):
     return x.vals[s:e]
 
 class Core: 
-    """The core rendering and physics interface"""
+    """The core rendering and physics interface. 
+
+    To create the Core, you pass a collection of geometries.
+
+    """
 
     def __init__(self, geometries, n_agents=1, res=64, supersample=8, fov=130, fps=10):
         self.geometries = geometries 

@@ -1,3 +1,7 @@
+"""A collection of functions for building geometries. 
+
+A *geometry* is an arrdict
+"""
 import numpy as np
 import rasterio.features
 from shapely.ops import cascaded_union

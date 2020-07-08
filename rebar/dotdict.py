@@ -66,6 +66,62 @@ def leaves(t):
     return [t]
 
 class dotdict(OrderedDict):
+    """A dotdict is a dictionary with dot (attribute) access to its elements. 
+
+    You can access elements with either `[key]` or `.key` notation, but always assign new values with `d[key] = v` . 
+    This convention is entirely my taste, but it aligns well with the usual use-case of assigning values rarely and 
+    reading them regularly.
+
+    There are many dotdict implementations on the internet. This one is special because when you nest dotdicts 
+    inside themselves, they're printed prettily:
+
+    >>> dotdict(a=dotdict(b=1, c=2), d=3)
+    dotdict:
+    a    dotdict:
+        b    1
+        c    2
+    d    3
+
+    It's especially pretty when some of your elements are collections, possibly with shapes and dtypes:
+
+    >>> dotdict(a=np.array([1, 2]), b=torch.as_tensor([3., 4., 5.])) 
+    TODO: This
+
+    On top of the pretty-printing, this dotdict has a couple of methods for making `method-chaining
+    <https://tomaugspurger.github.io/method-chaining.html>`_ easier. Method chaining is nice because the computation
+    flows left-to-right, top-to-bottom. Setting up an example `d`,
+
+    >>> d = dotdict(a=dotdict(b=1, c=2), d=3)
+
+    then you can act on the entire datastructure
+
+    >>> d.pipe(list)                # Act on the entire datastructure
+    ['a', 'd']
+
+    or act on the leaves
+
+    >>> d.map(float)                # Act on the leaves
+    TODO: This
+
+    or combine it with another dotdict
+
+    >>> d.starmap(int.__add__, d)  
+    TODO: This
+
+    or, together
+
+    >>> (d
+            .map(float)
+            .starmap(float.__add__, d)
+            .pipe(list))
+    TODO: This
+
+    You generally use dotdict in places that _really_ you should use a `namedtuple`, except that forcing explicit types on
+    things would reduce your iteration velocity. Using a dictionary instead lets you keep things flexible. The
+    principal costs are that you lose type-safety, and your keys might clash with method names.
+    
+    TODO: Write a better tradeoff section.
+    """
     
     def __dir__(self):
         return sorted(set(super().__dir__() + list(self.keys())))
