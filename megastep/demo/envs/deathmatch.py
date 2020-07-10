@@ -33,7 +33,7 @@ class Deathmatch:
             imu=self._imu.space,
             health=spaces.MultiVector(1, 1))
 
-        self._bounds = arrdict.tensorify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
+        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
         self._health = self._core.agent_full(np.nan)
         self._damage = self._core.agent_full(np.nan)
 

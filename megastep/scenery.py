@@ -84,13 +84,13 @@ def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random):
             lights=arrdict.arrdict(vals=lights, widths=len(lights)),
             lines=arrdict.arrdict(vals=lines, widths=len(lines)),
             textures=arrdict.arrdict(vals=textures, widths=texwidths)))
-    data = arrdict.tensorify(arrdict.cat(data)).to(device)
+    data = arrdict.torchify(arrdict.cat(data)).to(device)
     
     scene = cuda.Scene(
         lights=cuda.Textures(**data['lights']),
         lines=cuda.Lines(**data['lines']),
         textures=cuda.Textures(**data['textures']),
-        frame=arrdict.tensorify(agent_frame()).to(device))
+        frame=arrdict.torchify(agent_frame()).to(device))
     cuda.bake(scene, n_agents)
 
     return scene

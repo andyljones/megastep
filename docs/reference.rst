@@ -1,15 +1,15 @@
 #################
-API Documentation
+Reference
 #################
 
 *******
 dotdict
 *******
-
 .. automodule:: rebar.dotdict
     :members: dotdict, mapping, starmapping, leaves
 
-
-
+*******
+arrdict
+*******
 .. automodule:: rebar.arrdict
-    :members:  
+    :members: arrdict, torchify, numpyify, stack, cat

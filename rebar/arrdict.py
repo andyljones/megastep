@@ -8,11 +8,16 @@ try:
 except ModuleNotFoundError:
     TORCH = False
 
-# For re-export
-from .dotdict import mapping, starmapping, leaves
-
 @dotdict.mapping
-def tensorify(a):
+def torchify(a):
+    """Converts an array or a dotdict of numpy arrays to CPU tensors.
+
+    If you'd like CUDA tensors, follow the tensor-ification ``.cuda()`` ; the attribute delegation
+    built into :func:`dotdict.dotdict` s will do the rest.
+    
+    Floats get mapped to 32-bit PyTorch floats; ints get mapped to 32-bit PyTorch ints. This is usually what you want in 
+    machine learning work.
+    """
     a = np.asarray(a)
     if np.issubdtype(a.dtype, np.floating):
         dtype = torch.float
@@ -26,6 +31,8 @@ def tensorify(a):
 
 @dotdict.mapping
 def numpyify(tensors):
+    """Converts an array or a dotdict of tensors to numpy arrays.
+    """
     if isinstance(tensors, tuple):
         return tuple(numpyify(t) for t in tensors)
     if isinstance(tensors, torch.Tensor):
@@ -57,11 +64,6 @@ def cat(x, *args, **kwargs):
     if np.isscalar(x[0]):
         return np.array(x)
     raise ValueError(f'Can\'t cat {type(x[0])}')
-
-def leaves(t):
-    if isinstance(t, dict):
-        return [l for v in t.values() for l in leaves(v)]
-    return [t]
 
 def _arrdict_factory():
 

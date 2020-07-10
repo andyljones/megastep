@@ -134,7 +134,7 @@ class RandomSpawns:
 
         positions = random_empty_positions(core, n_spawns)
         angles = core.random.uniform(-180, +180, (len(core.geometries), core.n_agents, n_spawns))
-        self._spawns = arrdict.tensorify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
+        self._spawns = arrdict.torchify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
         core = self._core
