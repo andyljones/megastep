@@ -42,7 +42,7 @@ RUN pip install  \
         # Things I find useful
         pandas jupyter seaborn bokeh setproctitle wurlitzer ipython==7.5 av flake8 rope gitpython \ 
         # Docs
-        sphinx sphinx-rtd-theme
+        sphinx
 
 # Copy the Jupyter config into place. 
 ADD .jupyter /root/.jupyter

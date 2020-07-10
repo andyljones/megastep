@@ -68,12 +68,73 @@ def leaves(t):
 class dotdict(OrderedDict):
     """A dotdict is a dictionary with dot (attribute) access to its elements. 
 
-    You can access elements with either `[key]` or `.key` notation, but always assign new values with `d[key] = v` . 
+    You can access elements with either ``d[k]`` or ``d.k`` notation, but always assign new values with `d[key] = v` . 
     This convention is entirely my taste, but it aligns well with the usual use-case of assigning values rarely and 
     reading them regularly.
 
-    There are many dotdict implementations on the internet. This one is special because when you nest dotdicts 
-    inside themselves, they're printed prettily:
+    As well as the dot access, there are some extra features for making a researcher's life easier.
+
+    **Delegated Attributes**
+
+    If you try to access an attribute that isn't a method of ``dict`` or a key in the dotdict, then the attribute will
+    instead be evaluated on every value in the dictionary. This means if you've got a dotdict full of CPU tensors, you
+    can send them all to the GPU with a single call:
+
+    >>> cpu_tensors = dotdict(
+    >>>     a=torch.tensor([1]), 
+    >>>     b=dotdict(
+    >>>         c=torch.tensor([2])))
+    >>> gpu_tensors = cpu_tensors.cuda()
+
+    Fair warning: be careful not to use keys in your dotdict that clash with the names of methods you're likely to
+    use.
+
+    **Method Chaining**
+
+    There are a couple of methods on the dotdict itself for making `method-chaining
+    <https://tomaugspurger.github.io/method-chaining.html>`_ easier. Method chaining is nice because the computation
+    flows left-to-right, top-to-bottom. Setting up an example `d`,
+
+    >>> d = dotdict(
+    >>>     a=dotdict(
+    >>>         b=1, 
+    >>>         c=2), 
+    >>>     d=3)
+
+    then you can act on the entire datastructure
+
+    >>> d.pipe(list)
+    ['a', 'd']
+
+    or act on the leaves
+
+    >>> d.map(float)
+    dotdict:
+    a    dotdict:
+        b    1.0
+        c    2.0
+    d    3.0
+
+    or combine it with another dotdict
+
+    >>> d.starmap(int.__add__, d)  
+    dotdict:
+    a    dotdict:
+        b    2
+        c    4
+    d    6
+
+    or, together
+
+    >>> (d
+            .map(float)
+            .starmap(float.__add__, d)
+            .pipe(list))
+    ['a', 'd']
+    
+    **Pretty-printing**
+
+    As you've likely noticed, when you nest dotdicts inside themselves then they're printed prettily:
 
     >>> dotdict(a=dotdict(b=1, c=2), d=3)
     dotdict:
@@ -84,40 +145,15 @@ class dotdict(OrderedDict):
 
     It's especially pretty when some of your elements are collections, possibly with shapes and dtypes:
 
-    >>> dotdict(a=np.array([1, 2]), b=torch.as_tensor([3., 4., 5.])) 
-    TODO: This
+    >>> dotdict(a=np.array([1, 2]), b=torch.as_tensor([[3., 4., 5.]])) 
+    dotdict:
+    a    ndarray((2,), int64)
+    b    Tensor((1, 3), torch.float32)
 
-    On top of the pretty-printing, this dotdict has a couple of methods for making `method-chaining
-    <https://tomaugspurger.github.io/method-chaining.html>`_ easier. Method chaining is nice because the computation
-    flows left-to-right, top-to-bottom. Setting up an example `d`,
+    **Use cases**
 
-    >>> d = dotdict(a=dotdict(b=1, c=2), d=3)
-
-    then you can act on the entire datastructure
-
-    >>> d.pipe(list)                # Act on the entire datastructure
-    ['a', 'd']
-
-    or act on the leaves
-
-    >>> d.map(float)                # Act on the leaves
-    TODO: This
-
-    or combine it with another dotdict
-
-    >>> d.starmap(int.__add__, d)  
-    TODO: This
-
-    or, together
-
-    >>> (d
-            .map(float)
-            .starmap(float.__add__, d)
-            .pipe(list))
-    TODO: This
-
-    You generally use dotdict in places that _really_ you should use a `namedtuple`, except that forcing explicit types on
-    things would reduce your iteration velocity. Using a dictionary instead lets you keep things flexible. The
+    You generally use dotdict in places that *really* you should use a `namedtuple`, except that forcing explicit types on
+    things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
     principal costs are that you lose type-safety, and your keys might clash with method names.
     
     TODO: Write a better tradeoff section.

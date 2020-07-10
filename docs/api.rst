@@ -2,6 +2,8 @@
 API Documentation
 #################
 
-.. automodule:: megastep.core
-    :members:
-    :undoc-members:
+.. automodule:: rebar.dotdict
+    :members: dotdict
+
+.. automodule:: rebar.arrdict
+    :members:  
