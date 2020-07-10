@@ -40,6 +40,24 @@ def treestr(t):
     return '\n'.join(s)
 
 def mapping(f):
+    """Wraps ``f`` so that when called on a dotdict, ``f`` instead gets called on the dotdict's values
+    and a dotdict of the results is returned. Extra ``*args`` and ``**kwargs`` passed to the wrapper are
+    passed as extra arguments to ``f`` .
+
+    >>> d = dotdict(a=1, b=2)
+    >>> m = mapping(int.__add__)
+    >>> m(d, 10)
+    dotdict:
+    a    11
+    b    12
+    
+    Works equally well on trees of dotdicts, where ``f`` will be applied to the leaves of the tree.
+
+    Can be used as a decorator.
+
+    See :func:`dotdict.map` for an object-oriented version of this function.
+    """
+
     @wraps(f)
     def g(x, *args, **kwargs):
         if isinstance(x, dict):
@@ -50,8 +68,24 @@ def mapping(f):
     return g
 
 def starmapping(f):
+    """Wraps ``f`` so that when called on a sequence of dotdicts, ``f`` instead gets called on the dotdict's values
+    and a dotdict of the results is returned.
+
+    >>> d = dotdict(a=1, b=2)
+    >>> m = starmapping(int.__add__)
+    >>> m(d, d)
+    dotdict:
+    a    2
+    b    4
+    
+    Works equally well on trees of dotdicts, where ``f`` will be applied to the leaves of the trees.
+
+    Can be used as a decorator.
+
+    See :func:`dotdict.starmap` for an object-oriented version of this function.
+    """
     @wraps(f)
-    def g(x, *args):
+    def g(x, *args, **kwargs):
         if isinstance(x, dict):
             return type(x)([(k, g(x[k], *(a[k] for a in args))) for k in x])
         if isinstance(f, str):
@@ -61,6 +95,7 @@ def starmapping(f):
     return g
 
 def leaves(t):
+    """Returns the leaves of a tree of dotdicts as a list"""
     if isinstance(t, dict):
         return [l for v in t.values() for l in leaves(v)]
     return [t]
@@ -155,8 +190,6 @@ class dotdict(OrderedDict):
     You generally use dotdict in places that *really* you should use a `namedtuple`, except that forcing explicit types on
     things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
     principal costs are that you lose type-safety, and your keys might clash with method names.
-    
-    TODO: Write a better tradeoff section.
     """
     
     def __dir__(self):
@@ -187,13 +220,44 @@ class dotdict(OrderedDict):
         self.update(state)
     
     def copy(self):
+        """Shallow-copy the dotdict"""
         return type(self)(super().copy()) 
     
     def pipe(self, f, *args, **kwargs):
+        """Returns ``f(self, *args, **kwargs)`` . 
+
+        >>> d = dotdict(a=1, b=2)
+        >>> d.pipe(list)
+        ['a', 'b']
+
+        Useful for method-chaining."""
         return f(self, *args, **kwargs)
 
-    def starmap(self, f, *args):
-        return starmapping(f)(self, *args)
-
     def map(self, f, *args, **kwargs):
+        """Applies ``f`` to the values of the dotdict, returning a matching dotdict of the results.
+        ``*args`` and  ``**kwargs`` are passed as extra arguments to each call.
+
+        >>> d = dotdict(a=1, b=2)
+        >>> d.map(int.__add__, 10)
+        dotdict:
+        a    11
+        b    12
+
+        Useful for method-chaining. Works equally well on trees of dotdicts.
+        
+        See :func:`mapping` for a functional version of this method."""
         return mapping(f)(self, *args, **kwargs)
+
+    def starmap(self, f, *args, **kwargs):
+        """Applies ``f`` to the values of the dotdicts one key at a time, returning a matching dotdict of the results.
+
+        >>> d = dotdict(a=1, b=2)
+        >>> d.starmap(int.__add__, d)
+        dotdict:
+        a    2
+        b    4
+
+        Useful for method-chaining. Works equally well on trees of dotdicts.
+        
+        See :func:`starmapping` for a functional version of this method."""
+        return starmapping(f)(self, *args, **kwargs)
