@@ -162,9 +162,9 @@ class dotdict(OrderedDict):
     or, together
 
     >>> (d
-            .map(float)
-            .starmap(float.__add__, d)
-            .pipe(list))
+    >>>     .map(float)
+    >>>     .starmap(float.__add__, d)
+    >>>     .pipe(list))
     ['a', 'd']
     
     **Pretty-printing**
