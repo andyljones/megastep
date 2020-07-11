@@ -99,7 +99,7 @@ def geometry(svg):
         masks=masks(walls, spaces),
         res=RES)
 
-def center_coords(indices, shape, res):
+def centers(indices, shape, res):
     """Converts mask (i, j) indices to the (x, y) coordinates of the ``ij`` th cell's center.
 
     Usually the ``shape`` and ``res`` arguments for this come directly from a geoemtry dotdict.

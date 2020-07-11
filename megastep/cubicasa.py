@@ -137,8 +137,10 @@ def sample(n_geometries, split='training', seed=1):
 
     The first time you call this function, it'll fetch and cache a ~10MB precomputed geometries file. This is far
     easier to work with than the full 5GB Cuibcasa5k dataset. If you want to recompute the geometries from scratch
-    however, import this module and try calling ``svg_data(regenerate=True)`` and then
-    ``geometry_data(regenerat=True)`` .
+    however, import this module and try calling :: 
+    
+        svg_data(regenerate=True) 
+        geometry_data(regenerate=True)
 
     **Parameters**
 

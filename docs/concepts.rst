@@ -169,10 +169,11 @@ masks
     
     The mask is aligned with its lower-left corner on (0, 0), and each cell is **res** wide and high. You can map
     between the (i, j) indices of the mask and the (x, y) coords of the walls and lights with
-    :func:`rebar.geometries.center_coords` and :func:`rebar.geometries.indices`
+    :func:`megastep.geometries.centers` and :func:`megastep.geometries.indices`
 
     The mask is ``-1`` in cells touching a wall, and otherwise ``0`` in free space or positive integer if the cell is
     in a room. Each room gets its own positive integer. 
 
 res
     A float giving the resolution of **masks** in meters.
+

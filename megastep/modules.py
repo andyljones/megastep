@@ -119,7 +119,7 @@ def random_empty_positions(core, n_points):
         # So repeat the sample until we've got enough
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
         sample = np.random.permutation(sample)
-        points.append(geometry.center_coords(sample, g.masks.shape, g.res).transpose(1, 0, 2))
+        points.append(geometry.centers(sample, g.masks.shape, g.res).transpose(1, 0, 2))
     return arrdict.stack(points)
         
 class RandomSpawns:
