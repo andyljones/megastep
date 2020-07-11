@@ -84,11 +84,12 @@ def safe_geometry(id, svg):
         log.info(f'Geometry generation failed on on #{id}')
 
 def fastload(raw):
-    """Most of the time in np.load is spent parsing the header, since
-    it could have a giant mess of record types in it. But we know here that it doesn't!
+    """Most of the time in np.load is spent parsing the header, since it could have a giant mess of record types in
+    it. But we know here that it doesn't! So we can do the parsing with direct slices into the byte array, and skip a
+    bunch of checks.
     
-    Can push x3 faster than this by writing a regex for the descr and shape, but 
-    that's going a bit too far
+    Can push x3 faster than this by writing a regex for the descr and shape, but that's optimizing a bit too hard for 
+    our purposes.
     
     Credit to @pag for pointing this out to me once upon a time"""
     headerlen = np.frombuffer(raw[8:9], dtype=np.uint8)[0]

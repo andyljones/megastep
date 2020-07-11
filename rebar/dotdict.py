@@ -101,98 +101,10 @@ def leaves(t):
     return [t]
 
 class dotdict(OrderedDict):
-    """A dotdict is a dictionary with dot (attribute) access to its elements. 
+    """dotdicts are dictionaries with additional support for attribute (dot) access of their elements.
+    dotdicts have a lot of unusual but extremely useful behaviours, which are documented in :ref:`the dotdicts
+    and arrdicts concept section <dotdicts>` .
 
-    You can access elements with either ``d[k]`` or ``d.k`` notation, but always assign new values with ``d[k] = v`` . 
-    This convention is entirely taste, but it aligns well with the usual use-case of assigning values rarely and 
-    reading them regularly.
-
-    As well as the dot access, there are some extra features for making a numerical researcher's life easier.
-
-    **Forwarded Attributes**
-
-    If you try to access an attribute that isn't a method of ``dict`` or a key in the dotdict, then the attribute access
-    instead be forwarded to every value in the dictionary. This means if you've got a dotdict full of CPU tensors, you
-    can send them all to the GPU with a single call:
-
-    >>> cpu_tensors = dotdict(
-    >>>     a=torch.tensor([1]), 
-    >>>     b=dotdict(
-    >>>         c=torch.tensor([2])))
-    >>> gpu_tensors = cpu_tensors.cuda()
-
-    What's happening here is that the ``.cuda`` access returns a dotdict full of ``.cuda`` attributes. Then the call
-    itself is forwarded to each tensor, and the results are collected and returned in a tree with the same keys.
-
-    Fair warning: be careful not to use keys in your dotdict that clash with the names of methods you're likely to
-    use.
-
-    **Method Chaining**
-
-    There are a couple of methods on the dotdict itself for making `method-chaining
-    <https://tomaugspurger.github.io/method-chaining.html>`_ easier. Method chaining is nice because the computation
-    flows left-to-right, top-to-bottom. Setting up an example `d`,
-
-    >>> d = dotdict(
-    >>>     a=dotdict(
-    >>>         b=1, 
-    >>>         c=2), 
-    >>>     d=3)
-
-    then you can act on the entire datastructure
-
-    >>> d.pipe(list)
-    ['a', 'd']
-
-    or act on the leaves
-
-    >>> d.map(float)
-    dotdict:
-    a    dotdict:
-        b    1.0
-        c    2.0
-    d    3.0
-
-    or combine it with another dotdict
-
-    >>> d.starmap(int.__add__, d)  
-    dotdict:
-    a    dotdict:
-        b    2
-        c    4
-    d    6
-
-    or, together
-
-    >>> (d
-    >>>     .map(float)
-    >>>     .starmap(float.__add__, d)
-    >>>     .pipe(list))
-    ['a', 'd']
-    
-    **Pretty-printing**
-
-    As you've likely noticed, when you nest dotdicts inside themselves then they're printed prettily:
-
-    >>> dotdict(a=dotdict(b=1, c=2), d=3)
-    dotdict:
-    a    dotdict:
-        b    1
-        c    2
-    d    3
-
-    It's especially pretty when some of your elements are collections, possibly with shapes and dtypes:
-
-    >>> dotdict(a=np.array([1, 2]), b=torch.as_tensor([[3., 4., 5.]])) 
-    dotdict:
-    a    ndarray((2,), int64)
-    b    Tensor((1, 3), torch.float32)
-
-    **Use cases**
-
-    You generally use dotdict in places that *really* you should use a `namedtuple`, except that forcing explicit types on
-    things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
-    principal costs are that you lose type-safety, and your keys might clash with method names.
     """
     
     def __dir__(self):

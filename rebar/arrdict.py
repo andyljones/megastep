@@ -100,30 +100,8 @@ def _arrdict_factory():
     class _arrdict_base(dotdict.dotdict):
         """An arrdict is an :class:`rebar.dotdict.dotdict` with extra support for array and tensor values.
 
-        **Indexing**
-
-        Indexing operations are forwarded to the values:
-
-        >>> d = arrdict(a=np.array([1, 2]), b=np.array([3, 4]))
-        >>> d[0].item()  # the .item() call is needed to get it to print nicely
-        arrdict:
-        a    1
-        b    3
-
-        All the kinds of indexing that the underlying arrays/tensors support is supported by arrdict.
-
-        **Binary operations**
-
-        You can combine two arrdicts in all the ways you'd combine the underlying items
-
-        >>> d = arrdict(a=1, b=2)
-        >>> d + d
-        arrdict:
-        a    2
-        b    4
-
-        It works equally well with Python scalars, arrays, and tensors, and pretty much every op you're
-        likely to use is covered. Call ``dir(arrdict)`` to get a list of the supported magics.
+        arrdicts have a lot of unusual but extremely useful behaviours, which are documented in :ref:`the dotdicts
+        and arrdicts concept section <dotdicts>` .
         """
 
         def __init__(self, *args, **kwargs):
