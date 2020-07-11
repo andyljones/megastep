@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import rasterio.features
 from shapely.ops import cascaded_union
@@ -126,4 +128,18 @@ def indices(coords, shape, res):
     j = (x/res).clip(0, shape[1]-1)
     return np.stack([i, j], -1).astype(int)
 
+def display(geometry):
+    """Visualize a geometry using matplotlib"""
+    fig, ax = plt.subplots()
 
+    height, width = geometry.res*np.array(geometry.masks.shape)
+    extent = (0, width, 0, height)
+    ax.imshow(geometry.masks, extent=extent, cmap='tab20')
+
+    lines = mpl.collections.LineCollection(geometry.walls, color='w', linewidth=2)
+    ax.add_collection(lines)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    ax.set_title(geometry.id)

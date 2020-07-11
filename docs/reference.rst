@@ -8,7 +8,7 @@ cubicasa
     :members: sample
 
 .. automodule:: megastep.geometry
-    :members: center_coords, indices
+    :members: center_coords, indices, display
 
 core
 ====
