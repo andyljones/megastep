@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from . import spaces
+from . import spaces, geometry
 
 def to_local_frame(angles, p):
     a = np.pi/180*angles
@@ -107,11 +107,6 @@ class IMU:
             self._core.agents.angmomenta[..., None]/360.,
             to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
 
-def to_center_coords(indices, shape, res):
-    i, j = indices[..., 0] + .5, indices[..., 1]
-    xy = res*np.stack([j, shape[0] - i], -1)
-    return xy
-
 def random_empty_positions(core, n_points):
     points = []
     for g in core.geometries:
@@ -124,7 +119,7 @@ def random_empty_positions(core, n_points):
         # So repeat the sample until we've got enough
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
         sample = np.random.permutation(sample)
-        points.append(to_center_coords(sample, g.masks.shape, g.res).transpose(1, 0, 2))
+        points.append(geometry.center_coords(sample, g.masks.shape, g.res).transpose(1, 0, 2))
     return arrdict.stack(points)
         
 class RandomSpawns:

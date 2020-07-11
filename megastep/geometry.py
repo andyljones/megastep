@@ -1,7 +1,3 @@
-"""A collection of functions for building geometries. 
-
-A *geometry* is an arrdict
-"""
 import numpy as np
 import rasterio.features
 from shapely.ops import cascaded_union
@@ -100,3 +96,34 @@ def geometry(svg):
         lights=centroids(spaces),
         masks=masks(walls, spaces),
         res=RES)
+
+def center_coords(indices, shape, res):
+    """Converts mask (i, j) indices to the (x, y) coordinates of the ``ij`` th cell's center.
+
+    Usually the ``shape`` and ``res`` arguments for this come directly from a geoemtry dotdict.
+    
+    :param indices: A (..., 2) array of indices into a masking array.
+    :param shape: A tuple-like giving the height and width of the masking array.
+    :param res: The resolution of the masking array.
+    :return: A (..., 2) array of (x, y) coordinates
+    """
+    i, j = indices[..., 0] + .5, indices[..., 1] + .5
+    xy = res*np.stack([j, shape[0] - i], -1)
+    return xy
+
+def indices(coords, shape, res):
+    """Converts (x, y) coordinates to the (i, j) indices of the containing cell.
+    
+    Usually the ``shape`` and ``res`` arguments for this come directly from a geoemtry dotdict.
+    
+    :param indices: A (..., 2) array of (x, y) coordinates.
+    :param shape: A tuple-like giving the height and width of the masking array.
+    :param res: The resolution of the masking array.
+    :return: A (..., 2) array of integer (i, j) indices.
+    """
+    x, y = coords[..., 0], coords[..., 1]
+    i = (shape[0] - y/res).clip(0, shape[0]-1)
+    j = (x/res).clip(0, shape[1]-1)
+    return np.stack([i, j], -1).astype(int)
+
+

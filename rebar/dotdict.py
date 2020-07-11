@@ -103,16 +103,16 @@ def leaves(t):
 class dotdict(OrderedDict):
     """A dotdict is a dictionary with dot (attribute) access to its elements. 
 
-    You can access elements with either ``d[k]`` or ``d.k`` notation, but always assign new values with `d[key] = v` . 
-    This convention is entirely my taste, but it aligns well with the usual use-case of assigning values rarely and 
+    You can access elements with either ``d[k]`` or ``d.k`` notation, but always assign new values with ``d[k] = v`` . 
+    This convention is entirely taste, but it aligns well with the usual use-case of assigning values rarely and 
     reading them regularly.
 
-    As well as the dot access, there are some extra features for making a researcher's life easier.
+    As well as the dot access, there are some extra features for making a numerical researcher's life easier.
 
-    **Delegated Attributes**
+    **Forwarded Attributes**
 
-    If you try to access an attribute that isn't a method of ``dict`` or a key in the dotdict, then the attribute will
-    instead be evaluated on every value in the dictionary. This means if you've got a dotdict full of CPU tensors, you
+    If you try to access an attribute that isn't a method of ``dict`` or a key in the dotdict, then the attribute access
+    instead be forwarded to every value in the dictionary. This means if you've got a dotdict full of CPU tensors, you
     can send them all to the GPU with a single call:
 
     >>> cpu_tensors = dotdict(
@@ -120,6 +120,9 @@ class dotdict(OrderedDict):
     >>>     b=dotdict(
     >>>         c=torch.tensor([2])))
     >>> gpu_tensors = cpu_tensors.cuda()
+
+    What's happening here is that the ``.cuda`` access returns a dotdict full of ``.cuda`` attributes. Then the call
+    itself is forwarded to each tensor, and the results are collected and returned in a tree with the same keys.
 
     Fair warning: be careful not to use keys in your dotdict that clash with the names of methods you're likely to
     use.
