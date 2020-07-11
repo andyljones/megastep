@@ -12,3 +12,4 @@ docs/_templates
 *.egg-info
 build 
 dist
+.env

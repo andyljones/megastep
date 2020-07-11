@@ -124,39 +124,11 @@ def geometry_data(regenerate=False):
 
 _cache = None
 def sample(n_geometries, split='training', seed=1):
-    """Returns a random sample of cubicasa geometries. 
+    """Returns a random sample of cubicasa :ref:`geometries <geometry>`. 
 
     If you pass the same arguments, you'll get the same sample every time.
 
     There are 4,992 unique geometries, split into a 4,492-geometry training set and a 500-geometry test set.
-
-    **Geometries**
-
-    Each returned geometry is a :class:`rebar.dotdict.dotdict` with attributes
-
-    id
-        An integer uniquely identifying this geometry
-    
-    walls
-        An (M, 2, 2)-array of endpoints of the walls of the geometry, given as (x, y) coordinates in units of meters.
-    
-    lights
-        An (N, 2)-array of the locations of the lights in the geometry, again given as (x, y) coordinates
-
-    masks
-        An (H, W) masking array describing the rooms and free space in the geometry. 
-        
-        The mask is aligned with its lower-left corner on (0, 0), and each cell is **res** wide and high. 
-        You can map between (i, j) array indices and (x, y) coords with :func:`rebar.geometries.center_coords` and
-        :func:`rebar.geometries.indices`
-
-        The mask is ``-1`` in cells occupied by a wall, ``0`` in free space, and a positive integer if 
-        the cell is in a room. Each room gets its own positive integer.
-
-    res
-        A float giving the resolution of **masks** in meters.
-
-    TODO: Add a visualization of a geometry
 
     **Caching**
 

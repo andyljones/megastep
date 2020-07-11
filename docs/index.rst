@@ -7,4 +7,5 @@ megastep
 .. toctree::
     :maxdepth: 3
     
+    concepts
     reference
