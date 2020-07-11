@@ -8,15 +8,29 @@ There are some ideas that are referenced in many places in this documentation.
 
 dotdicts and arrdicts
 =====================
-dotdicts and arrdicts are used in many places in megastep in preference to custom classes. There are several serious
-issues with giving up on static typing, but in a research workflow I believe the benefits outweigh those costs.
-
-As for definitions:
+dotdicts and arrdicts are used in many places in megastep in preference to custom classes. 
  * A :class:`rebar.dotdict.dotdict` is a dictionary with dot (attribute) access to its elements and a bunch of useful behaviours.
  * A :class:`rebar.arrdict.arrdict` does everything a dotdict does, but with extra support for array/tensor elements.
 
+There are several serious issues with giving up on static typing, but in a research workflow I believe the benefits
+outweigh those costs.
+
 Everything below applies to both dotdicts and arrdicts, except for the indexing and binary operation support. Those are 
 implemented on arrdicts alone, as they don't make much sense for general elements.
+
+Here're some example dotdicts that'll get exercised in the examples below
+
+>>> objs = dotdict(
+>>>     a=dotdict(
+>>>         b=1, 
+>>>         c=2), 
+>>>     d=3)
+>>> 
+>>> tensors = arrdict(
+>>>     a=torch.tensor([1]), 
+>>>     b=arrdict(
+>>>         c=torch.tensor([2])))
+
 
 Attribute access
 ----------------
@@ -33,10 +47,6 @@ If you try to access an attribute that isn't a method of ``dict`` or a key in th
 instead be forwarded to every value in the dictionary. This means if you've got a dotdict full of CPU tensors, you
 can send them all to the GPU with a single call:
 
->>> cpu_tensors = dotdict(
->>>     a=torch.tensor([1]), 
->>>     b=dotdict(
->>>         c=torch.tensor([2])))
 >>> gpu_tensors = cpu_tensors.cuda()
 
 What's happening here is that the ``.cuda`` access returns a dotdict full of ``.cuda`` attributes. Then the call
@@ -49,40 +59,32 @@ Method Chaining
 ---------------
 There are a couple of methods on the dotdict itself for making `method-chaining
 <https://tomaugspurger.github.io/method-chaining.html>`_ easier. Method chaining is nice because the computation
-flows left-to-right, top-to-bottom. Setting up an example `d`,
+flows left-to-right, top-to-bottom. For example, with :func:`pipe` you can act on the entire datastructure
 
->>> d = dotdict(
->>>     a=dotdict(
->>>         b=1, 
->>>         c=2), 
->>>     d=3)
-
-then you can act on the entire datastructure
-
->>> d.pipe(list)
+>>> objs.pipe(list)
 ['a', 'd']
 
-or act on the leaves
+or with :func:`map` you can act on the leaves
 
->>> d.map(float)
+>>> objs.map(float)
 dotdict:
 a    dotdict:
     b    1.0
     c    2.0
 d    3.0
 
-or combine it with another dotdict
+or with :func:`starmap` you can combine it with another dotdict
 
->>> d.starmap(int.__add__, d)  
+>>> objs.starmap(int.__add__, objs)  
 dotdict:
 a    dotdict:
     b    2
     c    4
 d    6
 
-or, together
+or you can do all these things in sequence
 
->>> (d
+>>> (objs
 >>>     .map(float)
 >>>     .starmap(float.__add__, d)
 >>>     .pipe(list))
@@ -92,7 +94,7 @@ Pretty-printing
 ---------------
 As you've likely noticed, when you nest dotdicts inside themselves then they're printed prettily:
 
->>> dotdict(a=dotdict(b=1, c=2), d=3)
+>>> objs
 dotdict:
 a    dotdict:
     b    1
@@ -101,21 +103,27 @@ d    3
 
 It's especially pretty when some of your elements are collections, possibly with shapes and dtypes:
 
->>> dotdict(a=np.array([1, 2]), b=torch.as_tensor([[3., 4., 5.]])) 
-dotdict:
-a    ndarray((2,), int64)
-b    Tensor((1, 3), torch.float32)
+>>> tensors
+arrdict:
+a    Tensor((1,), torch.int64)
+b    arrdict:
+     c    Tensor((1,), torch.int64)
 
 
 Indexing
 --------
 Indexing is exclusive to arrdicts. On arrdicts, indexing operations are forwarded to the values:
 
->>> d = arrdict(a=np.array([1, 2]), b=np.array([3, 4]))
->>> d[0].item()  # the .item() call is needed to get it to print nicely
+>>> tensors[0]
+arrdict:
+a    Tensor((), torch.int64)
+b    arrdict:
+     c    Tensor((), torch.int64)
+>>> tensors[0].item()  # the .item() call is needed to get it to print nicely
 arrdict:
 a    1
-b    3
+b    arrdict:
+     c    2
 
 All the kinds of indexing that the underlying arrays/tensors support is supported by arrdict.
 
@@ -125,14 +133,19 @@ Binary operations
 Binary operation support is also exclusive to arrdicts. You can combine two arrdicts in all the ways you'd combine
 the underlying items
 
->>> d = arrdict(a=1, b=2)
->>> d + d
+>>> tensors + tensors
+arrdict:
+a    Tensor((1,), torch.int64)
+b    arrdict:
+     c    Tensor((1,), torch.int64)
+>>> (tensors + tensors)[0].item() # the [0].item() call is needed to get it to print nicely
 arrdict:
 a    2
-b    4
+b    arrdict:
+     c    4
 
-It works equally well with Python scalars, arrays, and tensors, and pretty much every op you're
-likely to use is covered. Call ``dir(arrdict)`` to get a list of the supported magics.
+It works equally well with Python scalars, arrays, and tensors, and pretty much every binary op you're likely to use
+is covered. Call ``dir(arrdict)`` to get a list of the supported magics.
 
 Use cases
 ---------
