@@ -1,8 +1,8 @@
 import numpy as np
-from . import scenery, cuda
+from . import scenery, cuda, ragged
 import torch
 import logging
-from rebar import arrdict, dotdict, ragged
+from rebar import arrdict, dotdict
 
 log = logging.getLogger(__name__)
 

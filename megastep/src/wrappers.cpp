@@ -9,10 +9,6 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 using namespace std::string_literals;
 
-// template<typename T, size_t D>
-
-// }
-
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 /// Proxy for converting the Tensor of `progress` into a TensorProxy
@@ -25,9 +21,6 @@ void ragged(py::module &m, std::string name) {
     py::class_<T>(m, name.c_str(), py::module_local())
         .def(py::init<TT, TT>(), 
             "vals"_a, "widths"_a)
-        .def("__getitem__", [](T self, size_t n) { return self[n]; })
-        .def("__getitem__", [](T self, py::slice slice) { return self[slice]; })
-        .def("clone", &T::clone)
         .def_readonly("vals", &T::vals)
         .def_readonly("widths", &T::widths)
         .def_readonly("starts", &T::starts)
@@ -69,10 +62,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::options options;
     options.disable_function_signatures();
 
-    // 'Lights' and 'Frame' are missing as PyBind'll only let me bind each type once
-    ragged<Textures>(m, "Textures");
-    ragged<Lines>(m, "Lines");
-    ragged<Baked>(m, "Baked");
+    // PyBind won't bind two aliases of the same type, so rather than bind one of Lights or Textures, 
+    // instead a generic alias gets bound for each dimension.
+    ragged<Ragged<float, 1>>(m, "Ragged1D");
+    ragged<Ragged<float, 2>>(m, "Ragged2D");
+    ragged<Ragged<float, 3>>(m, "Ragged3D");
 
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 

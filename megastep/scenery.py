@@ -1,7 +1,7 @@
 import matplotlib as mpl
 import numpy as np
 import torch
-from . import core
+from . import core, ragged
 from rebar import arrdict
 
 # Ten bland colors from https://medialab.github.io/iwanthue/
@@ -86,12 +86,14 @@ def init_scene(geometries, n_agents, device='cuda', random=np.random):
             textures=arrdict.arrdict(vals=textures, widths=texwidths)))
     data = arrdict.torchify(arrdict.cat(data)).to(device)
     
+    lights = ragged.Ragged(**data['lights'])
     scene = core.cuda.Scene(
-        lights=core.cuda.Textures(**data['lights']),
-        lines=core.cuda.Lines(**data['lines']),
-        textures=core.cuda.Textures(**data['textures']),
+        lights=lights,
+        lines=ragged.Ragged(**data['lines']),
+        textures=ragged.Ragged(**data['textures']),
         frame=arrdict.torchify(agent_frame()).to(device))
     core.cuda.bake(scene, n_agents)
+    import aljpy; aljpy.extract()
 
     return scene
 
