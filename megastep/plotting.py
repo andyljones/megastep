@@ -51,24 +51,24 @@ def n_agent_texels(state):
 def line_arrays(state):
     scene = state.scene
 
-    starts = scene.widths.cumsum() - scene.widths
-    tex_starts = np.zeros(len(scene.textures), dtype=int)
+    starts = scene.textures.starts
+    tex_starts = np.zeros(len(scene.textures.vals), dtype=int)
     tex_starts[starts] = 1
     tex_starts = tex_starts.cumsum() - 1
     tex_offsets = np.arange(len(tex_starts)) - starts[tex_starts]
 
-    seg_starts = tex_offsets/scene.widths[tex_starts]
+    seg_starts = tex_offsets/scene.textures.widths[tex_starts]
     seg_starts = scene.lines[tex_starts, 0]*(1 - seg_starts[:, None]) + scene.lines[tex_starts, 1]*seg_starts[:, None]
 
-    seg_ends = (tex_offsets+1)/scene.widths[tex_starts]
+    seg_ends = (tex_offsets+1)/scene.textures.widths[tex_starts]
     seg_ends = scene.lines[tex_starts, 0]*(1 - seg_ends[:, None]) + scene.lines[tex_starts, 1]*seg_ends[:, None]
 
     lines = np.stack([seg_starts, seg_ends]).transpose(1, 0, 2)
 
-    baked = scene.baked.copy()
+    baked = scene.baked.vals.copy()
     baked[:n_agent_texels(state)] = 1.
 
-    colors = core.gamma_encode(scene.textures*baked[:, None])
+    colors = core.gamma_encode(scene.textures.vals*baked[:, None])
     return lines, colors
 
 def plot_lights(diagram, state):

@@ -18,6 +18,9 @@ def torchify(a):
     Floats get mapped to 32-bit PyTorch floats; ints get mapped to 32-bit PyTorch ints. This is usually what you want in 
     machine learning work.
     """
+    if hasattr(a, 'torchify'):
+        return a.torchify()
+
     a = np.asarray(a)
     if np.issubdtype(a.dtype, np.floating):
         dtype = torch.float
@@ -26,7 +29,7 @@ def torchify(a):
     elif np.issubdtype(a.dtype, np.bool_):
         dtype = torch.bool
     else:
-        raise ValueError('Can\'t handle {a.dtype}')
+        raise ValueError(f'Can\'t handle {type(a)}')
     return torch.as_tensor(np.array(a), dtype=dtype)
 
 @dotdict.mapping
@@ -37,6 +40,8 @@ def numpyify(tensors):
         return tuple(numpyify(t) for t in tensors)
     if isinstance(tensors, torch.Tensor):
         return tensors.clone().detach().cpu().numpy()
+    if hasattr(tensors, 'numpyify'):
+        return tensors.numpyify()
     return tensors
 
 def stack(x, *args, **kwargs):

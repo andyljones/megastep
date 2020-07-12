@@ -142,6 +142,8 @@ struct Ragged {
     }
 
     size_t size(const size_t i) const { return vals.size(i); }
+
+    Ragged<T, D> clone() const { return Ragged<T, D>(vals.clone(), widths.clone()); }
 };
 
 using Angles = TensorProxy<float, 2>;

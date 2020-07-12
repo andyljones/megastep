@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import numbers
+from rebar import arrdict
 
 class RaggedNumpy:
 
@@ -25,6 +26,11 @@ class RaggedNumpy:
                 self.widths[start:end])
         raise ValueError(f'Can\'t handle index "{x}"')
 
+    def torchify(self):
+        return RaggedTorch(
+            arrdict.torchify(self.vals),
+            arrdict.torchify(self.widths))
+
 class RaggedTorch:
 
     def __init__(self, vals, widths):
@@ -47,6 +53,11 @@ class RaggedTorch:
                 self.vals[self.starts[start]:self.ends[end-1]],
                 self.widths[start:end])
         raise ValueError(f'Can\'t handle index "{x}"')
+
+    def numpyify(self):
+        return RaggedNumpy(
+                arrdict.numpyify(self.vals), 
+                arrdict.numpyify(self.widths))
 
 def Ragged(vals, widths):
     if isinstance(vals, np.ndarray):
