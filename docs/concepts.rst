@@ -190,3 +190,5 @@ masks
 res
     A float giving the resolution of **masks** in meters.
 
+Raggeds
+=======

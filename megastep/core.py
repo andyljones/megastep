@@ -60,25 +60,35 @@ def init_agents(cuda, n_envs, n_agents, device='cuda'):
             momenta=torch.zeros((n_envs, n_agents, 2)))
     return cuda.Agents(**data.to(device))
 
-def select(x, d):
-    if isinstance(x, dict):
-        return x.__class__({k: select(v, d) for k, v in x.items()})
-    if isinstance(x, torch.Tensor):
-        return x[d]
-    # Else it's a Ragged
-    s = x.starts[d]
-    e = s+x.widths[d]
-    return x.vals[s:e]
-
 class Core: 
     """The core rendering and physics interface. 
 
-    To create the Core, you pass a collection of geometries.
+    To create the Core, you pass a collection of :ref:`geometries <geometry>` that describe the
+    static environment. Once created, the tensors hanging off of the Core give the state of the world,
+    and that state can be advanced with the functions hanging off of ``.cuda`` .
 
+    :param geometries: A list-like of :ref:`geometries <geometry>` that describe each static environment.
+    :param n_agents: the number of agents to put in each environment. Defaults to 1.
+    :type n_agents: int
+    :param res: The horizontal resolution of the observations. The resolution times the supersampling factor must be
+        less than 1024, as that's the `maximum number of CUDA threads in a block
+        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64 pixels.
+    :type res: int
+    :param supersample: The multiplier at which to render the observations. A higher value gives better antialiasing,
+        but makes for a slower simulation. The resolution times the supersampling factor must be less than 1024, as
+        that's the `maximum number of CUDA threads in a block
+        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64 pixels.
+        Defaults to 8.
+    :type supersample: int
+    :param fov: The field of view in degrees. Defaults to 130°.
+    :type fov float:
+    :param fps: The simulation frame rate/step rate. Defaults to 10. 
+    :type fps: int
+    
     """
 
     def __init__(self, geometries, n_agents=1, res=64, supersample=8, fov=130, fps=10):
-        self.geometries = geometries 
+        self.geometries = list(geometries)
         self.n_envs = len(geometries)
         self.n_agents = n_agents
         self.res = res
@@ -97,16 +107,9 @@ class Core:
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
         self.progress = torch.ones((self.n_envs, self.n_agents), device=self.device)
 
-        super().__init__()
-
     def state(self, d):
         scene = self.scene
-        lines_s = scene.lines.starts[d]
-        lines_e = scene.lines.starts[d]+scene.lines.widths[d]
-        textures_s = scene.textures.starts[lines_s]
-        textures_e = scene.textures.starts[lines_e-1] + scene.textures.widths[lines_e-1]
-        textures = scene.textures.vals[textures_s:textures_e]
-        baked = scene.baked.vals[textures_s:textures_e]
+        sd, ed = scene.lines.starts[d], scene.lines.ends[d]
 
         options = ('n_envs', 'n_agents', 'res', 'supersample', 'fov', 'agent_radius', 'fps')
         options = {k: getattr(self, k) for k in options}
@@ -115,29 +118,28 @@ class Core:
                     **options,
                     scene=arrdict.arrdict(
                             frame=self.scene.frame,
-                            lines=select(self.scene.lines, d),
-                            lights=select(self.scene.lights, d),
-                            start=textures_s,
-                            widths=scene.textures.widths[lines_s:lines_e],
-                            textures=textures,
-                            baked=baked).clone(),
+                            lines=self.scene.lines[d],
+                            lights=self.scene.lights[d],
+                            #TODO: Fix up ragged so this works
+                            textures=self.scene.textures[sd:ed],
+                            baked=self.scene.baked[sd:ed]).clone(),
                     agents=arrdict.arrdict(
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),
                     progress=self.progress[d].clone())
 
     def env_full(self, x):
-        """Returns a (n_env,) tensor on the device full of `obj`.
-        
-        This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
+        """Returns a (n_envs,)-tensor on the environment's device full of `x`.
+
+        This isn't strictly required by the Core, but you find yourself making these vectors so often it's useful sugar.
         """
         dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
         return torch.full((self.n_envs,), x, device=self.device, dtype=dtypes[type(x)])
 
     def agent_full(self, x):
-        """Returns a (n_env,) tensor on the device full of `obj`.
+        """Returns a (n_envs, n_agents)-tensor on the environment's device full of `x`.
         
-        This isn't strictly necessary, but you find yourself making these vectors so often it's useful sugar
+        This isn't strictly required by the Core, but you find yourself making these vectors so often it's useful sugar.
         """
         dtypes = {bool: torch.bool, int: torch.int32, float: torch.float32}
         return torch.full((self.n_envs, self.n_agents), x, device=self.device, dtype=dtypes[type(x)])

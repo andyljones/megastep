@@ -18,7 +18,7 @@ toys
 core
 ====
 .. automodule:: megastep.core
-    :members:
+    :members: Core,cuda , gamma_encode, gamma_decode
 
 rebar
 =====
