@@ -27,7 +27,6 @@ void ragged(py::module &m, std::string name) {
             "vals"_a, "widths"_a)
         .def("__getitem__", [](T self, size_t n) { return self[n]; })
         .def("__getitem__", [](T self, py::slice slice) { return self[slice]; })
-        .def("clone", &T::clone)
         .def_readonly("vals", &T::vals)
         .def_readonly("widths", &T::widths)
         .def_readonly("starts", &T::starts)
