@@ -2,7 +2,9 @@
 #include <variant>
 #include <exception>
 #include <iostream>
+#include <pybind11/pybind11.h>
 
+namespace py = pybind11;
 using TT = at::Tensor;
 
 #define CHECK_CUDA(x) AT_ASSERTM(x.is_cuda(), #x " must be a CUDA tensor")
@@ -100,6 +102,7 @@ struct Ragged {
     const TT vals;
     const TT widths;
     const TT starts;
+    const TT ends;
     const TT inverse;
 
     using PTA = RaggedPackedTensorAccessor<T, D>;
@@ -107,6 +110,7 @@ struct Ragged {
     Ragged(TT vals, TT widths) : 
         vals(vals), widths(widths), 
         starts(widths.cumsum(0).toType(at::kInt) - widths),
+        ends(widths.cumsum(0).toType(at::kInt)),
         inverse(inverses(widths)) { 
         
         CHECK_INPUT(vals);
@@ -123,7 +127,23 @@ struct Ragged {
 
     PTA pta() const { return PTA(vals, widths, starts, inverse); }
 
+    TT operator[](const int n) const {
+        return vals.slice(0, starts[n].item<int64_t>(), ends[n].item<int64_t>());
+    }
+
+    Ragged<T, D> operator[](const py::slice slice) const {
+        py::size_t start, stop, step, slicelength;
+        if (!slice.compute(static_cast<py::size_t>(widths.size(0)), &start, &stop, &step, &slicelength)) {
+            throw py::error_already_set();
+        }
+        return Ragged<T, D>(
+            vals.slice(0, starts[start].item<int64_t>(), ends[stop-1].item<int64_t>()),
+            widths.slice(0, start, stop));
+    }
+
     size_t size(const size_t i) const { return vals.size(i); }
+
+    Ragged<T, D> clone() const { return Ragged<T, D>(vals.clone(), widths.clone()); }
 };
 
 using Angles = TensorProxy<float, 2>;

@@ -2,10 +2,16 @@
 #include <torch/csrc/autograd/variable.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/operators.h>
 #include "common.h"
+
 namespace py = pybind11;
 using namespace pybind11::literals;
 using namespace std::string_literals;
+
+// template<typename T, size_t D>
+
+// }
 
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
@@ -19,9 +25,13 @@ void ragged(py::module &m, std::string name) {
     py::class_<T>(m, name.c_str(), py::module_local())
         .def(py::init<TT, TT>(), 
             "vals"_a, "widths"_a)
+        .def("__getitem__", [](T self, size_t n) { return self[n]; })
+        .def("__getitem__", [](T self, py::slice slice) { return self[slice]; })
+        .def("clone", &T::clone)
         .def_readonly("vals", &T::vals)
         .def_readonly("widths", &T::widths)
         .def_readonly("starts", &T::starts)
+        .def_readonly("ends", &T::ends)
         .def_property_readonly("inverse", [](T r) { return variable(r.inverse); });
 }
 
@@ -59,10 +69,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::options options;
     options.disable_function_signatures();
 
+    // 'Lights' and 'Frame' are missing as PyBind'll only let me bind each type once
     ragged<Textures>(m, "Textures");
     ragged<Lines>(m, "Lines");
     ragged<Baked>(m, "Baked");
-    ragged<Lights>(m, "Lights"); // Forbidden as replicates Textures
 
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 

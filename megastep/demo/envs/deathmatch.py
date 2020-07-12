@@ -1,6 +1,5 @@
 import torch
 from megastep import modules, core, plotting, spaces
-from rebar.arrdict import mapping
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,12 +7,12 @@ import matplotlib as mpl
 
 CLEARANCE = 1.
 
-@mapping
+@dotdict.mapping
 def expand(x):
     B, A = x.shape[:2]
     return x.reshape(B*A, 1, *x.shape[2:])
 
-@mapping
+@dotdict.mapping
 def collapse(x, n_agents):
     B = x.shape[0]
     return x.reshape(B//n_agents, n_agents, *x.shape[2:])

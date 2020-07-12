@@ -169,6 +169,5 @@ def sample(n_geometries, split='training', seed=1):
         order = order
     else:
         raise ValueError('Split must be train/test/all')
-    print(len(order))
 
     return [_cache[order[i % len(order)]] for i in range(n_geometries)]
