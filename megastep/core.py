@@ -42,6 +42,8 @@ def cuda():
             f'-lpython{libpython_ver}', '-ltorch', '-ltorch_python', '-lc10_cuda', '-lc10', 
             f'-L{torch_libdir}', f'-Wl,-rpath,{torch_libdir}',
             f'-L{python_libdir}', f'-Wl,-rpath,{python_libdir}'])
+cuda = cuda()
+cuda.__doc__ = 'Test'
 
 def gamma_encode(x): 
     """Converts to viewable values"""
@@ -77,10 +79,9 @@ class Core:
     :param supersample: The multiplier at which to render the observations. A higher value gives better antialiasing,
         but makes for a slower simulation. The resolution times the supersampling factor must be less than 1024, as
         that's the `maximum number of CUDA threads in a block
-        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64 pixels.
-        Defaults to 8.
+        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 8.
     :type supersample: int
-    :param fov: The field of view in degrees. Defaults to 130°.
+    :param fov: The field of view in degrees. Must be less than 180° due to how frames are rendered. Defaults to 130°.
     :type fov float:
     :param fps: The simulation frame rate/step rate. Defaults to 10. 
     :type fps: int
@@ -94,6 +95,7 @@ class Core:
         self.res = res
         self.supersample = supersample
         self.fov = fov
+        # TODO: Make this adjustable
         self.agent_radius = AGENT_RADIUS
         self.fps = fps
         self.random = np.random.RandomState(1)
@@ -101,7 +103,10 @@ class Core:
         # TODO: This needs to be propagated to the C++ side
         self.device = torch.device('cuda')
 
-        self.cuda = cuda()
+        assert self.supersample*self.res <= 1024
+        assert fov < 180
+
+        self.cuda = cuda
         self.cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
         self.agents = init_agents(self.cuda, self.n_envs, self.n_agents, self.device)
         self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
