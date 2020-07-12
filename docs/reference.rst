@@ -18,12 +18,14 @@ megastep.toys
 megastep.core
 =============
 .. automodule:: megastep.core
-    :members: 
+    :members: Core, gamma_encode, gamma_decode
+    :undoc-members:
 
-megastep.core.cuda
+megastep.cuda
 ==================
-.. automodule:: megastep.core.cuda
-    :members: Textures, Lines, Baked, Agents, Scene, Render, initialize, bake, physics, render
+.. automodule:: megastep.cuda
+    :members: initialize, bake, physics, render, Textures, Lines, Baked, Agents, Scene, 
+    :undoc-members:
 
 rebar
 =====

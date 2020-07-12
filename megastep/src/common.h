@@ -174,4 +174,4 @@ using Progress = TensorProxy<float, 2>;
 void initialize(float, int, float, float);
 void bake(Scene& scene, int A);
 void physics(const Scene& scene, Agents& agents, Progress progress);
-Render render(const Agents& agents, Scene& scene);
+Render render(const Scene& scene, const Agents& agents);

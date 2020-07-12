@@ -27,18 +27,13 @@ void ragged(py::module &m, std::string name) {
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.doc() = R"pbdoc(
-        The C++ side of megastep,
-        
-        This module contains all the rendering and physics CUDA kernels, and they operate on the state tensors held
-        by :class:`megastep.core.Core`. It's dynamically compiled upon import of :mod:`megastep.core`.
-        
-        For ease of use, all the kernels are rebound as attributes on :mod:`megastep.core`. The only reason the
-        ``.cuda`` module is exposed is that I expect many users of this library to be curious as to how it's put
-        together.
+        This module contains all the rendering and physics CUDA kernels, and intended to operate on the state tensors held
+        by :class:`megastep.core.Core`. 
 
         **Internals**
+        This module is dynamically compiled upon import of :mod:`megastep`.
 
-        The best explanation of how the CUDA side of things is nailed onto the Python side of things is the `PyTorch
+        The best explanation of how the bridge between CUDA and Python works is the `PyTorch
         C++ extension tutorial <https://pytorch.org/tutorials/advanced/cpp_extension.html>`_ .
         
         In short though, this is a `PyBind <https://pybind11.readthedocs.io/>`_ module. You can find the PyBind
@@ -52,10 +47,22 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         library set for PyTorch extensions is much larger and slower to compile.
     )pbdoc";
 
+    m.def("initialize", &initialize, "agent_radius"_a, "res"_a, "fov"_a, "fps"_a, R"pbdoc(
+        Initializes the CUDA kernels by setting some global constants.
+    )pbdoc");
+    m.def("bake", &bake, "scene"_a, "A"_a, R"pbdoc(
+        Bakes the lighting.
+    )pbdoc", py::call_guard<py::gil_scoped_release>());
+    m.def("physics", &_physics, "scene"_a, "agents"_a, "progress"_a, py::call_guard<py::gil_scoped_release>());
+    m.def("render", &render, "scene"_a, "agents"_a, py::call_guard<py::gil_scoped_release>());
+
+    py::options options;
+    options.disable_function_signatures();
+
     ragged<Textures>(m, "Textures");
     ragged<Lines>(m, "Lines");
     ragged<Baked>(m, "Baked");
-    // ragged<Lights>(m, "Lights"); // Forbidden as replicates Textures
+    ragged<Lights>(m, "Lights"); // Forbidden as replicates Textures
 
     //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
     // Will have to replicate the Ragged logic on the Python side, but it's worth it to 
@@ -68,11 +75,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; })
         .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; });
 
-    py::class_<Scene>(m, "Scene", py::module_local(), R"pbdoc(
-        Datastructure describing the scenes.
-    )pbdoc") 
+    py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<Lights, Lines, Textures, TT>(),
-            "lights"_a, "lines"_a, "textures"_a, "frame"_a)
+            "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
+                Datastructure describing the scenes.
+            )pbdoc")
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
         .def_readonly("lights", &Scene::lights)
         .def_readonly("lines", &Scene::lines)
@@ -86,10 +93,5 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("dots", [](Render r) { return variable(r.dots); })
         .def_property_readonly("distances", [](Render r) { return variable(r.distances); });
 
-    m.def("initialize", &initialize, R"pbdoc(
-        Initializes the state.
-    )pbdoc");
-    m.def("bake", &bake, py::call_guard<py::gil_scoped_release>());
-    m.def("physics", &_physics, py::call_guard<py::gil_scoped_release>());
-    m.def("render", &render, py::call_guard<py::gil_scoped_release>());
+
 }

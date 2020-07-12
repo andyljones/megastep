@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from . import spaces, geometry
+from . import spaces, geometry, cuda
 
 def to_local_frame(angles, p):
     a = np.pi/180*angles
@@ -34,7 +34,7 @@ class SimpleMovement:
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
-        core.cuda.physics(core.scene, core.agents, core.progress)
+        cuda.physics(core.scene, core.agents, core.progress)
 
 class MomentumMovement:
 
@@ -57,7 +57,7 @@ class MomentumMovement:
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
-        core.cuda.physics(core.scene, core.agents, core.progress)
+        cuda.physics(core.scene, core.agents, core.progress)
 
 def unpack(d):
     if isinstance(d, torch.Tensor):
@@ -76,7 +76,7 @@ class RGBD:
 
     def render(self):
         core = self._core
-        render = unpack(core.cuda.render(core.agents, core.scene))
+        render = unpack(cuda.render(core.scene, core.agents))
         render = arrdict.arrdict({k: v.unsqueeze(2) for k, v in render.items()})
         render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
         return render

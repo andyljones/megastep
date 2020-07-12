@@ -71,7 +71,7 @@ def random_lights(lights, random=np.random):
         random.uniform(.1, 1., (len(lights), 1))], -1)
 
 @torch.no_grad()
-def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random): 
+def init_scene(geometries, n_agents, device='cuda', random=np.random): 
     agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
     agentcolors = np.tile(agent_colors(), (n_agents, 1))
 
@@ -86,12 +86,12 @@ def init_scene(cuda, geometries, n_agents, device='cuda', random=np.random):
             textures=arrdict.arrdict(vals=textures, widths=texwidths)))
     data = arrdict.torchify(arrdict.cat(data)).to(device)
     
-    scene = cuda.Scene(
-        lights=cuda.Textures(**data['lights']),
-        lines=cuda.Lines(**data['lines']),
-        textures=cuda.Textures(**data['textures']),
+    scene = core.cuda.Scene(
+        lights=core.cuda.Textures(**data['lights']),
+        lines=core.cuda.Lines(**data['lines']),
+        textures=core.cuda.Textures(**data['textures']),
         frame=arrdict.torchify(agent_frame()).to(device))
-    cuda.bake(scene, n_agents)
+    core.cuda.bake(scene, n_agents)
 
     return scene
 

@@ -445,7 +445,7 @@ __global__ void shader_kernel(
     screen[n][a][r][2] = s2;
 }
 
-__host__ Render render(const Agents& agents, Scene& scene) {
+__host__ Render render(const Scene& scene, const Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint A = agents.angles.size(1);
     const uint F = scene.frame.size(0);

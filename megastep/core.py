@@ -1,11 +1,8 @@
 import numpy as np
-from . import scenery
+from . import scenery, cuda
 import torch
 import logging
 from rebar import arrdict
-import torch.utils.cpp_extension
-from pkg_resources import resource_filename
-import sysconfig
 
 log = logging.getLogger(__name__)
 
@@ -15,23 +12,6 @@ TEXTURE_RES = .05
 # Used for collision radius and near camera plane
 AGENT_RADIUS = 1/2**.5*AGENT_WIDTH
 
-DEBUG = False
-
-def _cuda():
-    [torch_libdir] = torch.utils.cpp_extension.library_paths()
-    python_libdir = sysconfig.get_config_var('LIBDIR')
-    libpython_ver = sysconfig.get_config_var('LDVERSION')
-    return torch.utils.cpp_extension.load(
-        name='megastepcuda', 
-        sources=[resource_filename(__package__, f'src/{fn}') for fn in ('wrappers.cpp', 'kernels.cu')], 
-        extra_cflags=['-std=c++17'] + (['-g'] if DEBUG else []), 
-        extra_cuda_cflags=['--use_fast_math', '-lineinfo', '-std=c++14'] + (['-g', '-G'] if DEBUG else []),
-        extra_ldflags=[
-            f'-lpython{libpython_ver}', '-ltorch', '-ltorch_python', '-lc10_cuda', '-lc10', 
-            f'-L{torch_libdir}', f'-Wl,-rpath,{torch_libdir}',
-            f'-L{python_libdir}', f'-Wl,-rpath,{python_libdir}'])
-cuda = _cuda()
-
 def gamma_encode(x): 
     """Converts to viewable values"""
     return x**(1/2.2)
@@ -40,7 +20,7 @@ def gamma_decode(x):
     """Converts to interpolatable values"""
     return x**2.2
 
-def init_agents(cuda, n_envs, n_agents, device='cuda'):
+def _init_agents(n_envs, n_agents, device='cuda'):
     """Creates and returns an Agents datastructure"""
     data = arrdict.arrdict(
             angles=torch.zeros((n_envs, n_agents)),
@@ -50,32 +30,32 @@ def init_agents(cuda, n_envs, n_agents, device='cuda'):
     return cuda.Agents(**data.to(device))
 
 class Core: 
-    """The core rendering and physics interface. 
-
-    To create the Core, you pass a collection of :ref:`geometries <geometry>` that describe the
-    static environment. Once created, the tensors hanging off of the Core give the state of the world,
-    and that state can be advanced with the functions hanging off of ``.cuda`` .
-
-    :param geometries: A list-like of :ref:`geometries <geometry>` that describe each static environment.
-    :param n_agents: the number of agents to put in each environment. Defaults to 1.
-    :type n_agents: int
-    :param res: The horizontal resolution of the observations. The resolution times the supersampling factor must be
-        less than 1024, as that's the `maximum number of CUDA threads in a block
-        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64 pixels.
-    :type res: int
-    :param supersample: The multiplier at which to render the observations. A higher value gives better antialiasing,
-        but makes for a slower simulation. The resolution times the supersampling factor must be less than 1024, as
-        that's the `maximum number of CUDA threads in a block
-        <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 8.
-    :type supersample: int
-    :param fov: The field of view in degrees. Must be less than 180° due to how frames are rendered. Defaults to 130°.
-    :type fov float:
-    :param fps: The simulation frame rate/step rate. Defaults to 10. 
-    :type fps: int
-    
-    """
 
     def __init__(self, geometries, n_agents=1, res=64, supersample=8, fov=130, fps=10):
+        """The core rendering and physics interface. 
+
+        To create the Core, you pass a collection of :ref:`geometries <geometry>` that describe the
+        static environment. Once created, the tensors hanging off of the Core give the state of the world,
+        and that state can be advanced with the functions hanging off of ``.cuda`` .
+
+        :param geometries: A list-like of :ref:`geometries <geometry>` that describe each static environment.
+        :param n_agents: the number of agents to put in each environment. Defaults to 1.
+        :type n_agents: int
+        :param res: The horizontal resolution of the observations. The resolution times the supersampling factor must be
+            less than 1024, as that's the `maximum number of CUDA threads in a block
+            <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64 pixels.
+        :type res: int
+        :param supersample: The multiplier at which to render the observations. A higher value gives better antialiasing,
+            but makes for a slower simulation. The resolution times the supersampling factor must be less than 1024, as
+            that's the `maximum number of CUDA threads in a block
+            <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 8.
+        :type supersample: int
+        :param fov: The field of view in degrees. Must be less than 180° due to how frames are rendered. Defaults to 130°.
+        :type fov float:
+        :param fps: The simulation frame rate/step rate. Defaults to 10. 
+        :type fps: int
+        """
+
         self.geometries = list(geometries)
         self.n_envs = len(geometries)
         self.n_agents = n_agents
@@ -93,10 +73,9 @@ class Core:
         assert self.supersample*self.res <= 1024
         assert fov < 180
 
-        self.cuda = cuda
-        self.cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
-        self.agents = init_agents(self.cuda, self.n_envs, self.n_agents, self.device)
-        self.scene = scenery.init_scene(self.cuda, self.geometries, self.n_agents, self.device, self.random)
+        cuda.initialize(self.agent_radius, self.supersample*self.res, self.fov, self.fps)
+        self.agents = _init_agents(self.n_envs, self.n_agents, self.device)
+        self.scene = scenery.init_scene(self.geometries, self.n_agents, self.device, self.random)
         self.progress = torch.ones((self.n_envs, self.n_agents), device=self.device)
 
     def state(self, d):
