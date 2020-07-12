@@ -26,6 +26,32 @@ void ragged(py::module &m, std::string name) {
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+    m.doc() = R"pbdoc(
+        The C++ side of megastep,
+        
+        This module contains all the rendering and physics CUDA kernels, and they operate on the state tensors held
+        by :class:`megastep.core.Core`. It's dynamically compiled upon import of :mod:`megastep.core`.
+        
+        For ease of use, all the kernels are rebound as attributes on :mod:`megastep.core`. The only reason the
+        ``.cuda`` module is exposed is that I expect many users of this library to be curious as to how it's put
+        together.
+
+        **Internals**
+
+        The best explanation of how the CUDA side of things is nailed onto the Python side of things is the `PyTorch
+        C++ extension tutorial <https://pytorch.org/tutorials/advanced/cpp_extension.html>`_ .
+        
+        In short though, this is a `PyBind <https://pybind11.readthedocs.io/>`_ module. You can find the PyBind
+        wrappers in ``wrappers.cpp``, and the actual code they call into in ``common.h`` and ``kernels.cu``.
+        
+        I have very limited experience with distributing binaries, so while I've _tried_ to reference the library
+        paths in a platform-independent way, there is a good chance they'll turn out to be dependent after all.
+        Sorry. Submit an issue and explain a better way to me!
+        
+        The libraries listed are - I believe - the minimal possible to allow megastep's compilation. The default
+        library set for PyTorch extensions is much larger and slower to compile.
+    )pbdoc";
+
     ragged<Textures>(m, "Textures");
     ragged<Lines>(m, "Lines");
     ragged<Baked>(m, "Baked");
@@ -42,7 +68,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; })
         .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; });
 
-    py::class_<Scene>(m, "Scene", py::module_local()) 
+    py::class_<Scene>(m, "Scene", py::module_local(), R"pbdoc(
+        Datastructure describing the scenes.
+    )pbdoc") 
         .def(py::init<Lights, Lines, Textures, TT>(),
             "lights"_a, "lines"_a, "textures"_a, "frame"_a)
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
@@ -58,10 +86,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("dots", [](Render r) { return variable(r.dots); })
         .def_property_readonly("distances", [](Render r) { return variable(r.distances); });
 
-    m.def("initialize", &initialize);
+    m.def("initialize", &initialize, R"pbdoc(
+        Initializes the state.
+    )pbdoc");
     m.def("bake", &bake, py::call_guard<py::gil_scoped_release>());
     m.def("physics", &_physics, py::call_guard<py::gil_scoped_release>());
     m.def("render", &render, py::call_guard<py::gil_scoped_release>());
-    //TODO: This should work. Come back when you're more comfortable with type inference
-    // m.def("render", [](auto ...args) { return torch::autograd::make_variable(render(args...)); });
 }

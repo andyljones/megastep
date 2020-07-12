@@ -17,24 +17,12 @@ AGENT_RADIUS = 1/2**.5*AGENT_WIDTH
 
 DEBUG = False
 
-def cuda():
-    """Compiles and loads the C++ side of onedee, returning it as a Python module.
-    
-    The best explanation of what's going on here is the `PyTorch C++ extension tutorial
-    <https://pytorch.org/tutorials/advanced/cpp_extension.html>`_ .
-    
-    I have very limited experience with distributing binaries, so while I've _tried_ to reference the library paths
-    in a platform-independent way, there is a good chance they'll turn out to be dependent after all. Sorry. Submit
-    an issue and explain a better way to me!
-    
-    The libraries listed are - I believe - the minimal possible to allow onedee's compilation. The default library
-    set for PyTorch extensions is much larger and slower to compile.
-    """
+def _cuda():
     [torch_libdir] = torch.utils.cpp_extension.library_paths()
     python_libdir = sysconfig.get_config_var('LIBDIR')
     libpython_ver = sysconfig.get_config_var('LDVERSION')
     return torch.utils.cpp_extension.load(
-        name='onedeekernels', 
+        name='megastepcuda', 
         sources=[resource_filename(__package__, f'src/{fn}') for fn in ('wrappers.cpp', 'kernels.cu')], 
         extra_cflags=['-std=c++17'] + (['-g'] if DEBUG else []), 
         extra_cuda_cflags=['--use_fast_math', '-lineinfo', '-std=c++14'] + (['-g', '-G'] if DEBUG else []),
@@ -42,8 +30,7 @@ def cuda():
             f'-lpython{libpython_ver}', '-ltorch', '-ltorch_python', '-lc10_cuda', '-lc10', 
             f'-L{torch_libdir}', f'-Wl,-rpath,{torch_libdir}',
             f'-L{python_libdir}', f'-Wl,-rpath,{python_libdir}'])
-cuda = cuda()
-cuda.__doc__ = 'Test'
+cuda = _cuda()
 
 def gamma_encode(x): 
     """Converts to viewable values"""

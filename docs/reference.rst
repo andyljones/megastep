@@ -2,23 +2,28 @@
 Reference
 #################
 
-cubicasa
-========
+megastep.cubicasa
+=================
 .. automodule:: megastep.cubicasa
-    :members: sample
+    :members: sample 
 
 .. automodule:: megastep.geometry
     :members: centers, indices, display
 
-toys 
-====
+megastep.toys 
+=============
 .. automodule:: megastep.toys
     :members: box, column
 
-core
-====
+megastep.core
+=============
 .. automodule:: megastep.core
-    :members: Core,cuda , gamma_encode, gamma_decode
+    :members: 
+
+megastep.core.cuda
+==================
+.. automodule:: megastep.core.cuda
+    :members: Textures, Lines, Baked, Agents, Scene, Render, initialize, bake, physics, render
 
 rebar
 =====
@@ -26,12 +31,12 @@ rebar
 learning development. Only two pieces of rebar are currently used in megastep: :mod:`rebar.dotdict` and
 :mod:`rebar.arrdict`.
 
-dotdict
-=======
+rebar.dotdict
+-------------
 .. automodule:: rebar.dotdict
     :members: dotdict, mapping, starmapping, leaves
 
-arrdict
-=======
+rebar.arrdict
+-------------
 .. automodule:: rebar.arrdict
     :members: arrdict, torchify, numpyify, stack, cat
