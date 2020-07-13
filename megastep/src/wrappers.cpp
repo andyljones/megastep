@@ -89,7 +89,15 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             value less than 1 means they did indeed hit something.
     )pbdoc", py::call_guard<py::gil_scoped_release>());
     m.def("render", &render, "scene"_a, "agents"_a, R"pbdoc(
-        Renders the scene onto the cameras.
+        Returns a rendering of the scene onto the agents' cameras.
+
+        For more details on how this works, see the :ref:`rendering <Rendering>` section.
+
+        :param scene: The scene to reference when updating the agents
+        :type scene: :class:`Scene`
+        :param agents: The agents to update the movement of
+        :type agents: :class:`Agents`
+        :rtype: :class:`Render` 
     )pbdoc", py::call_guard<py::gil_scoped_release>());
 
     py::options options;
@@ -107,18 +115,20 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
             "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a, R"pbdoc( 
-                Holds the state of the agents.
-            )pbdoc")
-        .def_property_readonly("angles", [](Agents a) { return a.angles.t; })
-        .def_property_readonly("positions", [](Agents a) { return a.positions.t; })
-        .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; })
-        .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; });
+                Holds the state of the agents.)pbdoc")
+        .def_property_readonly("angles", [](Agents a) { return a.angles.t; }, R"pbdoc(
+            An (n_env, n_agent)-tensor of agents' angles relative to the positive x axis, given in degrees.)pbdoc")
+        .def_property_readonly("positions", [](Agents a) { return a.positions.t; }, R"pbdoc(
+            An (n_env, n_agent, 2)-tensor of agents' positions, in meters.)pbdoc")
+        .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; }, R"pbdoc(
+            An (n_env, n_agent)-tensor of agents' angular velocity, in degrees per second.)pbdoc")
+        .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; }, R"pbdoc( 
+            An (n_env, n_agent, 2)-tensor of agents' velocity, in meters per second.)pbdoc");
 
     py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<Lights, Lines, Textures, TT>(),
             "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
-                Holds the state of the scene.
-            )pbdoc")
+                Holds the state of the scene.)pbdoc")
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
         .def_readonly("lights", &Scene::lights)
         .def_readonly("lines", &Scene::lines)
@@ -126,8 +136,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_readonly("baked", &Scene::baked);
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
-        The result of a :func:`render` call, showing the scene from the agent's points of view.
-        )pbdoc"))
+            The result of a :func:`render` call, showing the scene from the agent's points of view.)pbdoc")
         .def_property_readonly("screen", [](Render r) { return variable(r.screen); })
         .def_property_readonly("indices", [](Render r) { return variable(r.indices); })
         .def_property_readonly("locations", [](Render r) { return variable(r.locations); })
