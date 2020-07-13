@@ -41,6 +41,12 @@ class RaggedNumpy:
             arrdict.torchify(self.vals),
             arrdict.torchify(self.widths))
 
+    def __str__(self):
+        return f'{type(self).__name__}({str(self.widths)})'
+
+    def __repr__(self):
+        return str(self)
+
 def Ragged(vals, widths):
     """Returns a :ref:`Ragged <raggeds>` array or tensor. 
     

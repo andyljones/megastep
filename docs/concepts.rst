@@ -147,13 +147,43 @@ is covered. Call ``dir(arrdict)`` to get a list of the supported magics.
 
 Use cases
 ---------
-You generally use dotdict in places that *really* you should use a `namedtuple`, except that forcing explicit types on
+You generally use dotdict in places that *really* you should use a :class:`namedtuple`, except that forcing explicit types on
 things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
 principal costs are that you lose type-safety, and your keys might clash with method names.
 
 Raggeds
 =======
-Ragged arrays and tensors
+Ragged arrays and tensors are basically lists-of-lists, with the values stored in a single backing array to speed up
+operations. **megastep** has both numpy and torch Raggeds, and both are created using :func:`megastep.ragged.Ragged`.
+
+As an example, here's a simple ragged array:: 
+
+    from megastep.ragged import Ragged
+
+    vals = np.array([0., 1., 2., 3., 4., 5.]) 
+    widths = np.array([3, 1, 2])
+    r = Ragged(vals, widths)
+
+The ``widths`` array gives the widths of each 'list' in the list-of-lists. Indexing retrieves those lists:
+
+>>> r[0]
+array([0, 1, 2])
+>>> r[1]
+array([3])
+>>> r[2]
+array([4, 5])
+
+and it can also be sliced:
+
+>>> r[:2]
+RaggedNumpy([3 1])
+
+or - if the backing array is 3-dimensional or less - it can be sent to torch:
+
+>>> r.torchify()
+<megastepcuda.Ragged1D at 0x7fba25320d30>
+
+These torch Raggeds can be freely used with the machinery in :mod:`megastep.core` and :mod:`megastep.scenery`.
 
 .. _geometry:
 

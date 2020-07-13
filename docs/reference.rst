@@ -22,6 +22,7 @@ ragged
 ------
 .. automodule:: megastep.ragged
     :members: Ragged, RaggedNumpy
+    :undoc-members:
 
 core
 ----
