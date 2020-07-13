@@ -59,7 +59,7 @@ class Core:
         :param res: The horizontal resolution of the observations. The resolution must be less than 1024, as
             that's the `maximum number of CUDA threads in a block
             <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities>`_. Defaults to 64
-        pixels.
+            pixels.
         :type res: int
         :param fov: The field of view in degrees. Must be less than 180° due to how frames are rendered. Defaults to 130°.
         :type fov float:
@@ -110,7 +110,7 @@ class Core:
                             positions    Tensor((4, 2), torch.float32)
             progress        Tensor((4,), torch.float32)
 
-        This state tree is usually passed onto a plotting function.""" 
+        This state tree is usually passed onto a :ref:`plotting` function.""" 
         scene = self.scene
         sd, ed = scene.lines.starts[e], scene.lines.ends[e]
 

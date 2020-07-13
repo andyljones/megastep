@@ -9,3 +9,5 @@ megastep
     
     concepts
     reference
+
+    tutorials/kernels

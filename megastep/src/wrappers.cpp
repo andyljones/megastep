@@ -49,20 +49,48 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         
         I have very limited experience with distributing binaries, so while I've _tried_ to reference the library
         paths in a platform-independent way, there is a good chance they'll turn out to be dependent after all.
-        Sorry. Submit an issue and explain a better way to me!
+        Submit an issue and explain a better way to me!
         
         The libraries listed are - I believe - the minimal possible to allow megastep's compilation. The default
         library set for PyTorch extensions is much larger and slower to compile.
     )pbdoc";
 
     m.def("initialize", &initialize, "agent_radius"_a, "res"_a, "fov"_a, "fps"_a, R"pbdoc(
-        Initializes the CUDA kernels by setting some global constants.
+        Initializes the CUDA kernels by setting some global constants. The constants are then used by 
+        :func:`bake`, :func:`physics` and :func:`render`.
+
+        Really, the existance of these constants is an indicator the whole CUDA side of things should be wrapped up
+        in a class. But that'd make things a bit messier, and it's a rare use-case that'll have them set to different
+        values in the same process.
     )pbdoc");
     m.def("bake", &bake, "scene"_a, "A"_a, R"pbdoc(
-        Bakes the lighting.
+        Pre-computes the lighting for the static geometry, updating the :attr:`Scene.baked` tensor.
+
+        For more details on how this works, see the :ref:`rendering <Rendering>` section.
+
+        :param scene: The scene to compute the lighting for
+        :type scene: :class:`Scene`
+        :param A: the number of agents in the scene
+        :type A: int
     )pbdoc", py::call_guard<py::gil_scoped_release>());
-    m.def("physics", &_physics, "scene"_a, "agents"_a, "progress"_a, py::call_guard<py::gil_scoped_release>());
-    m.def("render", &render, "scene"_a, "agents"_a, py::call_guard<py::gil_scoped_release>());
+    m.def("physics", &_physics, "scene"_a, "agents"_a, "progress"_a, R"pbdoc(
+        Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their momenta 
+        and possible collisions. It also updates the ``progress`` tensor with how far the agents moved before
+        colliding with something.
+
+        For more details on how this works, see the :ref:`physics <Physics>` section.
+        
+        :param scene: The scene to reference when updating the agents
+        :type scene: :class:`Scene`
+        :param agents: The agents to update the movement of
+        :type agents: :class:`Agents`
+        :param progress: A (n_env, n_agent) tensor that will be filled with the progress made by the agents. 'Progress'
+            is what fraction of their intended movement they managed to complete before colliding with something. A
+            value less than 1 means they did indeed hit something.
+    )pbdoc", py::call_guard<py::gil_scoped_release>());
+    m.def("render", &render, "scene"_a, "agents"_a, R"pbdoc(
+        Renders the scene onto the cameras.
+    )pbdoc", py::call_guard<py::gil_scoped_release>());
 
     py::options options;
     options.disable_function_signatures();
@@ -78,7 +106,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     // avoid all this indirection.
     py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
-            "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a)
+            "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a, R"pbdoc( 
+                Holds the state of the agents.
+            )pbdoc")
         .def_property_readonly("angles", [](Agents a) { return a.angles.t; })
         .def_property_readonly("positions", [](Agents a) { return a.positions.t; })
         .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; })
@@ -87,7 +117,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<Lights, Lines, Textures, TT>(),
             "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
-                Datastructure describing the scenes.
+                Holds the state of the scene.
             )pbdoc")
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
         .def_readonly("lights", &Scene::lights)
@@ -95,12 +125,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_readonly("textures", &Scene::textures)
         .def_readonly("baked", &Scene::baked);
 
-    py::class_<Render>(m, "Render", py::module_local())
+    py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
+        The result of a :func:`render` call, showing the scene from the agent's points of view.
+        )pbdoc"))
         .def_property_readonly("screen", [](Render r) { return variable(r.screen); })
         .def_property_readonly("indices", [](Render r) { return variable(r.indices); })
         .def_property_readonly("locations", [](Render r) { return variable(r.locations); })
         .def_property_readonly("dots", [](Render r) { return variable(r.dots); })
         .def_property_readonly("distances", [](Render r) { return variable(r.distances); });
-
-
 }

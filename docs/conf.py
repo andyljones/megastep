@@ -69,4 +69,4 @@ html_sidebars = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-autoclass_content = 'init'
+autoclass_content = 'both'
