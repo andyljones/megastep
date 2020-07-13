@@ -4,23 +4,27 @@ import numbers
 from rebar import arrdict
 from . import cuda
 
-def Ragged(vals, widths):
-    Ragged = getattr(cuda, f'Ragged{vals.ndim}D')
-    return Ragged(vals, widths)
-
 class RaggedNumpy:
 
     def __init__(self, vals, widths):
+        """A :ref:`Ragged <raggeds>` backed by numpy arrays.
+
+        :param vals: an array or tensor of values
+        :param widths: an array or tensor of widths of each element in the ragged array.
+        """
         self.vals = vals
         self.widths = widths
         self.starts = widths.cumsum().astype(int) - widths
         self.ends = widths.cumsum().astype(int)
+
+        assert widths.sum() == vals.shape[0]
 
         indices = np.zeros(self.widths.sum(), dtype=self.starts.dtype)
         indices[self.starts] = np.ones_like(self.starts)
         self.inverse = indices.cumsum().astype(int) - 1
 
     def __getitem__(self, x):
+        """Indexes or slices the first dimension of the ragged array."""
         if isinstance(x, numbers.Integral):
             return self.vals[self.starts[x]:self.ends[x]]
         if isinstance(x, slice):
@@ -32,9 +36,25 @@ class RaggedNumpy:
         raise ValueError(f'Can\'t handle index "{x}"')
 
     def torchify(self):
+        """Applies :func:`arrdict.torchify` to the backing arrays and returns a new :class:`cuda.Ragged$ND` for them"""
         return Ragged(
             arrdict.torchify(self.vals),
             arrdict.torchify(self.widths))
+
+def Ragged(vals, widths):
+    """Returns a :ref:`Ragged <raggeds>` array or tensor. 
+    
+    If you pass numpy arrays as arguments, you'll get back a :class:`RaggedNumpy` object; if you pass Torch tensors,
+    you'll get back a :class:`cuda.Ragged$ND` that's backed by a C++
+    implementation and is OK to pass to the :class:`core.Core` machinery.
+
+    :param vals: an array or tensor of values
+    :param widths: an array or tensor of widths of each element in the ragged array.
+    """
+    if isinstance(vals, np.ndarray):
+        return RaggedNumpy(vals, widths)
+    Ragged = getattr(cuda, f'Ragged{vals.ndim}D')
+    return Ragged(vals, widths)
 
 def test_ragged():
     vals = torch.as_tensor([0, 1, 2, 3, 4, 5]).float()
@@ -49,7 +69,6 @@ def test_ragged():
 
     torch.testing.assert_allclose(ragged[1:].vals, np.array([3, 4, 5]))
     torch.testing.assert_allclose(ragged[1:].widths, np.array([1, 2]))
-
 
 def test_ragged_numpy():
     vals = np.array([0, 1, 2, 3, 4, 5])

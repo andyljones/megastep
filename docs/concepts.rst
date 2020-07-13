@@ -31,7 +31,6 @@ Here're some example dotdicts that'll get exercised in the examples below
 >>>     b=arrdict(
 >>>         c=torch.tensor([2])))
 
-
 Attribute access
 ----------------
 You can access elements with either ``d[k]`` or ``d.k`` notation, but you must assign new values with ``d[k] = v`` . 
@@ -109,7 +108,6 @@ a    Tensor((1,), torch.int64)
 b    arrdict:
      c    Tensor((1,), torch.int64)
 
-
 Indexing
 --------
 Indexing is exclusive to arrdicts. On arrdicts, indexing operations are forwarded to the values:
@@ -153,6 +151,10 @@ You generally use dotdict in places that *really* you should use a `namedtuple`,
 things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
 principal costs are that you lose type-safety, and your keys might clash with method names.
 
+Raggeds
+=======
+Ragged arrays and tensors
+
 .. _geometry:
 
 Geometries
@@ -189,6 +191,3 @@ masks
 
 res
     A float giving the resolution of **masks** in meters.
-
-Raggeds
-=======
