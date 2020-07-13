@@ -33,7 +33,7 @@ core
 cuda
 ----
 .. automodule:: megastep.cuda
-    :members: initialize, bake, physics, render, Ragged1D, Ragged2D, Ragged3D, Agents, Scene, 
+    :members: initialize, bake, physics, render, Agents, Scene, 
     :undoc-members:
 
 rebar

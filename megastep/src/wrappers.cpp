@@ -38,6 +38,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         by :class:`megastep.core.Core`. 
 
         **Internals**
+
         This module is dynamically compiled upon import of :mod:`megastep`.
 
         The best explanation of how the bridge between CUDA and Python works is the `PyTorch

@@ -20,8 +20,8 @@ def collapse(x, n_agents):
 class Deathmatch:
 
     def __init__(self, *args, **kwargs):
-        self._core = core.Core(*args, res=128, fov=60, supersample=4, **kwargs)
-        self._rgbd = modules.RGBD(self._core, n_agents=1)
+        self._core = core.Core(*args, res=4*128, fov=60, **kwargs)
+        self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
         self._imu = modules.IMU(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)
         self._respawner = modules.RandomSpawns(self._core)
@@ -47,9 +47,8 @@ class Deathmatch:
         return reset.reshape(-1)
 
     def _downsample(self, screen):
-        core = self._core
-        idx = core.supersample//2
-        return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample)[..., idx]
+        idx = self._rgbd.subsample//2
+        return screen.view(*screen.shape[:-1], screen.shape[-1]//self._rgbd.subsample, self._rgbd.subsample)[..., idx]
 
     def _shoot(self, opponents):
         res = opponents.size(-1)

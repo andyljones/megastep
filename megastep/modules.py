@@ -66,13 +66,14 @@ def unpack(d):
         
 class RGBD:
 
-    def __init__(self, core, *args, n_agents=None, max_depth=10, **kwargs):
+    def __init__(self, core, *args, n_agents=None, subsample=1, max_depth=10, **kwargs):
         n_agents = n_agents or core.n_agents
         self._core = core
         self.space = arrdict.arrdict(
             rgb=spaces.MultiImage(n_agents, 3, 1, core.res),
             d=spaces.MultiImage(n_agents, 1, 1, core.res),)
-        self._max_depth = max_depth
+        self.max_depth = max_depth
+        self.subsample = subsample
 
     def render(self):
         core = self._core
@@ -82,12 +83,11 @@ class RGBD:
         return render
 
     def _downsample(self, screen):
-        core = self._core
-        return screen.view(*screen.shape[:-1], screen.shape[-1]//core.supersample, core.supersample).mean(-1)
+        return screen.view(*screen.shape[:-1], screen.shape[-1]//self.subsample, self.subsample).mean(-1)
 
     def __call__(self, render=None):
         render = self.render() if render is None else render
-        depth = ((render.distances - self._core.agent_radius)/self._max_depth).clamp(0, 1)
+        depth = ((render.distances - self._core.agent_radius)/self.max_depth).clamp(0, 1)
         self._last_obs = arrdict.arrdict(
             rgb=self._downsample(render.screen),
             d=self._downsample(depth).unsqueeze(3))
