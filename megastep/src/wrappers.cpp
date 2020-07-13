@@ -12,9 +12,7 @@ using namespace std::string_literals;
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 /// Proxy for converting the Tensor of `progress` into a TensorProxy
-void _physics(const Scene& scene, Agents& agents, TT progress) {
-    return physics(scene, agents, progress); 
-}
+void _physics(const Scene& scene, Agents& agents, TT progress) { return physics(scene, agents, progress); }
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
@@ -109,13 +107,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     ragged<Ragged<float, 2>>(m, "Ragged2D");
     ragged<Ragged<float, 3>>(m, "Ragged3D");
 
-    //TODO: Swap out this Agents/Scene stuff for direct access to the arrays.
-    // Will have to replicate the Ragged logic on the Python side, but it's worth it to 
-    // avoid all this indirection.
     py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
             "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a, R"pbdoc( 
-                Holds the state of the agents.)pbdoc")
+                Holds the state of the agents. Typically accessed through :attr:`megastep.core.Core.agents`.)pbdoc")
         .def_property_readonly("angles", [](Agents a) { return a.angles.t; }, R"pbdoc(
             An (n_env, n_agent)-tensor of agents' angles relative to the positive x axis, given in degrees.)pbdoc")
         .def_property_readonly("positions", [](Agents a) { return a.positions.t; }, R"pbdoc(
@@ -128,18 +123,25 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<Lights, Lines, Textures, TT>(),
             "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
-                Holds the state of the scene.)pbdoc")
-        .def_property_readonly("frame", [](Scene s) { return s.frame.t; })
-        .def_readonly("lights", &Scene::lights)
-        .def_readonly("lines", &Scene::lines)
-        .def_readonly("textures", &Scene::textures)
-        .def_readonly("baked", &Scene::baked);
+                Holds the state of the scene. Typically accessed through :attr:`megastep.core.Core.scene`.)pbdoc")
+        .def_property_readonly("frame", [](Scene s) { return s.frame.t; }, R"pbdoc(
+            An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 
+            shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scene.)pbdoc")
+        .def_readonly("lights", &Scene::lights, R"pbdoc(
+            An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities 
+            (typically a value between 0 and 1) in the third.)pbdoc")
+        .def_readonly("lines", &Scene::lines, R"pbdoc(
+            An (n_lines, 2, 2)-:class:`megastep.ragged.Ragged` tensor giving the lines in each scene.)pbdoc")
+        .def_readonly("textures", &Scene::textures, R"pbdoc(
+            An (n_texels, 3)-:class:`megastep.ragged.Ragged` tensor giving the texels in each line.)pbdoc")
+        .def_readonly("baked", &Scene::baked, R"pbdoc(
+            An (n_texels,)-:class:`megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
             The result of a :func:`render` call, showing the scene from the agent's points of view.)pbdoc")
-        .def_property_readonly("screen", [](Render r) { return variable(r.screen); })
-        .def_property_readonly("indices", [](Render r) { return variable(r.indices); })
-        .def_property_readonly("locations", [](Render r) { return variable(r.locations); })
-        .def_property_readonly("dots", [](Render r) { return variable(r.dots); })
-        .def_property_readonly("distances", [](Render r) { return variable(r.distances); });
+        .def_property_readonly("screen", [](Render r) { return variable(r.screen); }, R"pbdoc()pbdoc")
+        .def_property_readonly("indices", [](Render r) { return variable(r.indices); }, R"pbdoc()pbdoc")
+        .def_property_readonly("locations", [](Render r) { return variable(r.locations); }, R"pbdoc()pbdoc")
+        .def_property_readonly("dots", [](Render r) { return variable(r.dots); }, R"pbdoc()pbdoc")
+        .def_property_readonly("distances", [](Render r) { return variable(r.distances); }, R"pbdoc()pbdoc");
 }

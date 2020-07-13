@@ -9,8 +9,14 @@ class RaggedNumpy:
     def __init__(self, vals, widths):
         """A :ref:`Ragged <raggeds>` backed by numpy arrays.
 
-        :param vals: an array or tensor of values
-        :param widths: an array or tensor of widths of each element in the ragged array.
+        :param vals: a (V, ...)-array of backing values.
+        :param widths: a (W,)-array of widths of each subarray in the ragged. The sum of the widths must equal ``V``.
+
+        :var vals: a (V, ...)-array of backing values.
+        :var widths: a (W,)-array of widths of each subarray in the ragged array.
+        :var starts: a (W,)-array of indices giving where each subarray starts in ``vals``.
+        :var ends: an (W,)-array of indices giving where each subarray ends in ``vals``.
+        :var inverse: an (V,)-array of indices giving the index of the subarray each element of ``vals`` is a part of.
         """
         self.vals = vals
         self.widths = widths
@@ -54,8 +60,14 @@ def Ragged(vals, widths):
     you'll get back a :class:`cuda.Ragged$ND` that's backed by a C++
     implementation and is OK to pass to the :class:`core.Core` machinery.
 
-    :param vals: an array or tensor of values
-    :param widths: an array or tensor of widths of each element in the ragged array.
+    :param vals: a (V, ...)-array/tensor of backing values.
+    :param widths: a (W,)-array/tensor of widths of each subarray in the ragged. The sum of the widths must equal ``V``.
+
+    :var vals: a (V, ...)-array/tensor of backing values.
+    :var widths: a (W,)-array/tensor of widths of each subarray in the ragged.
+    :var starts: a (W,)-array/tensor of indices giving where each subarray starts in ``vals``.
+    :var ends: an (W,)-array/tensor of indices giving where each subarray ends in ``vals``.
+    :var inverse: an (V,)-array/tensor of indices giving the index of the subarray each element of ``vals`` is a part of.
     """
     if isinstance(vals, np.ndarray):
         return RaggedNumpy(vals, widths)
