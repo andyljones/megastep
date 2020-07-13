@@ -46,7 +46,7 @@ def plot_images(arrs, axes=None):
 def n_agent_texels(state):
     D = state.agents.angles.shape[0]
     F = len(state.scene.frame)
-    return state.scene.widths[:D*F].sum()
+    return state.scene.textures.widths[:D*F].sum()
 
 def line_arrays(state):
     scene = state.scene

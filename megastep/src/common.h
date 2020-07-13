@@ -113,8 +113,8 @@ struct Ragged {
         ends(widths.cumsum(0).toType(at::kInt)),
         inverse(inverses(widths)) { 
         
-        CHECK_INPUT(vals);
-        CHECK_INPUT(widths);
+        CHECK_CONTIGUOUS(vals);
+        CHECK_CONTIGUOUS(widths);
 
         AT_ASSERT(widths.size(0) == starts.size(0));
         AT_ASSERT(widths.scalar_type() == dtype<int>());
@@ -144,6 +144,12 @@ struct Ragged {
     size_t size(const size_t i) const { return vals.size(i); }
 
     Ragged<T, D> clone() const { return Ragged<T, D>(vals.clone(), widths.clone()); }
+
+    py::object numpyify() const {
+        const auto Ragged = py::module::import("megastep.ragged").attr("RaggedNumpy");
+        const auto numpyify = py::module::import("rebar.arrdict").attr("numpyify");
+        return Ragged(numpyify(vals), numpyify(widths));
+    }
 };
 
 using Angles = TensorProxy<float, 2>;

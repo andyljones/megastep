@@ -93,7 +93,6 @@ def init_scene(geometries, n_agents, device='cuda', random=np.random):
         textures=ragged.Ragged(**data['textures']),
         frame=arrdict.torchify(agent_frame()).to(device))
     core.cuda.bake(scene, n_agents)
-    import aljpy; aljpy.extract()
 
     return scene
 

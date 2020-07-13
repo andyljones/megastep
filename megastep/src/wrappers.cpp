@@ -21,6 +21,10 @@ void ragged(py::module &m, std::string name) {
     py::class_<T>(m, name.c_str(), py::module_local())
         .def(py::init<TT, TT>(), 
             "vals"_a, "widths"_a)
+        .def("__getitem__", [](T self, int n) { return self[n]; })
+        .def("__getitem__", [](T self, py::slice slice) { return self[slice]; })
+        .def("clone", &T::clone)
+        .def("numpyify", &T::numpyify)
         .def_readonly("vals", &T::vals)
         .def_readonly("widths", &T::widths)
         .def_readonly("starts", &T::starts)

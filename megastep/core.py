@@ -85,8 +85,6 @@ class Core:
         options = ('n_envs', 'n_agents', 'res', 'supersample', 'fov', 'agent_radius', 'fps')
         options = {k: getattr(self, k) for k in options}
 
-        textures = self.scene.textures[sd:ed]
-        baked = self.scene.baked[sd:ed]
         return arrdict.arrdict(
                     **options,
                     scene=arrdict.arrdict(
@@ -94,8 +92,8 @@ class Core:
                             lines=self.scene.lines[d],
                             lights=self.scene.lights[d],
                             #TODO: Fix up ragged so this works
-                            textures=ragged.Ragged(textures.vals, textures.widths),
-                            baked=ragged.Ragged(baked.vals, baked.widths)).clone(),
+                            textures=self.scene.textures[sd:ed],
+                            baked=self.scene.baked[sd:ed]).clone(),
                     agents=arrdict.arrdict(
                             angles=self.agents.angles[d], 
                             positions=self.agents.positions[d]).clone(),
