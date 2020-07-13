@@ -16,7 +16,7 @@ class RaggedNumpy:
         :var widths: a (W,)-array of widths of each subarray in the ragged array.
         :var starts: a (W,)-array of indices giving where each subarray starts in ``vals``.
         :var ends: an (W,)-array of indices giving where each subarray ends in ``vals``.
-        :var inverse: an (V,)-array of indices giving the index of the subarray each element of ``vals`` is a part of.
+        :var inverse: an (V,)-array of indices giving the index of the subarray the corresponding element of ``vals`` is a part of.
         """
         self.vals = vals
         self.widths = widths
@@ -67,7 +67,7 @@ def Ragged(vals, widths):
     :var widths: a (W,)-array/tensor of widths of each subarray in the ragged.
     :var starts: a (W,)-array/tensor of indices giving where each subarray starts in ``vals``.
     :var ends: an (W,)-array/tensor of indices giving where each subarray ends in ``vals``.
-    :var inverse: an (V,)-array/tensor of indices giving the index of the subarray each element of ``vals`` is a part of.
+    :var inverse: an (V,)-array/tensor of indices giving the index of the subarray the corresponding element of ``vals`` is a part of.
     """
     if isinstance(vals, np.ndarray):
         return RaggedNumpy(vals, widths)

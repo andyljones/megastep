@@ -151,20 +151,27 @@ You generally use dotdict in places that *really* you should use a :class:`named
 things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
 principal costs are that you lose type-safety, and your keys might clash with method names.
 
+.. _raggeds:
+
 Raggeds
 =======
-Ragged arrays and tensors are basically lists-of-lists, with the values stored in a single backing array to speed up
+Ragged arrays and tensors are basically arrays-of-arrays, with the values stored in a contiguous backing array to speed up
 operations. **megastep** has both numpy and torch Raggeds, and both are created using :func:`megastep.ragged.Ragged`.
 
 As an example, here's a simple ragged array:: 
 
     from megastep.ragged import Ragged
 
+    # Subarrays are [0., 1., 2.], [3.], [4., 5.]
     vals = np.array([0., 1., 2., 3., 4., 5.]) 
     widths = np.array([3, 1, 2])
     r = Ragged(vals, widths)
 
-The ``widths`` array gives the widths of each 'list' in the list-of-lists. Indexing retrieves those lists:
+The ``widths`` array gives the widths of each subarray. 
+
+Indexing
+--------
+Indexing with an integer retrieves the corresponding subarray:
 
 >>> r[0]
 array([0, 1, 2])
@@ -178,12 +185,36 @@ and it can also be sliced:
 >>> r[:2]
 RaggedNumpy([3 1])
 
-or - if the backing array is 3-dimensional or less - it can be sent to torch:
+Conversion
+----------
+Numpy raggeds can be turned back-and-forth into Torch raggeds:
 
 >>> r.torchify()
 <megastepcuda.Ragged1D at 0x7fba25320d30>
+>>> r.torchify().numpyify()
 
-These torch Raggeds can be freely used with the machinery in :mod:`megastep.core` and :mod:`megastep.scenery`.
+Be warned that the torch side of things only supports backing tensors with at most 3 dimensions. 
+
+Attributes
+----------
+If you want to do bulk operations on a ragged, you'll usually want to operate on the backing array directly. There
+are a couple of attributes to help with that:
+
+>>> r.vals   # the backing array
+array([0., 1., 2., 3., 4., 5.])
+>>> r.widths # the subarray widths
+array([3, 1, 2])
+>>> r.starts # indices of the start of each subarray
+array([0, 3, 4])
+>>> r.ends   # indices of the end of each subarray
+array([3, 4, 6])
+
+Inversion
+---------
+There is also an ``.inverse`` attribute that tells you which subarray every element of the backing array corresponds to:
+
+>>> r.inverse
+array([0, 0, 0, 1, 2, 2])
 
 .. _geometry:
 
@@ -222,11 +253,17 @@ masks
 res
     A float giving the resolution of **masks** in meters.
 
+.. _rendering:
+
 Rendering
 =========
 
+.. _physics:
+
 Physics
 =======
+
+.. _plotting:
 
 Plotting
 ========
