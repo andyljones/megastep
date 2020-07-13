@@ -138,12 +138,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             An (n_texels,)-:class:`megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
-            The result of a :func:`render` call, showing the scene from the agent's points of view.
+            The result of a :func:`render` call, showing the scene from the agents' points of view.
 
             Rendering is done by casting 'rays' from the camera, through each pixel and out into the world. When a ray
-            hits a line from :attr:`Scene.lines`, that's called a 'hit'.
-            
-            )pbdoc")
+            intersects a line from :attr:`Scene.lines`, that's called a 'hit'. )pbdoc")
         .def_property_readonly("screen", [](Render r) { return variable(r.screen); }, R"pbdoc(
             A (n_envs, n_agents, res, 3)-tensor giving the views of each agent. Colours are RGB with values between 0 and 1. Infinity is coloured black.)pbdoc")
         .def_property_readonly("indices", [](Render r) { return variable(r.indices); }, R"pbdoc(

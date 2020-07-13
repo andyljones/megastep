@@ -38,9 +38,7 @@ cuda
 
 rebar
 =====
-**rebar** helps with reinforcement learning. It's a toolkit that helps with some common pain-points in reinforcement
-learning development. Only two pieces of rebar are currently used in megastep: :mod:`rebar.dotdict` and
-:mod:`rebar.arrdict`.
+.. automodule:: rebar
 
 dotdict
 -------------
