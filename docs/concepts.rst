@@ -255,7 +255,7 @@ res
 
 The geometry is a dotdict rather than a class because when writing your own environments, it's common to want to nail 
 extra bits of information onto the side of the default geometry. That *could* be handled by subclassing, but I have a
-personal :ref:`aversion to inheritance hierarchies <inheritance>`.
+personal :ref:`aversion to inheritance hierarchies in research code<inheritance>`.
 
 .. _rendering:
 
@@ -275,3 +275,28 @@ TODO: this
 
 Inheritance
 ===========
+TODO: Figure out a better way to phrase this
+
+One way to think about inheritance in software development is that's about offering a secondary interface to a class.
+
+The primary interface to a class is its public methods. When you write a class for some other part of your program to 
+use, this is usually what you have in mind.
+
+When you encourage people to inherit from your classes though, you're effectively declaring a secondary interface,
+saying 'here are some useful ways to exploit its private state'.
+
+The thing is, Python's ideas of public and private amount to gentle suggestions. This leads to a tertiary interface
+to every class, which is where you totally ignore what the designer of the class intended you to do and rely instead
+entirely on how the class *actually works*. You freely read and write its private state, monkey patch its methods and
+generally let slip the dogs of terrible software development.
+
+Researchers are very fond of this tertiary wild-west interface. The reason researchers are fond of it is either
+because they're terrible developers (the popular answer), or because research code is a very unusual kind of code.
+It's `written many times and read once (if ever)`<https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>_,
+it's typically written by one person in a short period of time and it's typically only a few thousand lines of code
+that are understood inside and out. Because of this, researchers can happily trade off a lot of otherwise-good
+development practices in favour of iteration velocity - the ability to adapt your codebase to a new idea quickly and
+easily.
+
+Since **megastep** is explicitly intended to be a foundation for research, it's designed with the third interface in mind.
+There are few private methods, and any state that is likely interesting to a user is there for the taking.
