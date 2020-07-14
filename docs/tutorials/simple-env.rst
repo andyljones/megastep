@@ -29,4 +29,19 @@ Yup, it's a box. Four walls and one room. To create this geometry, we start with
 These corners give a 1m box, which is a bit too small for our purposes. We can scale it up by multiplying by the
 width we want. It's also a good idea to shift it 1m up and to the right, as lots of machinery in megastep assumes
 that everything happens in the top-right quadrant (ie, above and to the right of the origin). There's no fundamental
-reason for this, it just simplifes some stuff internally.
+reason for this, it just simplifes some stuff internally. ::
+
+    corners = 5*corners + 1
+
+Then to get the walls, we take all sequential pairs of corners and stack them::
+
+    from megastep.geometry import cyclic_pairs
+    walls = np.stack(cyclic_pairs(corners))
+
+You can check that these walls are what we think they are using matplotlib::
+
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    
+    lines = mpl.collections.LineCollection(walls, color='k', width=2)
+    plt.axes().add_collection(lines)
