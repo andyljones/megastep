@@ -285,7 +285,7 @@ __host__ void bake(Scene& scene, int A) {
 
     const auto blocks = (T + BLOCK - 1)/BLOCK;
     baking_kernel<<<blocks, BLOCK, 0, stream()>>>(
-        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), A*F);
+        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), scene.n_agents*F);
 }
 
 // RENDERING - KERNELS

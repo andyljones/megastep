@@ -1,5 +1,5 @@
 import torch
-from megastep import modules, core, plotting, spaces
+from megastep import modules, core, plotting, spaces, scenery, cubicasa
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,8 +19,10 @@ def collapse(x, n_agents):
 
 class Deathmatch:
 
-    def __init__(self, *args, **kwargs):
-        self._core = core.Core(*args, res=4*128, fov=60, **kwargs)
+    def __init__(self, n_envs, n_agents, *args, **kwargs):
+        geometries = cubicasa.sample(n_envs)
+        scene = scenery.init_scene(geometries, n_agents)
+        self._core = core.Core(scene, *args, res=4*128, fov=60, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
         self._imu = modules.IMU(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)

@@ -171,6 +171,7 @@ using Baked = Ragged<float, 1>;
 using Frame = TensorProxy<float, 3>;
 
 struct Scene {
+    const int n_agents;
     const Lights lights;
     const Lines lines;
     const Textures textures;
@@ -180,8 +181,8 @@ struct Scene {
     // Weird initialization of `baked` here is to avoid having to create a `AutoNonVariableTypeMode` 
     // guard, because I still don't understand the Variable vs Tensor thing. 
     // Goal is to create a Tensor of 1s like textures.vals[:, 0]
-    Scene(Lights lights, Lines lines, Textures textures, TT frame) :
-        lights(lights), lines(lines), textures(textures), frame(frame),
+    Scene(int n_agents, Lights lights, Lines lines, Textures textures, TT frame) :
+        n_agents(n_agents), lights(lights), lines(lines), textures(textures), frame(frame),
         baked(at::ones_like(textures.vals.select(1, 0)), textures.widths) {
 
         }
@@ -198,6 +199,6 @@ struct Render {
 using Progress = TensorProxy<float, 2>; 
 
 void initialize(float, int, float, float);
-void bake(Scene& scene, int A);
+void bake(Scene& scene);
 void physics(const Scene& scene, Agents& agents, Progress progress);
 Render render(const Scene& scene, const Agents& agents);

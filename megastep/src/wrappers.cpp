@@ -61,15 +61,13 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         in a class. But that'd make things a bit messier, and it's a rare use-case that'll have them set to different
         values in the same process.
     )pbdoc");
-    m.def("bake", &bake, "scene"_a, "A"_a, R"pbdoc(
+    m.def("bake", &bake, "scene"_a, R"pbdoc(
         Pre-computes the lighting for the static geometry, updating the :attr:`Scene.baked` tensor.
 
         For more details on how this works, see the :ref:`rendering <Rendering>` section.
 
         :param scene: The scene to compute the lighting for
         :type scene: :class:`Scene`
-        :param A: the number of agents in the scene
-        :type A: int
     )pbdoc", py::call_guard<py::gil_scoped_release>());
     m.def("physics", &_physics, "scene"_a, "agents"_a, "progress"_a, R"pbdoc(
         Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their momenta 
@@ -121,12 +119,14 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             An (n_env, n_agent, 2)-tensor of agents' velocity, in meters per second.)pbdoc");
 
     py::class_<Scene>(m, "Scene", py::module_local()) 
-        .def(py::init<Lights, Lines, Textures, TT>(),
-            "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
+        .def(py::init<int, Lights, Lines, Textures, TT>(),
+            "n_agents", "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
                 Holds the state of the scene. Typically accessed through :attr:`megastep.core.Core.scene`.)pbdoc")
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; }, R"pbdoc(
             An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 
             shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scene.)pbdoc")
+        .def_readonly("n_agents", &Scene::n_agents, R"pbdoc(
+            The number of agents in each environment)pbdoc")
         .def_readonly("lights", &Scene::lights, R"pbdoc(
             An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities 
             (typically a value between 0 and 1) in the third.)pbdoc")

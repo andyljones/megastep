@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return envs.Deathmatch(cubicasa.sample(max(n_envs, 4)//4), n_agents=4)
+    return envs.Deathmatch(max(n_envs, 4)//4, n_agents=4)
 
 class Agent(nn.Module):
 

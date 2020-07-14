@@ -88,11 +88,12 @@ def init_scene(geometries, n_agents, device='cuda', random=np.random):
     
     lights = ragged.Ragged(**data['lights'])
     scene = core.cuda.Scene(
+        n_agents=n_agents,
         lights=lights,
         lines=ragged.Ragged(**data['lines']),
         textures=ragged.Ragged(**data['textures']),
         frame=arrdict.torchify(agent_frame()).to(device))
-    core.cuda.bake(scene, n_agents)
+    core.cuda.bake(scene)
 
     return scene
 

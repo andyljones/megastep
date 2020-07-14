@@ -31,12 +31,12 @@ def _init_agents(n_envs, n_agents, device='cuda'):
 
 class Core: 
 
-    def __init__(self, geometries, n_agents=1, res=64, fov=130, fps=10):
+    def __init__(self, scene, res=64, fov=130, fps=10):
         """The core rendering and physics interface. 
 
-        To create the Core, you pass a collection of :ref:`geometries <geometry>` that describe the
-        static environment. Once created, the tensors hanging off of the Core give the state of the world,
-        and that state can be advanced with the functions in :mod:`megastep.cuda`.
+        To create the Core, you pass a :class:`megastep.cuda.Scene` that describes the environment. Once created, 
+        the tensors hanging off of the Core give the state of the world, and that state can be advanced with the 
+        functions in :mod:`megastep.cuda`.
 
         :var agents: A :class:`megastep.cuda.Agents` object describing the agents.
         :var scene: A :class:`megastep.cuda.Scene` object describing the scenery.
@@ -47,13 +47,14 @@ class Core:
         :var n_agents: Number of agents.
         :var res: The horizontal resolution of observations. 
         :var fov: The field of view in degrees.
-        :var agent_radius: The radius of a disc containing the agent, in meters
+        :var agent_radius: The radius of a disc containing the agent, in meters.
         :var fps: The framerate.
         :var random: The seeded :class:`numpy.random.RandomState` used to initialize the environment. By reusing this
             in any extra random decisions made when generating the environments, it can be guaranteed you'll get the same
             environments every time.
 
-        :param geometries: A list-like of :ref:`geometries <geometry>` that describe each static environment.
+        :param scene: Describes the static parts of the environment.
+        :type scene: :class:`megastep.cuda.Scene`.
         :param n_agents: the number of agents to put in each environment. Defaults to 1.
         :type n_agents: int
         :param res: The horizontal resolution of the observations. The resolution must be less than 1024, as
@@ -67,9 +68,8 @@ class Core:
         :type fps: int
         """
 
-        self.geometries = list(geometries)
-        self.n_envs = len(geometries)
-        self.n_agents = n_agents
+        self.n_envs = len(scene.lines.widths)
+        self.n_agents = scene.n_agents
         self.res = res
         self.fov = fov
         # TODO: Make this adjustable
@@ -78,13 +78,13 @@ class Core:
         self.random = np.random.RandomState(1)
 
         # TODO: This needs to be propagated to the C++ side
-        self.device = torch.device('cuda')
+        self.device = scene.lines.device
 
         assert fov < 180
 
         cuda.initialize(self.agent_radius, self.res, self.fov, self.fps)
+        self.scene = scene 
         self.agents = _init_agents(self.n_envs, self.n_agents, self.device)
-        self.scene = scenery.init_scene(self.geometries, self.n_agents, self.device, self.random)
         self.progress = torch.ones((self.n_envs, self.n_agents), device=self.device)
 
     def state(self, e):
