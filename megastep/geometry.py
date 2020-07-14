@@ -77,7 +77,14 @@ def mask_transform(*args):
     h, w = int(t/RES)+1, int(r/RES)+1
     return rasterio.transform.Affine(RES, 0, 0, 0, -RES, h*RES), (h, w)
 
-def masks(walls, spaces):
+def masks(walls, spaces, res=RES):
+    """Generates a masking array from an array of walls and a list of spaces.
+    
+    :param walls: A (n_walls, 2, 2)-array giving the coordinates of the walls' endpoints.
+    :param spaces: A list of spaces, each given as a coordinate array of the space's vertices.
+    :param res: The resolution of the the masking array. 
+    :return: A masking array 
+    """
     transform, shape = mask_transform(walls, spaces)
     wall_shapes = [(cascaded_union([LineString(p).buffer(.01) for p in walls]), -1)]
     space_shapes = [(Polygon(p).buffer(0), i+1) for i, p in enumerate(spaces)]
