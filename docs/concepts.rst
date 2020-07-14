@@ -253,6 +253,10 @@ masks
 res
     A float giving the resolution of **masks** in meters.
 
+The geometry is a dotdict rather than a class because when writing your own environments, it's common to want to nail 
+extra bits of information onto the side of the default geometry. That *could* be handled by subclassing, but I have a
+personal :ref:`aversion to inheritance hierarchies <inheritance>`.
+
 .. _rendering:
 
 Rendering
@@ -268,3 +272,6 @@ Physics
 Plotting
 ========
 TODO: this
+
+Inheritance
+===========
