@@ -120,7 +120,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
     py::class_<Scene>(m, "Scene", py::module_local()) 
         .def(py::init<int, Lights, Lines, Textures, TT>(),
-            "n_agents", "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
+            "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
                 Holds the state of the scene. Typically accessed through :attr:`megastep.core.Core.scene`.)pbdoc")
         .def_property_readonly("frame", [](Scene s) { return s.frame.t; }, R"pbdoc(
             An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 

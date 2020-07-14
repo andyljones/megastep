@@ -448,7 +448,7 @@ __global__ void shader_kernel(
 __host__ Render render(const Scene& scene, const Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint A = agents.angles.size(1);
-    const uint F = scene.frame.size(0);
+    const uint F = scene.n_agents;
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
     draw_kernel<<<N, {2, F, A}, 0, stream()>>>(
