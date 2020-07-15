@@ -2,15 +2,15 @@ import torch
 from rebar import arrdict
 from megastep import modules, core, plotting
 import matplotlib.pyplot as plt
-from ... import toys, scenery
+from ... import toys, scene
 
 class Minimal:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
 
     def __init__(self, *args, **kwargs):
         geometries = [toys.box()]
-        scene = scenery.scene(geometries)
-        self.core = core.Core(scene, *args, **kwargs)
+        scenery = scene.scenery(geometries)
+        self.core = core.Core(scenery, *args, **kwargs)
         self.mover = modules.SimpleMovement(self.core)
         self.observer = modules.RGBD(self.core)
         self.respawner = modules.RandomSpawns(geometries, self.core)

@@ -33,7 +33,7 @@ core
 cuda
 ----
 .. automodule:: megastep.cuda
-    :members: initialize, bake, physics, render, Render, Agents, Scene, 
+    :members: initialize, bake, physics, render, Render, Agents, Scenery, 
     :undoc-members:
 
 rebar

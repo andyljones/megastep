@@ -45,34 +45,34 @@ def plot_images(arrs, axes=None):
 
 def n_agent_texels(state):
     D = state.agents.angles.shape[0]
-    F = len(state.scene.frame)
-    return state.scene.textures.widths[:D*F].sum()
+    F = len(state.scenery.frame)
+    return state.scenery.textures.widths[:D*F].sum()
 
 def line_arrays(state):
-    scene = state.scene
+    scenery = state.scenery
 
-    starts = scene.textures.starts
-    tex_starts = np.zeros(len(scene.textures.vals), dtype=int)
+    starts = scenery.textures.starts
+    tex_starts = np.zeros(len(scenery.textures.vals), dtype=int)
     tex_starts[starts] = 1
     tex_starts = tex_starts.cumsum() - 1
     tex_offsets = np.arange(len(tex_starts)) - starts[tex_starts]
 
-    seg_starts = tex_offsets/scene.textures.widths[tex_starts]
-    seg_starts = scene.lines[tex_starts, 0]*(1 - seg_starts[:, None]) + scene.lines[tex_starts, 1]*seg_starts[:, None]
+    seg_starts = tex_offsets/scenery.textures.widths[tex_starts]
+    seg_starts = scenery.lines[tex_starts, 0]*(1 - seg_starts[:, None]) + scenery.lines[tex_starts, 1]*seg_starts[:, None]
 
-    seg_ends = (tex_offsets+1)/scene.textures.widths[tex_starts]
-    seg_ends = scene.lines[tex_starts, 0]*(1 - seg_ends[:, None]) + scene.lines[tex_starts, 1]*seg_ends[:, None]
+    seg_ends = (tex_offsets+1)/scenery.textures.widths[tex_starts]
+    seg_ends = scenery.lines[tex_starts, 0]*(1 - seg_ends[:, None]) + scenery.lines[tex_starts, 1]*seg_ends[:, None]
 
     lines = np.stack([seg_starts, seg_ends]).transpose(1, 0, 2)
 
-    baked = scene.baked.vals.copy()
+    baked = scenery.baked.vals.copy()
     baked[:n_agent_texels(state)] = 1.
 
-    colors = core.gamma_encode(scene.textures.vals*baked[:, None])
+    colors = core.gamma_encode(scenery.textures.vals*baked[:, None])
     return lines, colors
 
 def plot_lights(diagram, state):
-    for light in state.scene.lights:
+    for light in state.scenery.lights:
         diagram.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
 
 def extent(state, zoom, radius=VIEW_RADIUS):
@@ -80,8 +80,8 @@ def extent(state, zoom, radius=VIEW_RADIUS):
         r, t = state.agents.positions.max(0) + radius 
         l, b = state.agents.positions.min(0) - radius
     else:
-        r, t = state.scene.lines.max(0).max(0) + 1
-        l, b = state.scene.lines.min(0).min(0) - 1
+        r, t = state.scenery.lines.max(0).max(0) + 1
+        l, b = state.scenery.lines.min(0).min(0) - 1
 
     w = max(t - b, r - l)/2
     cx, cy = (r + l)/2, (t + b)/2
@@ -147,5 +147,5 @@ def plot_core(state, ax=None, zoom=False):
 
     return ax
 
-def display(scene, e=0):
+def display(scenery, e=0):
     pass

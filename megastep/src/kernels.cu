@@ -208,14 +208,14 @@ __global__ void collision_kernel(
     }
 }
 
-__host__ void physics(const Scene& scene, Agents& agents, Progress progress) {
+__host__ void physics(const Scenery& scenery, Agents& agents, Progress progress) {
     const uint N = agents.angles.size(0);
-    const uint A = scene.n_agents;
-    const uint F = scene.frame.size(0);
+    const uint A = scenery.n_agents;
+    const uint F = scenery.frame.size(0);
 
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
-        A*F, agents.positions.pta(), agents.momenta.pta(), scene.lines.pta(), progress.pta());
+        A*F, agents.positions.pta(), agents.momenta.pta(), scenery.lines.pta(), progress.pta());
 
     //TODO: Collisions should only kill the normal component of momentum
     at::AutoNonVariableTypeMode nonvar{true};
@@ -279,13 +279,13 @@ __global__ void baking_kernel(
     }
 }
 
-__host__ void bake(Scene& scene) {
-    const uint T = scene.textures.vals.size(0);
-    const uint F = scene.frame.size(0);
+__host__ void bake(Scenery& scenery) {
+    const uint T = scenery.textures.vals.size(0);
+    const uint F = scenery.frame.size(0);
 
     const auto blocks = (T + BLOCK - 1)/BLOCK;
     baking_kernel<<<blocks, BLOCK, 0, stream()>>>(
-        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), scene.n_agents*F);
+        scenery.lines.pta(), scenery.lights.pta(), scenery.textures.pta(), scenery.baked.pta(), scenery.n_agents*F);
 }
 
 // RENDERING - KERNELS
@@ -445,27 +445,27 @@ __global__ void shader_kernel(
     screen[n][a][r][2] = s2;
 }
 
-__host__ Render render(const Scene& scene, const Agents& agents) {
+__host__ Render render(const Scenery& scenery, const Agents& agents) {
     const uint N = agents.angles.size(0);
-    const uint A = scene.n_agents;
-    const uint F = scene.frame.size(0);
+    const uint A = scenery.n_agents;
+    const uint F = scenery.frame.size(0);
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
     draw_kernel<<<N, {2, F, A}, 0, stream()>>>(
-        agents.angles.pta(), agents.positions.pta(), scene.frame.pta(), scene.lines.pta()); 
+        agents.angles.pta(), agents.positions.pta(), scenery.frame.pta(), scenery.lines.pta()); 
 
     auto indices(Indices::empty({N, A, RES}));
     auto locations(Locations::empty({N, A, RES}));
     auto dots(Dots::empty({N, A, RES}));
     auto distances(Distances::empty({N, A, RES}));
     raycast_kernel<<<{N, A}, {(uint) RES}, 0, stream()>>>(
-        agents.angles.pta(), agents.positions.pta(), scene.lines.pta(), 
+        agents.angles.pta(), agents.positions.pta(), scenery.lines.pta(), 
         indices.pta(), locations.pta(), dots.pta(), distances.pta());
 
     auto screen(Screen::empty({N, A, RES, 3}));
     shader_kernel<<<{N, A}, {(uint) RES}, 0, stream()>>>(
         indices.pta(), locations.pta(), dots.pta(),
-        scene.lines.pta(), scene.lights.pta(), scene.textures.pta(), scene.baked.pta(), F, screen.pta()); 
+        scenery.lines.pta(), scenery.lights.pta(), scenery.textures.pta(), scenery.baked.pta(), F, screen.pta()); 
 
     return {indices.t, locations.t, dots.t, distances.t, screen.t};
 }

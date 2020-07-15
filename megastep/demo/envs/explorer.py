@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from megastep import modules, core, plotting, scenery, cubicasa
+from megastep import modules, core, plotting, scene, cubicasa
 from rebar import arrdict
 import matplotlib.pyplot as plt
 
@@ -8,8 +8,8 @@ class Explorer:
 
     def __init__(self, n_envs, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
-        scene = scenery.scene(geometries, 1)
-        self._core = core.Core(scene, *args, **kwargs)
+        scenery = scene.scenery(geometries, 1)
+        self._core = core.Core(scenery, *args, **kwargs)
         self._mover = modules.MomentumMovement(self._core)
         self._rgbd = modules.RGBD(self._core)
         self._imu = modules.IMU(self._core)
@@ -18,7 +18,7 @@ class Explorer:
         self.action_space = self._mover.space
         self.observation_space = self._rgbd.space
 
-        self._tex_to_env = self._core.scene.lines.inverse[self._core.scene.textures.inverse.to(torch.long)].to(torch.long)
+        self._tex_to_env = self._core.scenery.lines.inverse[self._core.scenery.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
         self._potential = self._core.env_full(0.)
 
@@ -27,13 +27,13 @@ class Explorer:
         self.device = self._core.device
 
     def _tex_indices(self, aux): 
-        scene = self._core.scene 
+        scenery = self._core.scenery 
         mask = aux.indices >= 0
         result = torch.full_like(aux.indices, -1, dtype=torch.long)
-        tex_n = (scene.lines.starts[:, None, None, None] + aux.indices)[mask]
-        tex_w = scene.textures.widths[tex_n.to(torch.long)]
+        tex_n = (scenery.lines.starts[:, None, None, None] + aux.indices)[mask]
+        tex_w = scenery.textures.widths[tex_n.to(torch.long)]
         tex_i = torch.min(torch.floor(tex_w.to(torch.float)*aux.locations[mask]), tex_w.to(torch.float)-1)
-        tex_s = scene.textures.starts[tex_n.to(torch.long)]
+        tex_s = scenery.textures.starts[tex_n.to(torch.long)]
         result[mask] = tex_s.to(torch.long) + tex_i.to(torch.long)
         return result.unsqueeze(2)
 
@@ -101,7 +101,7 @@ class Explorer:
 
         alpha = .1 + .9*state.seen.astype(float)
         # modifying this in place will bite me eventually. o for a lens
-        state['scene']['textures'] = np.concatenate([state.scene.textures, alpha[:, None]], 1)
+        state['scenery']['textures'] = np.concatenate([state.scenery.textures, alpha[:, None]], 1)
         ax = plotting.plot_core(state, plt.subplot(gs[:, 0]), zoom=zoom)
 
         images = {k: v for k, v in state.obs.items() if k != 'imu'}

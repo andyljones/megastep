@@ -1,5 +1,5 @@
 import torch
-from megastep import modules, core, plotting, spaces, scenery, cubicasa
+from megastep import modules, core, plotting, spaces, scene, cubicasa
 from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,8 +21,8 @@ class Deathmatch:
 
     def __init__(self, n_envs, n_agents, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
-        scene = scenery.scene(geometries, n_agents)
-        self._core = core.Core(scene, *args, res=4*128, fov=60, **kwargs)
+        scenery = scene.scenery(geometries, n_agents)
+        self._core = core.Core(scenery, *args, res=4*128, fov=60, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
         self._imu = modules.IMU(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)
@@ -74,7 +74,7 @@ class Deathmatch:
     def _observe(self):
         render = self._rgbd.render()
         indices = self._downsample(render.indices)
-        obj = indices//len(self._core.scene.frame)
+        obj = indices//len(self._core.scenery.frame)
         mask = (0 <= indices) & (obj < self._core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
         hits = self._shoot(opponents)

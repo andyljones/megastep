@@ -12,7 +12,7 @@ using namespace std::string_literals;
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
 /// Proxy for converting the Tensor of `progress` into a TensorProxy
-void _physics(const Scene& scene, Agents& agents, TT progress) { return physics(scene, agents, progress); }
+void _physics(const Scenery& scenery, Agents& agents, TT progress) { return physics(scenery, agents, progress); }
 
 template<typename T>
 void ragged(py::module &m, std::string name) {
@@ -61,36 +61,36 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         in a class. But that'd make things a bit messier, and it's a rare use-case that'll have them set to different
         values in the same process.
     )pbdoc");
-    m.def("bake", &bake, "scene"_a, R"pbdoc(
-        Pre-computes the lighting for the static geometry, updating the :attr:`Scene.baked` tensor.
+    m.def("bake", &bake, "scenery"_a, R"pbdoc(
+        Pre-computes the lighting for the static geometry, updating the :attr:`Scenery.baked` tensor.
 
         For more details on how this works, see the :ref:`rendering <Rendering>` section.
 
-        :param scene: The scene to compute the lighting for
-        :type scene: :class:`Scene`
+        :param scenery: The scenery to compute the lighting for
+        :type scenery: :class:`Scenery`
     )pbdoc", py::call_guard<py::gil_scoped_release>());
-    m.def("physics", &_physics, "scene"_a, "agents"_a, "progress"_a, R"pbdoc(
+    m.def("physics", &_physics, "scenery"_a, "agents"_a, "progress"_a, R"pbdoc(
         Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their momenta 
         and possible collisions. It also updates the ``progress`` tensor with how far the agents moved before
         colliding with something.
 
         For more details on how this works, see the :ref:`physics <Physics>` section.
         
-        :param scene: The scene to reference when updating the agents
-        :type scene: :class:`Scene`
+        :param scenery: The scenery to reference when updating the agents
+        :type scenery: :class:`Scenery`
         :param agents: The agents to update the movement of
         :type agents: :class:`Agents`
         :param progress: A (n_env, n_agent) tensor that will be filled with the progress made by the agents. 'Progress'
             is what fraction of their intended movement they managed to complete before colliding with something. A
             value less than 1 means they did indeed hit something.
     )pbdoc", py::call_guard<py::gil_scoped_release>());
-    m.def("render", &render, "scene"_a, "agents"_a, R"pbdoc(
-        Returns a rendering of the scene onto the agents' cameras.
+    m.def("render", &render, "scenery"_a, "agents"_a, R"pbdoc(
+        Returns a rendering of the scenery onto the agents' cameras.
 
         For more details on how this works, see the :ref:`rendering <Rendering>` section.
 
-        :param scene: The scene to reference when updating the agents
-        :type scene: :class:`Scene`
+        :param scenery: The scenery to reference when updating the agents
+        :type scenery: :class:`Scenery`
         :param agents: The agents to update the movement of
         :type agents: :class:`Agents`
         :rtype: :class:`Render` 
@@ -118,34 +118,34 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; }, R"pbdoc( 
             An (n_env, n_agent, 2)-tensor of agents' velocity, in meters per second.)pbdoc");
 
-    py::class_<Scene>(m, "Scene", py::module_local()) 
+    py::class_<Scenery>(m, "Scenery", py::module_local()) 
         .def(py::init<int, Lights, Lines, Textures, TT>(),
             "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
-                Holds the state of the scene. Typically accessed through :attr:`megastep.core.Core.scene`.)pbdoc")
-        .def_property_readonly("frame", [](Scene s) { return s.frame.t; }, R"pbdoc(
+                Holds the state of the scenery. Typically accessed through :attr:`megastep.core.Core.scenery`.)pbdoc")
+        .def_property_readonly("frame", [](Scenery s) { return s.frame.t; }, R"pbdoc(
             An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 
-            shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scene.)pbdoc")
-        .def_readonly("n_agents", &Scene::n_agents, R"pbdoc(
+            shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scenery.)pbdoc")
+        .def_readonly("n_agents", &Scenery::n_agents, R"pbdoc(
             The number of agents in each environment)pbdoc")
-        .def_readonly("lights", &Scene::lights, R"pbdoc(
+        .def_readonly("lights", &Scenery::lights, R"pbdoc(
             An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities 
             (typically a value between 0 and 1) in the third.)pbdoc")
-        .def_readonly("lines", &Scene::lines, R"pbdoc(
-            An (n_lines, 2, 2)-:class:`megastep.ragged.Ragged` tensor giving the lines in each scene.)pbdoc")
-        .def_readonly("textures", &Scene::textures, R"pbdoc(
+        .def_readonly("lines", &Scenery::lines, R"pbdoc(
+            An (n_lines, 2, 2)-:class:`megastep.ragged.Ragged` tensor giving the lines in each scenery.)pbdoc")
+        .def_readonly("textures", &Scenery::textures, R"pbdoc(
             An (n_texels, 3)-:class:`megastep.ragged.Ragged` tensor giving the texels in each line.)pbdoc")
-        .def_readonly("baked", &Scene::baked, R"pbdoc(
+        .def_readonly("baked", &Scenery::baked, R"pbdoc(
             An (n_texels,)-:class:`megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
-            The result of a :func:`render` call, showing the scene from the agents' points of view.
+            The result of a :func:`render` call, showing the scenery from the agents' points of view.
 
             Rendering is done by casting 'rays' from the camera, through each pixel and out into the world. When a ray
-            intersects a line from :attr:`Scene.lines`, that's called a 'hit'. )pbdoc")
+            intersects a line from :attr:`Scenery.lines`, that's called a 'hit'. )pbdoc")
         .def_property_readonly("screen", [](Render r) { return variable(r.screen); }, R"pbdoc(
             A (n_envs, n_agents, res, 3)-tensor giving the views of each agent. Colours are RGB with values between 0 and 1. Infinity is coloured black.)pbdoc")
         .def_property_readonly("indices", [](Render r) { return variable(r.indices); }, R"pbdoc(
-            A (n_envs, n_agents, res)-tensor giving the index into :attr:`Scene.lines` of the hit. Rays which don't hit anything get a -1.)pbdoc")
+            A (n_envs, n_agents, res)-tensor giving the index into :attr:`Scenery.lines` of the hit. Rays which don't hit anything get a -1.)pbdoc")
         .def_property_readonly("locations", [](Render r) { return variable(r.locations); }, R"pbdoc(
             A (n_envs, n_agents, res)-tensor giving the location along each line that the hit occurs. A zero means it
             happened at the first endpoint; a one means it happened at the second.)pbdoc")

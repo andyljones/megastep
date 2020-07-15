@@ -29,14 +29,14 @@ and also a :ref:`brief discussion of its place in megastep <geometry>`.
 
 A geometry on its own is not enough for the renderer to go on though. For one it's missing texture, and for two it only 
 describes a single environment, when megastep's key advantage is the simulation of thousands of environments in parallel.
-To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scene`::
+To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
 
-    from megastep import scenery, plotting
-    scene = scenery.scene(1024*[g])
+    from megastep import scene, plotting
+    scenery = scene.scenery(1024*[g])
 
-    plotting.display(scene, e=126)
+    plotting.display(scenery, e=126)
 
-TODO: Image of scene
+TODO: Image of scenery
 
 This code generates
 
@@ -110,6 +110,6 @@ generating thousands of them - and the resolution of the mask, which here is the
 :func:`megastep.geometry.masks` uses by default.
 
 It's mentioned in the :ref:`geometry <geometry>` section but worth re-mentioning here: geometries are dicts rather 
-than classes because as you develop your own environments, scenery and geometries you'll likely find you have
+than classes because as you develop your own environments, scene and geometries you'll likely find you have
 different ideas about what information a geometry needs to carry around. A dotdict is much easier to modify in that
 case than a class.
