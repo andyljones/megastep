@@ -170,21 +170,21 @@ using Lights = Ragged<float, 2>;
 using Lines = Ragged<float, 3>;
 using Textures = Ragged<float, 2>;
 using Baked = Ragged<float, 1>;
-using Frame = TensorProxy<float, 3>;
+using Model = TensorProxy<float, 3>;
 
 struct Scenery {
     const int n_agents;
     const Lights lights;
     const Lines lines;
     const Textures textures;
-    const Frame frame;
+    const Model model;
     const Baked baked;
 
     // Weird initialization of `baked` here is to avoid having to create a `AutoNonVariableTypeMode` 
     // guard, because I still don't understand the Variable vs Tensor thing. 
     // Goal is to create a Tensor of 1s like textures.vals[:, 0]
-    Scenery(int n_agents, Lights lights, Lines lines, Textures textures, TT frame) :
-        n_agents(n_agents), lights(lights), lines(lines), textures(textures), frame(frame),
+    Scenery(int n_agents, Lights lights, Lines lines, Textures textures, TT model) :
+        n_agents(n_agents), lights(lights), lines(lines), textures(textures), model(model),
         baked(at::ones_like(textures.vals.select(1, 0)), textures.widths) {
     }
 
@@ -197,7 +197,7 @@ struct Scenery {
             "lights"_a=lights[e],
             "lines"_a=lines[e],
             "textures"_a=textures[py::slice(se, ee, 1)],
-            "frame"_a=frame.t,
+            "model"_a=model.t,
             "baked"_a=baked[py::slice(se, ee, 1)]);
     }
     

@@ -119,7 +119,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
     py::class_<Scenery>(m, "Scenery", py::module_local()) 
         .def(py::init<int, Lights, Lines, Textures, TT>(),
-            "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
+            "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "model"_a, R"pbdoc(
             Holds the state of the scenery. Typically accessed through :attr:`megastep.core.Core.scenery`. 
             
             See the :ref:`scenery <scenery>` section for a discussion of this class's place in megastep.
@@ -127,8 +127,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             )pbdoc")
         .def("__getitem__", [](Scenery self, int e) { return self[e]; }, R"pbdoc(
             Extracts the state for the ``e``th scene, returning it as a :class:`rebar.dotdict.dotdict`.)pbdoc")
-        .def_property_readonly("frame", [](Scenery s) { return s.frame.t; }, R"pbdoc(
-            An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 
+        .def_property_readonly("model", [](Scenery s) { return s.model.t; }, R"pbdoc(
+            An (n_model_line, 2, 2)-tensor giving the model - the set of lines - that make up the agent. This will be 
             shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scenery.)pbdoc")
         .def_readonly("n_agents", &Scenery::n_agents, R"pbdoc(
             The number of agents in each environment)pbdoc")

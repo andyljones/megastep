@@ -74,7 +74,7 @@ class Deathmatch:
     def _observe(self):
         render = self._rgbd.render()
         indices = self._downsample(render.indices)
-        obj = indices//len(self.core.scenery.frame)
+        obj = indices//len(self.core.scenery.model)
         mask = (0 <= indices) & (obj < self.core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
         hits = self._shoot(opponents)

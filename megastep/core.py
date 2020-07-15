@@ -78,7 +78,7 @@ class Core:
         self.random = np.random.RandomState(1)
 
         # TODO: This needs to be propagated to the C++ side
-        self.device = scenery.frame.device
+        self.device = scenery.model.device
 
         assert fov < 180, 'FOV should be less than 180°'
 
@@ -100,7 +100,7 @@ class Core:
             agent_radius    0.10606601717798211
             fps             10
             scenery           arrdict:
-                            frame       Tensor((8, 2, 2), torch.float32)
+                            model       Tensor((8, 2, 2), torch.float32)
                             lines       Tensor((307, 2, 2), torch.float32)
                             lights      Tensor((21, 3), torch.float32)
                             textures    <megastepcuda.Ragged2D object at 0x7fba34112eb0>
@@ -120,7 +120,7 @@ class Core:
         return arrdict.arrdict(
                     **options,
                     scenery=arrdict.arrdict(
-                            frame=self.scenery.frame,
+                            model=self.scenery.model,
                             lines=self.scenery.lines[e],
                             lights=self.scenery.lights[e],
                             #TODO: Fix up ragged so this works

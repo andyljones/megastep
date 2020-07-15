@@ -212,7 +212,7 @@ __global__ void collision_kernel(
 __host__ Physics physics(const Scenery& scenery, const Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint A = scenery.n_agents;
-    const uint F = scenery.frame.size(0);
+    const uint F = scenery.model.size(0);
 
     auto progress(Progress::empty({N, A}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
@@ -285,7 +285,7 @@ __global__ void baking_kernel(
 
 __host__ void bake(Scenery& scenery) {
     const uint T = scenery.textures.vals.size(0);
-    const uint F = scenery.frame.size(0);
+    const uint F = scenery.model.size(0);
 
     const auto blocks = (T + BLOCK - 1)/BLOCK;
     baking_kernel<<<blocks, BLOCK, 0, stream()>>>(
@@ -294,11 +294,11 @@ __host__ void bake(Scenery& scenery) {
 
 // RENDERING - KERNELS
 
-__global__ void draw_kernel(Angles::PTA angles, Positions::PTA positions, Frame::PTA frame, Lines::PTA lines) {
+__global__ void draw_kernel(Angles::PTA angles, Positions::PTA positions, Model::PTA model, Lines::PTA lines) {
     const auto n = blockIdx.x;
 
     const auto e = threadIdx.x;
-    const auto f = threadIdx.y;
+    const auto m = threadIdx.y;
     const auto a = threadIdx.z;
 
     const auto ang = angles[n][a]/180.f;
@@ -309,12 +309,12 @@ __global__ void draw_kernel(Angles::PTA angles, Positions::PTA positions, Frame:
     const auto py = positions[n][a][1];
 
     // TODO: Stick these in constant memory
-    const auto F = frame.size(0);
-    const auto fx = frame[f][e][0];
-    const auto fy = frame[f][e][1];
+    const auto M = model.size(0);
+    const auto mx = model[m][e][0];
+    const auto my = model[m][e][1];
 
-    lines[n][a*F + f][e][0] = c*fx - s*fy + px;
-    lines[n][a*F + f][e][1] = s*fx + c*fy + py;
+    lines[n][a*M + m][e][0] = c*mx - s*my + px;
+    lines[n][a*M + m][e][1] = s*mx + c*my + py;
 }
 
 
@@ -452,11 +452,11 @@ __global__ void shader_kernel(
 __host__ Render render(const Scenery& scenery, const Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint A = scenery.n_agents;
-    const uint F = scenery.frame.size(0);
+    const uint F = scenery.model.size(0);
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
     draw_kernel<<<N, {2, F, A}, 0, stream()>>>(
-        agents.angles.pta(), agents.positions.pta(), scenery.frame.pta(), scenery.lines.pta()); 
+        agents.angles.pta(), agents.positions.pta(), scenery.model.pta(), scenery.lines.pta()); 
 
     auto indices(Indices::empty({N, A, RES}));
     auto locations(Locations::empty({N, A, RES}));

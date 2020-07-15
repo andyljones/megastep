@@ -21,7 +21,7 @@ COLORS = [
 def lengths(lines):
     return ((lines[..., 0, :] - lines[..., 1, :])**2).sum(-1)**.5
 
-def agent_frame():
+def agent_model():
     corners = [
             [-.5, -1.], [+.5, -1.], 
             [+1., -.5], [+1., +.5],
@@ -73,7 +73,7 @@ def random_lights(lights, random=np.random):
 
 @torch.no_grad()
 def scenery(geometries, n_agents=1, device='cuda', random=np.random): 
-    agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
+    agentlines = np.tile(agent_model(), (n_agents, 1, 1))
     agentcolors = np.tile(agent_colors(), (n_agents, 1))
 
     data = []
@@ -93,7 +93,7 @@ def scenery(geometries, n_agents=1, device='cuda', random=np.random):
         lights=lights,
         lines=ragged.Ragged(**data['lines']),
         textures=ragged.Ragged(**data['textures']),
-        frame=arrdict.torchify(agent_frame()).to(device))
+        model=arrdict.torchify(agent_model()).to(device))
     core.cuda.bake(scenery)
 
     return scenery
