@@ -9,25 +9,25 @@ class Explorer:
     def __init__(self, n_envs, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
         scenery = scene.scenery(geometries, 1)
-        self._core = core.Core(scenery, *args, **kwargs)
-        self._mover = modules.MomentumMovement(self._core)
-        self._rgbd = modules.RGBD(self._core)
-        self._imu = modules.IMU(self._core)
-        self._respawner = modules.RandomSpawns(self._core)
+        self.core = core.Core(scenery, *args, **kwargs)
+        self._mover = modules.MomentumMovement(self.core)
+        self._rgbd = modules.RGBD(self.core)
+        self._imu = modules.IMU(self.core)
+        self._respawner = modules.RandomSpawns(self.core)
 
         self.action_space = self._mover.space
         self.observation_space = self._rgbd.space
 
-        self._tex_to_env = self._core.scenery.lines.inverse[self._core.scenery.textures.inverse.to(torch.long)].to(torch.long)
+        self._tex_to_env = self.core.scenery.lines.inverse[self.core.scenery.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
-        self._potential = self._core.env_full(0.)
+        self._potential = self.core.env_full(0.)
 
-        self._lengths = torch.zeros(self._core.n_envs, device=self._core.device, dtype=torch.int)
+        self._lengths = torch.zeros(self.core.n_envs, device=self.core.device, dtype=torch.int)
 
-        self.device = self._core.device
+        self.device = self.core.device
 
     def _tex_indices(self, aux): 
-        scenery = self._core.scenery 
+        scenery = self.core.scenery 
         mask = aux.indices >= 0
         result = torch.full_like(aux.indices, -1, dtype=torch.long)
         tex_n = (scenery.lines.starts[:, None, None, None] + aux.indices)[mask]
@@ -44,7 +44,7 @@ class Explorer:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        reward = (potential - self._potential)/self._core.res
+        reward = (potential - self._potential)/self.core.res
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
@@ -60,13 +60,13 @@ class Explorer:
 
     @torch.no_grad()
     def reset(self):
-        reset = self._core.env_full(True)
+        reset = self.core.env_full(True)
         self._reset(reset)
         render = self._rgbd.render()
         return arrdict.arrdict(
             obs=self._rgbd(render),
             reset=reset, 
-            terminal=self._core.env_full(False), 
+            terminal=self.core.env_full(False), 
             reward=self._reward(render, reset))
 
     @torch.no_grad()
@@ -81,13 +81,13 @@ class Explorer:
         return arrdict.arrdict(
             obs=self._rgbd(render),
             reset=reset, 
-            terminal=self._core.env_full(False), 
+            terminal=self.core.env_full(False), 
             reward=self._reward(render, reset))
 
     def state(self, d=0):
         seen = self._seen[self._tex_to_env == d]
         return arrdict.arrdict(
-            **self._core.state(d),
+            **self.core.state(d),
             obs=self._rgbd.state(d),
             potential=self._potential[d].clone(),
             seen=seen.clone(),
@@ -102,7 +102,7 @@ class Explorer:
         alpha = .1 + .9*state.seen.astype(float)
         # modifying this in place will bite me eventually. o for a lens
         state['scenery']['textures'] = np.concatenate([state.scenery.textures, alpha[:, None]], 1)
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]), zoom=zoom)
+        ax = plotting.plotcore(state, plt.subplot(gs[:, 0]), zoom=zoom)
 
         images = {k: v for k, v in state.obs.items() if k != 'imu'}
         plotting.plot_images(images, [plt.subplot(gs[0, 1])])

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 class RandomGoals:
 
     def __init__(self, core, *args, n_goals=10, **kwargs):
-        self._core = core
+        self.core = core
 
         self._n_goals = n_goals
         self._goals = arrdict.torchify(modules.random_empty_positions(core, n_goals).transpose(0, 2, 1, 3)).to(core.device)
@@ -16,7 +16,7 @@ class RandomGoals:
     def __call__(self, reset, distance, temperature=10, clip=2):
         if not reset.any():
             return self._goals.new_empty((0, *self._goals.shape[2:]))
-        d = (self._goals[reset] - self._core.agents.positions[reset, None]).pow(2).sum(-1).pow(.5).mean(-1)
+        d = (self._goals[reset] - self.core.agents.positions[reset, None]).pow(2).sum(-1).pow(.5).mean(-1)
 
         logits = -(d/distance).log10().clamp(-clip, +clip).abs().mul(temperature)
         sample = torch.distributions.Categorical(logits=logits).sample()
@@ -26,17 +26,17 @@ class RandomGoals:
 class Waypoint: 
 
     def __init__(self, *args, max_length=512, **kwargs):
-        self._core = core.Core(*args, **kwargs)
-        self._mover = modules.MomentumMovement(self._core)
-        self._rgbd = modules.RGBD(self._core)
-        self._respawner = modules.RandomSpawns(self._core)
-        self._lengths = modules.RandomLengths(self._core, max_length)
-        self._goals = RandomGoals(self._core)
+        self.core = core.Core(*args, **kwargs)
+        self._mover = modules.MomentumMovement(self.core)
+        self._rgbd = modules.RGBD(self.core)
+        self._respawner = modules.RandomSpawns(self.core)
+        self._lengths = modules.RandomLengths(self.core, max_length)
+        self._goals = RandomGoals(self.core)
 
         self.action_space = self._mover.space
         self.observation_space = arrdict.arrdict(
             **self._rgbd.space,
-            waypoint=spaces.MultiVector(self._core.n_agents, 2))
+            waypoint=spaces.MultiVector(self.core.n_agents, 2))
 
     def _reset(self, reset):
         reset = self._lengths(reset)
@@ -46,25 +46,25 @@ class Waypoint:
     
     def _observe(self):
         obs = self._rgbd().copy()
-        delta = self._goals.current - self._core.agents.positions
-        relative = modules.to_local_frame(self._core.agents.angles, delta)
+        delta = self._goals.current - self.core.agents.positions
+        relative = modules.to_local_frame(self.core.agents.angles, delta)
         obs['waypoint'] = relative
         return obs.clone()
 
     @torch.no_grad()
     def reset(self):
-        reset = self._core.env_full(True)
+        reset = self.core.env_full(True)
         reset = self._reset(reset)
         return arrdict.arrdict(
             obs=self._observe(),
-            reward=self._core.env_full(0.),
+            reward=self.core.env_full(0.),
             reset=reset,
             terminal=reset)
 
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
-        distances = (self._goals.current - self._core.agents.positions).pow(2).sum(-1).pow(.5)
+        distances = (self._goals.current - self.core.agents.positions).pow(2).sum(-1).pow(.5)
         success = distances < .15
         reset = self._reset(success.all(-1))
         return arrdict.arrdict(
@@ -75,7 +75,7 @@ class Waypoint:
 
     def state(self, d=0):
         return arrdict.arrdict(
-            **self._core.state(d),
+            **self.core.state(d),
             obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
 
@@ -84,7 +84,7 @@ class Waypoint:
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        ax = plotting.plotcore(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
         ax.scatter(*state.waypoint.T, marker='x', color='red')
@@ -102,30 +102,30 @@ class Waypoint:
 class PointGoal:
 
     def __init__(self, *args, max_length=512, **kwargs):
-        self._core = core.Core(*args, **kwargs)
-        self._mover = modules.MomentumMovement(self._core)
-        self._rgbd = modules.RGBD(self._core)
-        self._imu = modules.IMU(self._core)
-        self._respawner = modules.RandomSpawns(self._core)
-        self._lengths = modules.RandomLengths(self._core, max_length)
-        self._goals = RandomGoals(self._core)
+        self.core = core.Core(*args, **kwargs)
+        self._mover = modules.MomentumMovement(self.core)
+        self._rgbd = modules.RGBD(self.core)
+        self._imu = modules.IMU(self.core)
+        self._respawner = modules.RandomSpawns(self.core)
+        self._lengths = modules.RandomLengths(self.core, max_length)
+        self._goals = RandomGoals(self.core)
 
         self._spawns = arrdict.arrdict(
-            angles=torch.zeros_like(self._core.agents.angles),
-            positions=torch.zeros_like(self._core.agents.positions))
+            angles=torch.zeros_like(self.core.agents.angles),
+            positions=torch.zeros_like(self.core.agents.positions))
 
         self.action_space = self._mover.space
         self.observation_space = arrdict.arrdict(
             **self._rgbd.space,
             imu=self._imu.space,
-            waypoint=spaces.MultiVector(self._core.n_agents, 2))
+            waypoint=spaces.MultiVector(self.core.n_agents, 2))
 
     def _reset(self, reset):
         reset = self._lengths(reset)
         self._respawner(reset)
 
-        self._spawns.angles[reset] = self._core.agents.angles[reset]
-        self._spawns.positions[reset] = self._core.agents.positions[reset]
+        self._spawns.angles[reset] = self.core.agents.angles[reset]
+        self._spawns.positions[reset] = self.core.agents.positions[reset]
 
         self._goals(reset, 1.)
         return reset
@@ -140,18 +140,18 @@ class PointGoal:
 
     @torch.no_grad()
     def reset(self):
-        reset = self._core.env_full(True)
+        reset = self.core.env_full(True)
         reset = self._reset(reset)
         return arrdict.arrdict(
             obs=self._observe(),
-            reward=self._core.env_full(0.),
+            reward=self.core.env_full(0.),
             reset=reset,
-            terminal=self._core.env_full(False))
+            terminal=self.core.env_full(False))
 
     @torch.no_grad()
     def step(self, decision):
         self._mover(decision)
-        distances = (self._goals.current - self._core.agents.positions).pow(2).sum(-1).pow(.5)
+        distances = (self._goals.current - self.core.agents.positions).pow(2).sum(-1).pow(.5)
         success = distances < .15
         reset = self._reset(success.all(-1))
         return arrdict.arrdict(
@@ -162,7 +162,7 @@ class PointGoal:
 
     def state(self, d=0):
         return arrdict.arrdict(
-            **self._core.state(d),
+            **self.core.state(d),
             obs=self._rgbd.state(d),
             waypoint=self._goals.current[d].clone())
 
@@ -171,7 +171,7 @@ class PointGoal:
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
-        ax = plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        ax = plotting.plotcore(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
         ax.scatter(*state.waypoint.T, marker='x', color='red')

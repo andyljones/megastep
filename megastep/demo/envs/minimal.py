@@ -44,7 +44,7 @@ class Minimal:
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
-        plotting.plot_core(state, plt.subplot(gs[:, 0]))
+        plotting.plotcore(state, plt.subplot(gs[:, 0]))
         plotting.plot_images(state.obs, [plt.subplot(gs[0, 1])])
 
         return fig

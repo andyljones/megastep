@@ -135,7 +135,7 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         ax.plot(*line.T, color=color)
     return ax
 
-def plot_core(state, ax=None, zoom=False):
+def plotcore(state, ax=None, zoom=False):
     _, ax = plt.subplots() if ax is None else (None, ax)
 
     plot_lights(ax, state)

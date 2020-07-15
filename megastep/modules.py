@@ -19,7 +19,7 @@ class SimpleMovement:
 
     def __init__(self, core, *args, accel=10, ang_accel=180, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
-        self._core = core
+        self.core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict.arrdict(
@@ -30,7 +30,7 @@ class SimpleMovement:
         self.space = spaces.MultiDiscrete(n_agents or core.n_agents, 7)
 
     def __call__(self, decision):
-        core = self._core
+        core = self.core
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
@@ -40,7 +40,7 @@ class MomentumMovement:
 
     def __init__(self, core, *args, accel=5, ang_accel=180, decay=.125, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
-        self._core = core
+        self.core = core
         momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
         angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict.arrdict(
@@ -53,7 +53,7 @@ class MomentumMovement:
         self.space = spaces.MultiDiscrete(n_agents or core.n_agents, 7)
 
     def __call__(self, decision):
-        core = self._core
+        core = self.core
         delta = self._actionset[decision.actions]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
@@ -68,7 +68,7 @@ class RGBD:
 
     def __init__(self, core, *args, n_agents=None, subsample=1, max_depth=10, **kwargs):
         n_agents = n_agents or core.n_agents
-        self._core = core
+        self.core = core
         self.space = arrdict.arrdict(
             rgb=spaces.MultiImage(n_agents, 3, 1, core.res//subsample),
             d=spaces.MultiImage(n_agents, 1, 1, core.res//subsample),)
@@ -76,7 +76,7 @@ class RGBD:
         self.subsample = subsample
 
     def render(self):
-        core = self._core
+        core = self.core
         render = unpack(cuda.render(core.scenery, core.agents))
         render = arrdict.arrdict({k: v.unsqueeze(2) for k, v in render.items()})
         render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
@@ -87,7 +87,7 @@ class RGBD:
 
     def __call__(self, render=None):
         render = self.render() if render is None else render
-        depth = ((render.distances - self._core.agent_radius)/self.max_depth).clamp(0, 1)
+        depth = ((render.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
         self._last_obs = arrdict.arrdict(
             rgb=self._downsample(render.screen),
             d=self._downsample(depth).unsqueeze(3))
@@ -99,13 +99,13 @@ class RGBD:
 class IMU:
 
     def __init__(self, core, n_agents=None):
-        self._core = core
+        self.core = core
         self.space = spaces.MultiVector(n_agents or core.n_agents, 3)
 
     def __call__(self):
         return torch.cat([
-            self._core.agents.angmomenta[..., None]/360.,
-            to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
+            self.core.agents.angmomenta[..., None]/360.,
+            to_local_frame(self.core.agents.angles, self.core.agents.momenta)/10.], -1)
 
 def random_empty_positions(geometries, n_agents, n_points):
     points = []
@@ -125,14 +125,14 @@ def random_empty_positions(geometries, n_agents, n_points):
 class RandomSpawns:
 
     def __init__(self, geometries, core, *args, n_spawns=100, **kwargs):
-        self._core = core
+        self.core = core
 
         positions = random_empty_positions(geometries, core.n_agents, n_spawns)
         angles = core.random.uniform(-180, +180, (len(geometries), core.n_agents, n_spawns))
         self._spawns = arrdict.torchify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
-        core = self._core
+        core = self.core
         required = reset.nonzero(as_tuple=True)
         choices = torch.randint_like(required[0], 0, self._spawns.angles.shape[1])
         core.agents.angles[required] = self._spawns.angles[(*required, choices)] 

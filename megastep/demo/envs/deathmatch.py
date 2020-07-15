@@ -22,11 +22,11 @@ class Deathmatch:
     def __init__(self, n_envs, n_agents, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
         scenery = scene.scenery(geometries, n_agents)
-        self._core = core.Core(scenery, *args, res=4*128, fov=60, **kwargs)
-        self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
-        self._imu = modules.IMU(self._core, n_agents=1)
-        self._mover = modules.MomentumMovement(self._core, n_agents=1)
-        self._respawner = modules.RandomSpawns(geometries, self._core)
+        self.core = core.Core(scenery, *args, res=4*128, fov=60, **kwargs)
+        self._rgbd = modules.RGBD(self.core, n_agents=1, subsample=4)
+        self._imu = modules.IMU(self.core, n_agents=1)
+        self._mover = modules.MomentumMovement(self.core, n_agents=1)
+        self._respawner = modules.RandomSpawns(geometries, self.core)
 
         self.action_space = self._mover.space
         self.observation_space = dotdict.dotdict(
@@ -34,12 +34,12 @@ class Deathmatch:
             imu=self._imu.space,
             health=spaces.MultiVector(1, 1))
 
-        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in geometries])).to(self._core.device)
-        self._health = self._core.agent_full(np.nan)
-        self._damage = self._core.agent_full(np.nan)
+        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in geometries])).to(self.core.device)
+        self._health = self.core.agent_full(np.nan)
+        self._damage = self.core.agent_full(np.nan)
 
-        self.n_envs = self._core.n_envs*self._core.n_agents
-        self.device = self._core.device
+        self.n_envs = self.core.n_envs*self.core.n_agents
+        self.device = self.core.device
 
     def _reset(self, reset=None):
         reset = (self._health <= 0) if reset is None else reset
@@ -55,7 +55,7 @@ class Deathmatch:
     def _shoot(self, opponents):
         res = opponents.size(-1)
         middle = slice(res//2-1, res//2+1)
-        agents = torch.arange(self._core.n_agents, device=self._core.device)
+        agents = torch.arange(self.core.n_agents, device=self.core.device)
         matchings = (opponents[:, :, None] == agents[None, None, :, None, None])[..., middle].any(-1).any(-1)
         self._matchings = matchings
         
@@ -64,7 +64,7 @@ class Deathmatch:
 
         self._damage[:] += .05*hits
 
-        pos = self._core.agents.positions 
+        pos = self.core.agents.positions 
         outside = (pos < -CLEARANCE).any(-1) | (pos > (self._bounds[:, None] + CLEARANCE)).any(-1)
 
         self._health[:] += -.05*(wounds + outside) - .001
@@ -74,8 +74,8 @@ class Deathmatch:
     def _observe(self):
         render = self._rgbd.render()
         indices = self._downsample(render.indices)
-        obj = indices//len(self._core.scenery.frame)
-        mask = (0 <= indices) & (obj < self._core.n_agents)
+        obj = indices//len(self.core.scenery.frame)
+        mask = (0 <= indices) & (obj < self.core.n_agents)
         opponents = obj.where(mask, torch.full_like(indices, -1))
         hits = self._shoot(opponents)
         return arrdict.arrdict(
@@ -85,7 +85,7 @@ class Deathmatch:
 
     @torch.no_grad()
     def reset(self):
-        reset = self._reset(self._core.agent_full(True))
+        reset = self._reset(self.core.agent_full(True))
         obs, reward = self._observe()
         return arrdict.arrdict(
             obs=expand(obs),
@@ -96,7 +96,7 @@ class Deathmatch:
     @torch.no_grad()
     def step(self, decision):
         reset = self._reset()
-        self._mover(collapse(decision, self._core.n_agents))
+        self._mover(collapse(decision, self.core.n_agents))
         obs, reward = self._observe()
         return arrdict.arrdict(
             obs=expand(obs),
@@ -106,7 +106,7 @@ class Deathmatch:
 
     def state(self, e=0):
         return arrdict.arrdict(
-            **self._core.state(e),
+            **self.core.state(e),
             obs=self._rgbd.state(e),
             health=self._health[e].clone(),
             damage=self._damage[e].clone(),
@@ -123,7 +123,7 @@ class Deathmatch:
 
         colors = [f'C{i}' for i in range(state.n_agents)]
 
-        plan = plotting.plot_core(state, plt.subplot(gs[:-1, :-1]), zoom=zoom)
+        plan = plotting.plotcore(state, plt.subplot(gs[:-1, :-1]), zoom=zoom)
 
         # Add hits
         origin, dest = state.matchings.nonzero()
