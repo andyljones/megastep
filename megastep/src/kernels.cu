@@ -174,6 +174,7 @@ __host__ TT normalize_degrees(TT a) {
     return (((a % 360.f) + 180.f) % 360.f) - 180.f;
 }
 
+using Progress = TensorProxy<float, 2>; 
 
 __global__ void collision_kernel(
                 int DF, Positions::PTA positions, Momenta::PTA momenta, 
@@ -208,11 +209,12 @@ __global__ void collision_kernel(
     }
 }
 
-__host__ void physics(const Scenery& scenery, Agents& agents, Progress progress) {
+__host__ Physics physics(const Scenery& scenery, const Agents& agents) {
     const uint N = agents.angles.size(0);
     const uint A = scenery.n_agents;
     const uint F = scenery.frame.size(0);
 
+    auto progress(Progress::empty({N, A}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
         A*F, agents.positions.pta(), agents.momenta.pta(), scenery.lines.pta(), progress.pta());
@@ -223,6 +225,8 @@ __host__ void physics(const Scenery& scenery, Agents& agents, Progress progress)
     agents.momenta.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
     agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angmomenta.t/FPS));
     agents.angmomenta.t.masked_fill_(progress.t < 1, 0.f);
+
+    return {progress.t};
 }
 
 // RENDERING - BAKING

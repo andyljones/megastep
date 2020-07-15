@@ -211,9 +211,11 @@ struct Render {
     const TT screen;
 };
 
-using Progress = TensorProxy<float, 2>; 
+struct Physics {
+    const TT progress;
+};
 
 void initialize(float, int, float, float);
 void bake(Scenery& scenery);
-void physics(const Scenery& scenery, Agents& agents, Progress progress);
+Physics physics(const Scenery& scenery, const Agents& agents);
 Render render(const Scenery& scenery, const Agents& agents);

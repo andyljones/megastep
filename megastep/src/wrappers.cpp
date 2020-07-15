@@ -11,9 +11,6 @@ using namespace std::string_literals;
 
 TT variable(TT t) { return torch::autograd::make_variable(t); }
 
-/// Proxy for converting the Tensor of `progress` into a TensorProxy
-void _physics(const Scenery& scenery, Agents& agents, TT progress) { return physics(scenery, agents, progress); }
-
 template<typename T>
 void ragged(py::module &m, std::string name) {
     py::class_<T>(m, name.c_str(), py::module_local())
@@ -69,9 +66,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         :param scenery: The scenery to compute the lighting for
         :type scenery: :class:`Scenery`
     )pbdoc", py::call_guard<py::gil_scoped_release>());
-    m.def("physics", &_physics, "scenery"_a, "agents"_a, "progress"_a, R"pbdoc(
+    m.def("physics", &physics, "scenery"_a, "agents"_a, R"pbdoc(
         Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their momenta 
-        and possible collisions. It also updates the ``progress`` tensor with how far the agents moved before
+        and possible collisions. It also returns the ``progress`` tensor with how far the agents moved before
         colliding with something.
 
         For more details on how this works, see the :ref:`physics <Physics>` section.
@@ -80,9 +77,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         :type scenery: :class:`Scenery`
         :param agents: The agents to update the movement of
         :type agents: :class:`Agents`
-        :param progress: A (n_env, n_agent) tensor that will be filled with the progress made by the agents. 'Progress'
-            is what fraction of their intended movement they managed to complete before colliding with something. A
-            value less than 1 means they did indeed hit something.
+        :return: 
     )pbdoc", py::call_guard<py::gil_scoped_release>());
     m.def("render", &render, "scenery"_a, "agents"_a, R"pbdoc(
         Returns a rendering of the scenery onto the agents' cameras.
@@ -148,12 +143,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             An (n_texels,)-:class:`megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
-            The result of a :func:`render` call, showing the scenery from the agents' points of view.
+        The result of a :func:`render` call, showing the scenery from the agents' points of view.
 
-            See the :ref:`rendering <rendering>` section for a discussion of this class's place in megastep.
+        See the :ref:`rendering <rendering>` section for a discussion of this class's place in megastep.
 
-            Rendering is done by casting 'rays' from the camera, through each pixel and out into the world. When a ray
-            intersects a line from :attr:`Scenery.lines`, that's called a 'hit'. )pbdoc")
+        Rendering is done by casting 'rays' from the camera, through each pixel and out into the world. When a ray
+        intersects a line from :attr:`Scenery.lines`, that's called a 'hit'. )pbdoc")
         .def_property_readonly("screen", [](Render r) { return variable(r.screen); }, R"pbdoc(
             A (n_envs, n_agents, res, 3)-tensor giving the views of each agent. Colours are RGB with values between 0 and 1. Infinity is coloured black.)pbdoc")
         .def_property_readonly("indices", [](Render r) { return variable(r.indices); }, R"pbdoc(
@@ -165,4 +160,12 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             A (n_envs, n_agents, res)-tensor giving the dot product between the ray and the line it hit.)pbdoc")
         .def_property_readonly("distances", [](Render r) { return variable(r.distances); }, R"pbdoc(
             A (n_envs, n_agents, res)-tensor giving the distance from the camera to the hit in meters.)pbdoc");
+
+    py::class_<Physics>(m, "Physics", py::module_local(), R"pbdoc(
+        )pbdoc")
+        .def_property_readonly("progress", [](Physics p) { return variable(p.progress); }, R"pbdoc(
+            A (n_env, n_agent) tensor that will be filled with the progress made by the agents. 'Progress' is what
+            fraction of their intended movement they managed to complete before colliding with something. A value
+            less than 1 means they did indeed hit something.
+        )pbdoc");
 }
