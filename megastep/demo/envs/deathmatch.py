@@ -21,7 +21,7 @@ class Deathmatch:
 
     def __init__(self, n_envs, n_agents, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
-        scene = scenery.init_scene(geometries, n_agents)
+        scene = scenery.scene(geometries, n_agents)
         self._core = core.Core(scene, *args, res=4*128, fov=60, **kwargs)
         self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
         self._imu = modules.IMU(self._core, n_agents=1)

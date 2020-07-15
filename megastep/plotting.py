@@ -146,3 +146,6 @@ def plot_core(state, ax=None, zoom=False):
     ax.set_yticks([])
 
     return ax
+
+def display(scene, e=0):
+    pass

@@ -9,37 +9,35 @@ class Minimal:
 
     def __init__(self, *args, **kwargs):
         geometries = [toys.box()]
-        scene = scenery.init_scene(geometries)
-        self._core = core.Core(scene, *args, **kwargs)
-        self._mover = modules.SimpleMovement(self._core)
-        self._observer = modules.RGBD(self._core)
-        self._respawner = modules.RandomSpawns(geometries, self._core)
+        scene = scenery.scene(geometries)
+        self.core = core.Core(scene, *args, **kwargs)
+        self.mover = modules.SimpleMovement(self.core)
+        self.observer = modules.RGBD(self.core)
+        self.respawner = modules.RandomSpawns(geometries, self.core)
 
-        self.action_space = self._mover.space
-        self.observation_space = self._observer.space
+        self.action_space = self.mover.space
+        self.observation_space = self.observer.space
 
     @torch.no_grad()
     def reset(self):
-        self._respawner(self._core.env_full(True).unsqueeze(-1))
+        self.respawner(self.core.env_full(True).unsqueeze(-1))
         return arrdict.arrdict(
-            obs=self._observer(),
-            reward=self._core.env_full(0.),
-            reset=self._core.env_full(True),
-            terminal=self._core.env_full(False),)
+            obs=self.observer(),
+            reward=self.core.env_full(0.),
+            reset=self.core.env_full(True))
 
     @torch.no_grad()
     def step(self, decision):
-        self._mover(decision)
+        self.mover(decision)
         return arrdict.arrdict(
-            obs=self._observer(),            
-            reward=self._core.env_full(0.),
-            reset=self._core.env_full(True),
-            terminal=self._core.env_full(False),)
+            obs=self.observer(),            
+            reward=self.core.env_full(0.),
+            reset=self.core.env_full(True))
 
     def state(self, d=0):
         return arrdict.arrdict(
-            **self._core.state(d),
-            obs=self._observer.state(d))
+            **self.core.state(d),
+            obs=self.observer.state(d))
 
     @classmethod
     def plot_state(cls, state):

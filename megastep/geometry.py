@@ -137,17 +137,27 @@ def indices(coords, shape, res):
     return np.stack([i, j], -1).astype(int)
 
 def display(geometry):
-    """Visualize a geometry using matplotlib"""
+    """Visualize a geometry using matplotlib. 
+    
+    Supports visualizing partial geometries, that only have a subset of id/masks/walls/lights"""
     fig, ax = plt.subplots()
-
-    height, width = geometry.res*np.array(geometry.masks.shape)
-    extent = (0, width, 0, height)
-    ax.imshow(geometry.masks, extent=extent, cmap='tab20')
-
-    lines = mpl.collections.LineCollection(geometry.walls, color='w', linewidth=2)
-    ax.add_collection(lines)
-
     ax.set_xticks([])
     ax.set_yticks([])
 
-    ax.set_title(geometry.id)
+    if 'id' in geometry:
+        ax.set_title(geometry.id)
+
+    if 'walls' in geometry:
+        lines = mpl.collections.LineCollection(geometry.walls, color='w', linewidth=2)
+        ax.add_collection(lines)
+        ax.autoscale()
+
+    if 'lights' in geometry:
+        for light in geometry.lights:
+            ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
+        ax.autoscale()
+
+    if 'masks' in geometry:
+        height, width = geometry.res*np.array(geometry.masks.shape)
+        extent = (0, width, 0, height)
+        ax.imshow(geometry.masks, extent=extent, cmap='tab20')

@@ -8,7 +8,7 @@ class Explorer:
 
     def __init__(self, n_envs, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
-        scene = scenery.init_scene(geometries, 1)
+        scene = scenery.scene(geometries, 1)
         self._core = core.Core(scene, *args, **kwargs)
         self._mover = modules.MomentumMovement(self._core)
         self._rgbd = modules.RGBD(self._core)

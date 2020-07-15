@@ -71,7 +71,7 @@ def random_lights(lights, random=np.random):
         random.uniform(.1, 1., (len(lights), 1))], -1)
 
 @torch.no_grad()
-def init_scene(geometries, n_agents=1, device='cuda', random=np.random): 
+def scene(geometries, n_agents=1, device='cuda', random=np.random): 
     agentlines = np.tile(agent_frame(), (n_agents, 1, 1))
     agentcolors = np.tile(agent_colors(), (n_agents, 1))
 
