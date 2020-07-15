@@ -2,22 +2,25 @@ import torch
 from rebar import arrdict
 from megastep import modules, core, plotting
 import matplotlib.pyplot as plt
+from ... import toys, scenery
 
 class Minimal:
     """A minimal environment with no rewards or resets, just to demonstrate physics and rendering"""
 
     def __init__(self, *args, **kwargs):
-        self._core = core.Core(*args, **kwargs)
+        geometries = [toys.box()]
+        scene = scenery.init_scene(geometries)
+        self._core = core.Core(scene, *args, **kwargs)
         self._mover = modules.SimpleMovement(self._core)
         self._observer = modules.RGBD(self._core)
-        self._respawner = modules.RandomSpawns(self._core)
+        self._respawner = modules.RandomSpawns(geometries, self._core)
 
         self.action_space = self._mover.space
         self.observation_space = self._observer.space
 
     @torch.no_grad()
     def reset(self):
-        self._respawner(self._core.env_full(True))
+        self._respawner(self._core.env_full(True).unsqueeze(-1))
         return arrdict.arrdict(
             obs=self._observer(),
             reward=self._core.env_full(0.),

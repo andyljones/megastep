@@ -70,8 +70,8 @@ class RGBD:
         n_agents = n_agents or core.n_agents
         self._core = core
         self.space = arrdict.arrdict(
-            rgb=spaces.MultiImage(n_agents, 3, 1, core.res),
-            d=spaces.MultiImage(n_agents, 1, 1, core.res),)
+            rgb=spaces.MultiImage(n_agents, 3, 1, core.res//subsample),
+            d=spaces.MultiImage(n_agents, 1, 1, core.res//subsample),)
         self.max_depth = max_depth
         self.subsample = subsample
 
@@ -107,14 +107,14 @@ class IMU:
             self._core.agents.angmomenta[..., None]/360.,
             to_local_frame(self._core.agents.angles, self._core.agents.momenta)/10.], -1)
 
-def random_empty_positions(core, n_points):
+def random_empty_positions(geometries, n_agents, n_points):
     points = []
-    for g in core.geometries:
+    for g in geometries:
         sample = np.stack((g.masks > 0).nonzero(), -1)
 
         # There might be fewer open points than we're asking for
-        n_possible = min(len(sample)//core.n_agents, n_points)
-        sample = sample[core.random.choice(np.arange(len(sample)), (n_possible, core.n_agents), replace=True)]
+        n_possible = min(len(sample)//n_agents, n_points)
+        sample = sample[np.random.choice(np.arange(len(sample)), (n_possible, n_agents), replace=True)]
 
         # So repeat the sample until we've got enough
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
@@ -124,11 +124,11 @@ def random_empty_positions(core, n_points):
         
 class RandomSpawns:
 
-    def __init__(self, core, *args, n_spawns=100, **kwargs):
+    def __init__(self, geometries, core, *args, n_spawns=100, **kwargs):
         self._core = core
 
-        positions = random_empty_positions(core, n_spawns)
-        angles = core.random.uniform(-180, +180, (len(core.geometries), core.n_agents, n_spawns))
+        positions = random_empty_positions(geometries, core.n_agents, n_spawns)
+        angles = core.random.uniform(-180, +180, (len(geometries), core.n_agents, n_spawns))
         self._spawns = arrdict.torchify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):

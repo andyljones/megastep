@@ -78,7 +78,7 @@ class Core:
         self.random = np.random.RandomState(1)
 
         # TODO: This needs to be propagated to the C++ side
-        self.device = scene.lines.device
+        self.device = scene.frame.device
 
         assert fov < 180
 

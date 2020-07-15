@@ -26,7 +26,7 @@ class Deathmatch:
         self._rgbd = modules.RGBD(self._core, n_agents=1, subsample=4)
         self._imu = modules.IMU(self._core, n_agents=1)
         self._mover = modules.MomentumMovement(self._core, n_agents=1)
-        self._respawner = modules.RandomSpawns(self._core)
+        self._respawner = modules.RandomSpawns(geometries, self._core)
 
         self.action_space = self._mover.space
         self.observation_space = dotdict.dotdict(
@@ -34,7 +34,7 @@ class Deathmatch:
             imu=self._imu.space,
             health=spaces.MultiVector(1, 1))
 
-        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in self._core.geometries])).to(self._core.device)
+        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in geometries])).to(self._core.device)
         self._health = self._core.agent_full(np.nan)
         self._damage = self._core.agent_full(np.nan)
 

@@ -210,12 +210,12 @@ __global__ void collision_kernel(
 
 __host__ void physics(const Scene& scene, Agents& agents, Progress progress) {
     const uint N = agents.angles.size(0);
-    const uint D = agents.angles.size(1);
+    const uint A = scene.n_agents;
     const uint F = scene.frame.size(0);
 
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
-        D*F, agents.positions.pta(), agents.momenta.pta(), scene.lines.pta(), progress.pta());
+        A*F, agents.positions.pta(), agents.momenta.pta(), scene.lines.pta(), progress.pta());
 
     //TODO: Collisions should only kill the normal component of momentum
     at::AutoNonVariableTypeMode nonvar{true};
@@ -279,7 +279,7 @@ __global__ void baking_kernel(
     }
 }
 
-__host__ void bake(Scene& scene, int A) {
+__host__ void bake(Scene& scene) {
     const uint T = scene.textures.vals.size(0);
     const uint F = scene.frame.size(0);
 
@@ -447,8 +447,8 @@ __global__ void shader_kernel(
 
 __host__ Render render(const Scene& scene, const Agents& agents) {
     const uint N = agents.angles.size(0);
-    const uint A = agents.angles.size(1);
-    const uint F = scene.n_agents;
+    const uint A = scene.n_agents;
+    const uint F = scene.frame.size(0);
 
     //TODO: This gives underfull warps. But it's also not the bottleneck, so who cares
     draw_kernel<<<N, {2, F, A}, 0, stream()>>>(
