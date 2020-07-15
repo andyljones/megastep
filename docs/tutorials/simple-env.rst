@@ -1,6 +1,6 @@
-====================
-Writing a Simple Env
-====================
+============================
+Writing a Simple Environment
+============================
 
 In this tutorial we're going to write the simplest possible environment. It's going to have one agent that gets
 rewarded for colliding with a wall. Not a particularly interesting task, but it'll be easy to follow, and give us a
@@ -34,14 +34,46 @@ To turn the geometry into something the renderer can use, we turn it into a :cla
     from megastep import scene, plotting
     scenery = scene.scenery(1024*[g], n_agents=1)
 
-    plotting.display(scenery, e=(126, 957))
+    plotting.display(scenery, e=126)
 
 TODO: Image of scenery
 
 This code creates scenery for 1024 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
-Two of them are shown. If you want to know more about what's going on here, there's :ref:`another brief discussion
-about scenery <scenery>` and :ref:`a tutorial on writing your own scenery generator <tutorial-scenery>`.
+One copy is shown. You'll notice an agent has also been created and placed at the origin. If you want to know more
+about what's going on here, there's :ref:`another brief discussion about scenery <scenery>` and :ref:`a tutorial on
+writing your own scenery generator <tutorial-scenery>`.
 
+With the scenery in hand, the next thing to do is create a :class:`megastep.core.Core`:
+
+    from megastep import core
+    c = core.Core(scenery, n_agents=1)
+
+The Core doesn't actually do very much; there're little code in it and all its variables are public. It does do some
+setup for you, but after that it's just a bag of useful attributes that you're going to pass to the physics and rendering
+engines. 
+
+One of things the core sets up is the :class:`megastep.cuda.Agents` datastructure, which stores where the agents are.
+You can take a look with
+
+>>> import torch
+>>> c.agents.positions
+tensor([[[0., 0.]],
+        ... 
+        [[0., 0.]]], device='cuda:0')
+
+but all it's going to tell you is that they're at the origin. megastep stores all its state in PyTorch tensors like 
+these, and it's a-okay to update them on the fly. By default the origin is outside the box we've built, so as a 
+first step let's put them inside the box ::
+
+    c.agents.positions[:] = torch.as_tensor([3., 3.], device=c.device)
+
+And now we can render the agents' view :: 
+
+    from megastep import cuda
+    r = cuda.render(c.scenery, c.agents)
+
+``r`` is a :class:`megastep.cuda.Render` object, and holds a lot of useful information that you can exploit when 
+desiging environments.
 
 .. _simple-env-geometry:
 

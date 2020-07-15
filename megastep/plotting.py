@@ -67,7 +67,7 @@ def line_arrays(state):
     lines = np.stack([seg_starts, seg_ends]).transpose(1, 0, 2)
 
     baked = scenery.baked.vals.copy()
-    # baked[:n_agent_texels(scenery)] = 1.
+    baked[:n_agent_texels(scenery)] = 1.
 
     colors = core.gamma_encode(scenery.textures.vals*baked[:, None])
     return lines, colors

@@ -80,7 +80,7 @@ class Core:
         # TODO: This needs to be propagated to the C++ side
         self.device = scenery.frame.device
 
-        assert fov < 180
+        assert fov < 180, 'FOV should be less than 180°'
 
         cuda.initialize(self.agent_radius, self.res, self.fov, self.fps)
         self.scenery = scenery 
