@@ -17,7 +17,7 @@ The place to start is with the :ref:`geometry <geometry>`. The geometry describe
 an environment. In later tutorials we're going to generate thousands of unique geometries, but here for our
 simplest-possible env, a single geometry will do. A single, simple geometry::
 
-    form megastep import geometry, toys
+    from megastep import geometry, toys
 
     g = toys.box()
     geometry.display(g)
@@ -32,7 +32,7 @@ describes a single environment, when megastep's key advantage is the simulation 
 To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
 
     from megastep import scene, plotting
-    scenery = scene.scenery(1024*[g])
+    scenery = scene.scenery(1024*[g], n_agents=1)
 
     plotting.display(scenery, e=(126, 957))
 
@@ -41,8 +41,6 @@ TODO: Image of scenery
 This code creates scenery for 1024 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
 Two of them are shown. If you want to know more about what's going on here, there's :ref:`another brief discussion
 about scenery <scenery>` and :ref:`a tutorial on writing your own scenery generator <tutorial-scenery>`.
-
-
 
 
 .. _simple-env-geometry:
@@ -95,22 +93,19 @@ Again, we can plot it to check how it looks::
 TODO: Image of walls and masks
 
 This ``masks`` array has a -1 where there's a wall, a 0 where there's free space, and a 1 where our room is. Now that
-we've got both walls and masks, we just need to add the location of lights and some metadata::
+we've got both walls and masks, we just need to add the location of lights and the resolution of the mask::
 
     from rebar import dotdict
     g = dotdict.dotdict(
         walls=walls,
         masks=masks,
         lights=np.array([[3., 3.]]),
-        id="box",
         res=geometry.RES)
     geometry.display(g)
 
 TODO: Image of geometry
 
-The metadata is an ID - which isn't particularly useful for our single geometry, but is a lot more useful when
-generating thousands of them - and the resolution of the mask, which here is the resolution that
-:func:`megastep.geometry.masks` uses by default.
+Here, the resolution is the one that :func:`megastep.geometry.masks` uses by default.
 
 It's mentioned in the :ref:`geometry <geometry>` section but worth re-mentioning here: geometries are dicts rather 
 than classes because as you develop your own environments, scene and geometries you'll likely find you have

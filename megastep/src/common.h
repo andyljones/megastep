@@ -5,6 +5,8 @@
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
+using namespace pybind11::literals;
+
 using TT = at::Tensor;
 
 #define CHECK_CUDA(x) AT_ASSERTM(x.is_cuda(), #x " must be a CUDA tensor")
@@ -184,8 +186,21 @@ struct Scenery {
     Scenery(int n_agents, Lights lights, Lines lines, Textures textures, TT frame) :
         n_agents(n_agents), lights(lights), lines(lines), textures(textures), frame(frame),
         baked(at::ones_like(textures.vals.select(1, 0)), textures.widths) {
+    }
 
-        }
+    py::object operator[](const size_t e) {
+        const auto dotdict = py::module::import("rebar.dotdict").attr("dotdict");
+        const auto se = lines.starts[e].item<int64_t>();
+        const auto ee = lines.ends[e].item<int64_t>();
+        return dotdict(
+            "n_agents"_a=n_agents,
+            "lights"_a=lights[e],
+            "lines"_a=lines[e],
+            "textures"_a=textures[py::slice(se, ee, 1)],
+            "frame"_a=frame.t,
+            "baked"_a=baked[py::slice(se, ee, 1)]);
+    }
+    
 };
 
 struct Render {

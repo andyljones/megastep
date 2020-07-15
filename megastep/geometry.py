@@ -136,28 +136,28 @@ def indices(coords, shape, res):
     j = (x/res).clip(0, shape[1]-1)
     return np.stack([i, j], -1).astype(int)
 
-def display(geometry):
+def display(g):
     """Visualize a geometry using matplotlib. 
     
     Supports visualizing partial geometries, that only have a subset of id/masks/walls/lights"""
     fig, ax = plt.subplots()
-    ax.set_xticks([])
-    ax.set_yticks([])
 
-    if 'id' in geometry:
-        ax.set_title(geometry.id)
+    if 'id' in g:
+        ax.set_title(g.id)
 
-    if 'walls' in geometry:
-        lines = mpl.collections.LineCollection(geometry.walls, color='w', linewidth=2)
+    if 'walls' in g:
+        lines = mpl.collections.LineCollection(g.walls, color='w', linewidth=2)
         ax.add_collection(lines)
         ax.autoscale()
 
-    if 'lights' in geometry:
-        for light in geometry.lights:
-            ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
+    if 'lights' in g:
+        for light in g.lights:
+            ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, color='yellow'))
         ax.autoscale()
 
-    if 'masks' in geometry:
-        height, width = geometry.res*np.array(geometry.masks.shape)
+    if 'masks' in g:
+        height, width = g.res*np.array(g.masks.shape)
         extent = (0, width, 0, height)
-        ax.imshow(geometry.masks, extent=extent, cmap='tab20')
+        cm = ax.imshow(g.masks, extent=extent, cmap='tab20')
+        ticks = np.arange(g.masks.min(), g.masks.max()+1)
+        plt.colorbar(cm, values=ticks, ticks=ticks)

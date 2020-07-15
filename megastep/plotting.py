@@ -3,6 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from . import core
+from rebar import arrdict, dotdict
 
 VIEW_RADIUS = 5
 
@@ -43,10 +44,10 @@ def plot_images(arrs, axes=None):
         ax.set_xticks([])
         ax.set_title(f'agent #{a}', fontdict={'color': f'C{a}', 'weight': 'bold'})
 
-def n_agent_texels(state):
-    D = state.agents.angles.shape[0]
-    F = len(state.scenery.frame)
-    return state.scenery.textures.widths[:D*F].sum()
+def n_agent_texels(scenery):
+    A = scenery.n_agents
+    F = len(scenery.frame)
+    return scenery.textures.widths[:A*F].sum()
 
 def line_arrays(state):
     scenery = state.scenery
@@ -66,14 +67,14 @@ def line_arrays(state):
     lines = np.stack([seg_starts, seg_ends]).transpose(1, 0, 2)
 
     baked = scenery.baked.vals.copy()
-    baked[:n_agent_texels(state)] = 1.
+    # baked[:n_agent_texels(scenery)] = 1.
 
     colors = core.gamma_encode(scenery.textures.vals*baked[:, None])
     return lines, colors
 
-def plot_lights(diagram, state):
+def plot_lights(ax, state):
     for light in state.scenery.lights:
-        diagram.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
+        ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
 
 def extent(state, zoom, radius=VIEW_RADIUS):
     if zoom:
@@ -88,7 +89,7 @@ def extent(state, zoom, radius=VIEW_RADIUS):
 
     return (cx-w, cx+w), (cy-w, cy+w)
 
-def plot_lines(diagram, state, zoom=True):
+def plot_lines(ax, state, zoom=True):
     lines, colors = line_arrays(state)
 
     (l, r), (b, t) = extent(state, zoom)
@@ -97,16 +98,16 @@ def plot_lines(diagram, state, zoom=True):
     mask = mask.any(-1)
 
     seen = mpl.collections.LineCollection(lines[mask], colors=colors[mask], linestyle='solid', linewidth=2)
-    diagram.add_collection(seen)
+    ax.add_collection(seen)
 
-def adjust_view(diagram, state, zoom=True):
+def adjust_view(ax, state, zoom=True):
     xs, ys = extent(state, zoom)
 
-    diagram.set_xlim(*xs)
-    diagram.set_ylim(*ys)
+    ax.set_xlim(*xs)
+    ax.set_ylim(*ys)
 
-    diagram.set_aspect(1)
-    diagram.set_facecolor('#c6c1b3')
+    ax.set_aspect(1)
+    ax.set_facecolor('#c6c1b3')
 
 def plot_wedge(ax, pose, distance, fov, radians=False, **kwargs):
     scale = 180/np.pi if radians else 1
@@ -117,10 +118,10 @@ def plot_wedge(ax, pose, distance, fov, radians=False, **kwargs):
                     pose.positions, distance, left, right, width=width, **kwargs)
     ax.add_patch(wedge)
 
-def plot_fov(diagram, state, distance=1, field='agents'):
+def plot_fov(ax, state, distance=1, field='agents'):
     a = len(getattr(state, field).angles)
     for i in range(a):
-        plot_wedge(diagram, getattr(state, field)[i], distance, state.fov, color=f'C{i}', alpha=.1)
+        plot_wedge(ax, getattr(state, field)[i], distance, state.fov, color=f'C{i}', alpha=.1)
 
 def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
     """Not used directly here, but often useful for code using this module"""
@@ -148,4 +149,15 @@ def plot_core(state, ax=None, zoom=False):
     return ax
 
 def display(scenery, e=0):
-    pass
+    ax = plt.axes()
+
+    state = arrdict.numpyify(
+        arrdict.arrdict(
+            scenery=scenery[e]))
+
+    plot_lines(ax, state, zoom=False)
+    plot_lights(ax, state)
+
+    adjust_view(ax, state, zoom=False)
+
+    return ax

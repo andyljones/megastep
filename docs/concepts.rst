@@ -237,8 +237,14 @@ id
 walls
     An (M, 2, 2)-array of endpoints of the walls of the geometry, given as (x, y) coordinates in units of meters.
 
+    One 'weird' restriction is that all the coordinates should be strictly positive. This is not a fundamental
+    restriction, it just makes a bunch of code elsewhere in megastep simpler if the geometry can be assumed to be in
+    the top-right quadrant.
+
 lights
     An (N, 2)-array of the locations of the lights in the geometry, again given as (x, y) coordinates
+
+    As with the walls, the lights should all have strictly positive coordinates.
 
 masks
     An (H, W) masking array describing the rooms and free space in the geometry. 
@@ -256,6 +262,11 @@ res
 The geometry is a dotdict rather than a class because when writing your own environments, it's common to want to nail 
 extra bits of information onto the side of the default geometry. That *could* be handled by subclassing, but I have a
 personal :ref:`aversion to inheritance hierarchies in research code<inheritance>`.
+
+.. _agents:
+
+Agents
+======
 
 .. _scenery:
 

@@ -108,7 +108,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
             "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a, R"pbdoc( 
-                Holds the state of the agents. Typically accessed through :attr:`megastep.core.Core.agents`.)pbdoc")
+                Holds the state of the agents. Typically accessed through :attr:`megastep.core.Core.agents`.
+            
+                See the :ref:`agents <agents>` section for a discussion of this class's place in megastep.
+                
+                )pbdoc")
         .def_property_readonly("angles", [](Agents a) { return a.angles.t; }, R"pbdoc(
             An (n_env, n_agent)-tensor of agents' angles relative to the positive x axis, given in degrees.)pbdoc")
         .def_property_readonly("positions", [](Agents a) { return a.positions.t; }, R"pbdoc(
@@ -121,7 +125,13 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<Scenery>(m, "Scenery", py::module_local()) 
         .def(py::init<int, Lights, Lines, Textures, TT>(),
             "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "frame"_a, R"pbdoc(
-                Holds the state of the scenery. Typically accessed through :attr:`megastep.core.Core.scenery`.)pbdoc")
+            Holds the state of the scenery. Typically accessed through :attr:`megastep.core.Core.scenery`. 
+            
+            See the :ref:`scenery <scenery>` section for a discussion of this class's place in megastep.
+            
+            )pbdoc")
+        .def("__getitem__", [](Scenery self, int e) { return self[e]; }, R"pbdoc(
+            Extracts the state for the ``e``th scene, returning it as a :class:`rebar.dotdict.dotdict`.)pbdoc")
         .def_property_readonly("frame", [](Scenery s) { return s.frame.t; }, R"pbdoc(
             An (n_frame_line, 2, 2)-tensor giving the frame - the set of lines - that make up the agent. This will be 
             shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scenery.)pbdoc")
@@ -129,7 +139,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             The number of agents in each environment)pbdoc")
         .def_readonly("lights", &Scenery::lights, R"pbdoc(
             An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities 
-            (typically a value between 0 and 1) in the third.)pbdoc")
+             in the third.)pbdoc")
         .def_readonly("lines", &Scenery::lines, R"pbdoc(
             An (n_lines, 2, 2)-:class:`megastep.ragged.Ragged` tensor giving the lines in each scenery.)pbdoc")
         .def_readonly("textures", &Scenery::textures, R"pbdoc(
@@ -139,6 +149,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
             The result of a :func:`render` call, showing the scenery from the agents' points of view.
+
+            See the :ref:`rendering <rendering>` section for a discussion of this class's place in megastep.
 
             Rendering is done by casting 'rays' from the camera, through each pixel and out into the world. When a ray
             intersects a line from :attr:`Scenery.lines`, that's called a 'hit'. )pbdoc")
