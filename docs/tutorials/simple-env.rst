@@ -74,8 +74,45 @@ And now we can render the agents' view ::
 
 The render call implicitly updates the agents' models in the scenery to 
 
-``r`` is a :class:`megastep.cuda.Render` object, and holds a lot of useful information that you can exploit when 
-desiging environments.
+``r`` is a :class:`megastep.cuda.Render` object, and contains a lot of useful information that you can exploit when 
+desiging environments. Principally, it contains what the agents see :: 
+
+    im = (r.screen
+            [[0]]            # get the screen for agents in env #0
+            .cpu().numpy())  # move them to cpu & numpy
+    plotting.plot_images({'rgb': im}, transpose=True, aspect=.1)
+
+TODO: Plotted image
+
+This is a 1-pixel-high image of what the agents see. You can read more about the rendering system in :ref:`this
+section <rendering>`. As well as filling up the Render object, calling render does something else: it updates the
+agents' models to match their positions. Having moved all the agents to (3, 3) earlier by assigning to
+``c.agents.positions``, plotting the scenery again shows that the agents have moved:
+
+    scenery.display(scene)
+
+TODO: Moved image
+
+Along with :func:`megastep.cuda.render`, the other important call in megastep is :func:`megastep.cuda.physics`. This
+call handles moving agents based on their velocities, and deals with any collisions that happen. If we set the agents'
+velocities to some obscene value, then make the physics call::
+
+>>> c.agents.momenta[:] = torch.as_tensor([1000., 0.], device=c.device)
+>>> p = cuda.physics(c.scenery, c.agents)
+>>> c.agents.positions
+tensor([[[5.8649, 3.0000]],
+        ...
+        [[5.8649, 3.0000]]], device='cuda:0')
+
+we see that afterwards, the agents positions have been updated to *roughly* where the right wall is. If we check the 
+scenery right now though, the agents' models will still be at (3, 3) however. To update them, we need to call render
+again:: 
+
+    cuda.render(c.scenery, c.agents)
+    scene.display(c.scenery)
+
+TODO: Updated position
+
 
 .. _simple-env-geometry:
 

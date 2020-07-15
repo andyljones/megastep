@@ -7,35 +7,36 @@ from rebar import arrdict, dotdict
 
 VIEW_RADIUS = 5
 
-def imshow_arrays(arrs):
+def imshow_arrays(arrs, transpose=False):
     """Args:
-        arrs: `{name: D x C x H x W}`
+        arrs: `{name: A x C x H x W}`
     """
-    [D] = {v.shape[0] for v in arrs.values()}
+    arrs = {k: v.transpose(0, 3, 1, 2) if transpose else v for k, v in arrs.items()}
+    [A] = {v.shape[0] for v in arrs.values()}
     ims = {}
-    for d in range(D):
+    for a in range(A):
         layers = []
         for k, v in arrs.items():
-            layer = v[d].astype(float)
-            if layer.shape[0] == 1:
+            layer = v[a].astype(float)
+            if layer.shape[-1] == 1:
                 layer = layer.repeat(3, 0)
             else:
                 layer = core.gamma_encode(layer)
             layers.append(layer)
         layers = np.concatenate(layers, 1)
-        ims[d] = layers.transpose(1, 2, 0)
+        ims[a] = layer.transpose(1, 2, 0)
     return ims
 
-def plot_images(arrs, axes=None):
-    ims = imshow_arrays(arrs)
-    D = len(ims)
+def plot_images(arrs, axes=None, aspect=1, **kwargs):
+    ims = imshow_arrays(arrs, **kwargs)
+    A = len(ims)
     H, W = ims[0].shape[:2]
 
-    axes = plt.subplots(D)[1] if axes is None else axes
+    axes = plt.subplots(A, 1, squeeze=False)[1].flatten() if axes is None else axes
     
     # Aspect is height/width
-    aspect = 1/min(D, 4)*W/H
-    for a in range(D):
+    aspect = aspect/min(A, 4)*W/H
+    for a in range(A):
         ax = axes[a]
         ax.imshow(ims[a], aspect=aspect, interpolation='none')
         ax.set_yticks(np.arange(H))
