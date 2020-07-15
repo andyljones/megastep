@@ -31,10 +31,10 @@ A geometry on its own is not enough for the renderer to go on though. For one it
 describes a single environment, when megastep's key advantage is the simulation of thousands of environments in parallel.
 To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
 
-    from megastep import scene, plotting
+    from megastep import scene
     scenery = scene.scenery(1024*[g], n_agents=1)
 
-    plotting.display(scenery, e=126)
+    scene.display(scenery, e=126)
 
 TODO: Image of scenery
 
@@ -71,6 +71,8 @@ And now we can render the agents' view ::
 
     from megastep import cuda
     r = cuda.render(c.scenery, c.agents)
+
+The render call implicitly updates the agents' models in the scenery to 
 
 ``r`` is a :class:`megastep.cuda.Render` object, and holds a lot of useful information that you can exploit when 
 desiging environments.

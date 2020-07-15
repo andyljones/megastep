@@ -1,8 +1,9 @@
 import matplotlib as mpl
 import numpy as np
 import torch
-from . import core, ragged
+from . import core, ragged, plotting
 from rebar import arrdict
+import matplotlib.pyplot as plt
 
 # Ten bland colors from https://medialab.github.io/iwanthue/
 COLORS = [
@@ -68,7 +69,7 @@ def init_textures(agentlines, agentcolors, walls, random=np.random):
 def random_lights(lights, random=np.random):
     return np.concatenate([
         lights,
-        random.uniform(.1, 1., (len(lights), 1))], -1)
+        random.uniform(.5, 2., (len(lights), 1))], -1)
 
 @torch.no_grad()
 def scenery(geometries, n_agents=1, device='cuda', random=np.random): 
@@ -97,3 +98,16 @@ def scenery(geometries, n_agents=1, device='cuda', random=np.random):
 
     return scenery
 
+def display(scenery, e=0):
+    ax = plt.axes()
+
+    state = arrdict.numpyify(
+        arrdict.arrdict(
+            scenery=scenery[e]))
+
+    plotting.plot_lines(ax, state, zoom=False)
+    plotting.plot_lights(ax, state)
+
+    plotting.adjust_view(ax, state, zoom=False)
+
+    return ax

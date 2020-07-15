@@ -73,8 +73,11 @@ def line_arrays(state):
     return lines, colors
 
 def plot_lights(ax, state):
+    vmin = state.scenery.lights[:, 2].min() - 1e-2
+    vmax = state.scenery.lights[:, 2].max()
     for light in state.scenery.lights:
-        ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=light[2], color='yellow'))
+        alpha = (light[2] - vmin)/(vmax - vmin)
+        ax.add_patch(mpl.patches.Circle(light[:2], radius=.05, alpha=alpha, color='yellow'))
 
 def extent(state, zoom, radius=VIEW_RADIUS):
     if zoom:
@@ -145,19 +148,5 @@ def plotcore(state, ax=None, zoom=False):
 
     ax.set_xticks([])
     ax.set_yticks([])
-
-    return ax
-
-def display(scenery, e=0):
-    ax = plt.axes()
-
-    state = arrdict.numpyify(
-        arrdict.arrdict(
-            scenery=scenery[e]))
-
-    plot_lines(ax, state, zoom=False)
-    plot_lights(ax, state)
-
-    adjust_view(ax, state, zoom=False)
 
     return ax
