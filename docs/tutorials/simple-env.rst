@@ -34,11 +34,14 @@ To turn the geometry into something the renderer can use, we turn it into a :cla
     from megastep import scene, plotting
     scenery = scene.scenery(1024*[g])
 
-    plotting.display(scenery, e=126)
+    plotting.display(scenery, e=(126, 957))
 
 TODO: Image of scenery
 
-This code generates
+This code creates scenery for 1024 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
+Two of them are shown. If you want to know more about what's going on here, there's :ref:`another brief discussion
+about scenery <scenery>` and :ref:`a tutorial on writing your own scenery generator <tutorial-scenery>`.
+
 
 
 
@@ -92,7 +95,7 @@ Again, we can plot it to check how it looks::
 TODO: Image of walls and masks
 
 This ``masks`` array has a -1 where there's a wall, a 0 where there's free space, and a 1 where our room is. Now that
-we've got both walls and masks, we just need to add the location of lights and some metadata:
+we've got both walls and masks, we just need to add the location of lights and some metadata::
 
     from rebar import dotdict
     g = dotdict.dotdict(

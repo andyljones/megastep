@@ -257,6 +257,11 @@ The geometry is a dotdict rather than a class because when writing your own envi
 extra bits of information onto the side of the default geometry. That *could* be handled by subclassing, but I have a
 personal :ref:`aversion to inheritance hierarchies in research code<inheritance>`.
 
+.. _scenery:
+
+Scenery
+=======
+
 .. _rendering:
 
 Rendering
@@ -272,6 +277,8 @@ Physics
 Plotting
 ========
 TODO: this
+
+.. _inheritance:
 
 Inheritance
 ===========
@@ -292,7 +299,7 @@ generally let slip the dogs of terrible software development.
 
 Researchers are very fond of this tertiary wild-west interface. The reason researchers are fond of it is either
 because they're terrible developers (the popular answer), or because research code is a very unusual kind of code.
-It's `written many times and read once (if ever)`<https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>_,
+It's `written many times and read once (if ever)<https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>`_,
 it's typically written by one person in a short period of time and it's typically only a few thousand lines of code
 that are understood inside and out. Because of this, researchers can happily trade off a lot of otherwise-good
 development practices in favour of iteration velocity - the ability to adapt your codebase to a new idea quickly and
