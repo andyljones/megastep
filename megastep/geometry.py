@@ -13,6 +13,7 @@ SCALE = 100
 from itertools import islice, cycle
 
 def cyclic_pairs(xs):
+    """Returns paxs[i]"""
     ys = islice(cycle(xs), 1, None)
     return list(zip(xs, ys))
 
@@ -83,7 +84,7 @@ def masks(walls, spaces, res=RES):
     :param walls: A (n_walls, 2, 2)-array giving the coordinates of the walls' endpoints.
     :param spaces: A list of spaces, each given as a coordinate array of the space's vertices.
     :param res: The resolution of the the masking array. 
-    :return: A masking array 
+    :return: A masking array, with indices 1, 2, ... for the spaces, 0 for free space, and -1 for walls. 
     """
     transform, shape = mask_transform(walls, spaces)
     wall_shapes = [(cascaded_union([LineString(p).buffer(.01) for p in walls]), -1)]

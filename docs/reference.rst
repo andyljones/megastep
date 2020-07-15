@@ -11,7 +11,7 @@ cubicasa
     :members: sample 
 
 .. automodule:: megastep.geometry
-    :members: centers, indices, display
+    :members: centers, indices, display, cyclic_pairs, masks
 
 toys 
 ----

@@ -35,8 +35,8 @@ reason for this, it just simplifes some stuff internally. ::
 
 Then to get the walls, we take all sequential pairs of corners and stack them::
 
-    from megastep.geometry import cyclic_pairs
-    walls = np.stack(cyclic_pairs(corners))
+    from megastep import geometry
+    walls = np.stack(geometry.cyclic_pairs(corners))
 
 You can check that these walls are what we think they are using matplotlib::
 
@@ -45,3 +45,35 @@ You can check that these walls are what we think they are using matplotlib::
     
     lines = mpl.collections.LineCollection(walls, color='k', width=2)
     plt.axes().add_collection(lines)
+
+TODO: Image of walls
+
+With the walls in place, the other thing to deal with is rooms. There's no strict definition of a room; they're 
+just small, generic regions. The usual use of them is to make it easy to spawn multiple agents near eachother.
+
+In this case, our room is going to just be the corners we had before. That's a list of corners though, while our 
+geometry wants a mask. Fortunately there's already a function to turn one into the other::
+
+    masks = geometry.masks(walls, [corners])
+
+Again, we can plot it to check how it looks:
+
+    plt.imshow(masks)
+
+This ``masks`` array has a -1 where there's a wall, a 0 where there's free space, and a 1 where our room is. Now that
+we've got both walls and masks, we can create our geometry instance and have a look at it:
+
+    from rebar import dotdict
+    g = dotdict.dotdict(
+        id="box",
+        walls=walls,
+        masks=masks,
+        lights=np.array([[3., 3.]]),
+        res=geometry.RES)
+
+    geometry.display(g)
+
+TODO: Image of geometry
+
+As well as the lights, this :class:`rebar.dotdict.dotdict` gives the locations of the lights and the resolution of the 
+mask - which here is the resolution that :func:`megastep.geometry.masks` uses by default.
