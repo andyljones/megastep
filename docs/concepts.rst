@@ -289,4 +289,12 @@ Plotting
 ========
 TODO: this
 
+.. _decision-world:
 
+Decision & World
+================
+
+.. _subpackages:
+
+Subpackages
+===========

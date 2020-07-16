@@ -10,8 +10,17 @@ TODO: Animation of collision env
 
 The High Level
 --------------
-This tutorial leads with a view-from-a-thousand-foot doing-without-understanding version. There are links throughout
+This tutorial leads with a view-from-a-thousand-foot doing-without-understanding version, but there are links throughout
 that explain what's going on in detail. 
+
+It'd a good idea to open yourself a `Jupyter notebook <https://jupyter.org/install>`_ or `colab
+<https://colab.research.google.com/>`_ and copy-paste the code as you go, experimenting with anything you don't quite
+understand.
+
+Once you've got your Jupyter install up and running, the first thing to do is to :ref:`install megastep <install>`,
+and the extra demo dependencies, which should be as simple as ::
+
+    pip install megastep[rebar]
 
 Geometry
 ********
@@ -36,20 +45,21 @@ describes a single environment, when megastep's key advantage is the simulation 
 To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
 
     from megastep import scene
-    scenery = scene.scenery(128*[g], n_agents=1)
+    geometries = 128*[toys.box()]
+    scenery = scene.scenery(geometries, n_agents=1)
 
     scene.display(scenery, e=126)
 
 TODO: Image of scenery
 
 This code creates scenery for 1024 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
-One copy is shown. You'll notice an agent has also been created and placed at the origin. If you want to know more
-about what's going on here, there's :ref:`another brief discussion about scenery <scenery>` and :ref:`a tutorial on
-writing your own scenery generator <tutorial-scenery>`.
+One copy is shown. You'll notice an :ref:`agent has also been created and placed at the origin <models>`. If you want
+to know more about what's going on here, there's :ref:`another brief discussion about scenery <scenery>` and :ref:`a
+tutorial on writing your own scenery generator <tutorial-scenery>`.
 
 Rendering
 *********
-With the scenery in hand, the next thing to do is create a :class:`megastep.core.Core`:
+With the scenery in hand, the next thing to do is create a :class:`megastep.core.Core`::
 
     from megastep import core
     c = core.Core(scenery)
@@ -78,10 +88,8 @@ And now we can render the agents' view ::
     from megastep import cuda
     r = cuda.render(c.scenery, c.agents)
 
-The render call implicitly updates the agents' models in the scenery to 
-
-``r`` is a :class:`megastep.cuda.Render` object, and contains a lot of useful information that you can exploit when 
-desiging environments. Principally, it contains what the agents see :: 
+This ``r`` is a :class:`megastep.cuda.Render` object, which contains a lot of useful information that you can exploit
+when desiging environments. Principally, it contains what the agents see ::
 
     im = (r.screen
             [[0]]            # get the screen for agents in env #0
@@ -90,10 +98,10 @@ desiging environments. Principally, it contains what the agents see ::
 
 TODO: Plotted image
 
-This is a 1-pixel-high image of what the agents see. You can read more about the rendering system in :ref:`this
+This is a 1-pixel-high image out from the front of the agent. You can read more about the rendering system in :ref:`this
 section <rendering>`. As well as filling up the Render object, calling render does something else: it updates the
 agents' models to match their positions. Having moved all the agents to (3, 3) earlier by assigning to
-``c.agents.positions``, plotting the scenery again shows that the agents have moved:
+``c.agents.positions``, plotting the scenery again shows that the agents' models have moved from the origin to (3, 3):
 
     scenery.display(scene)
 
@@ -147,8 +155,8 @@ though, that 'while' loop needs to be abstracted away. The typical way to do thi
     class Collisioneer:
 
         def __init__(self):
-            g = toys.box()
-            scenery = scene.scenery(128*[g], n_agents=1)
+            geometries = 128*[toys.box()]
+            scenery = scene.scenery(geometries, n_agents=1)
             self.c = cuda.Core(scenery)
 
         def reset(self):
@@ -176,7 +184,54 @@ more flexible::
         decision = agent(world)
         world = env.step(decision)
 
-The question now is simply how to fill in those comment lines. 
+Now all that's left to be done is to fill out those comment lines.
+
+An Aside
+********
+Now that we're building up a class, it's going to be impractical for me to copy-paste the source every time I discuss
+a change. Instead, you should grab the completed Collisioneer class from megastep's demo repo::
+
+    from megastep.demo.envs.collisioneer import *
+    self = Collisioneer()
+
+The remainder of the code segments will be small 'experiments' - for want of a better word - you can run on this env
+to understand what's happening and why it's set up the way it is. If you want to play with the class's definition, 
+then open an editor at ``self.__file__`` and copy-paste the contents into your notebook.
+
+(You could alternatively edit it in-place, or copy it into a file of your own. Both of those however either require
+restarting the kernel after each edit, or setting `autoreload
+<https://ipython.org/ipython-doc/3/config/extensions/autoreload.html>`_ up. Autoreload is magical and absolutely
+worth your time, but it is a tangent from this tutorial)
+
+Spawning
+********
+Back to those comment lines! The first comment line is to 'set agent location'. We're going to want to do this on the
+first reset, and then every time the agent collides with something and needs to be respawned at a new location.
+
+This is a pretty common task when building an environment, and so there's a :class:`megastep.modules.RandomSpawns`
+module to do it for you. It gets added to the env in ``__init__``, 
+
+    self.spawner = modules.RandomSpawns(geometries, self.c)
+
+and then you can call it with a mask of the agents you'd like to be respawned::
+
+    reset = self.c.agent_full(True)
+    self.spawner(reset)
+
+This will move each agent to a random position in the room. You can see this directly by inspecting ``self.c.agents.positions``,
+or you can render and display it::
+
+    self.c.render(c.scenery, c.agents)
+    scenery.display(c.scenery)
+
+TODO: Respawned agent
+
+Animation
+*********
+While the tempting thing to do is to start filling out those comment lines, writing environments can be tricky and 
+it's worth first doing some work to make bugs more obvious. One of the most powerful ways to spot bugs is to watch
+an agent interact with the environment.
+
 
 .. _simple-env-geometry:
 

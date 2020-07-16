@@ -2,6 +2,28 @@
 FAQ
 ===
 
+.. _install:
+
+How do I install megastep?
+--------------------------
+If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as ::
+
+    pip install megastep
+
+or if you want the :ref:`demo dependencies <subpackages>` too
+
+    pip install megastep[cubicasa,rebar]
+
+There are some fairly hefty dependencies so it might take a while, but it should get there fine. If it
+doesn't, my total guess is that it's the Pytorch install that will be the problem, in which case I refer you to
+`their install page <https://pytorch.org/get-started/locally/>`_. 
+
+**If you haven't got CUDA, megastep will not work**. There are some parts of megastep - like the cubicasa package - 
+that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.
+
+If you're on a different OS, then it's possible megastep will work, but I can't provide you any support. You're welcome
+to ask for help on the GitHub issues page, but you'll be relying on the community to come up with an answer.
+
 .. _inheritance:
 
 Why doesn't megastep use inheritance?
@@ -34,5 +56,11 @@ There are few private methods, and any state that is likely interesting to a use
 
 .. _openai-gym:
 
-Why don't you match the OpenAI gym interface?
+Why don't you use the OpenAI Gym interface?
 ---------------------------------------------
+
+
+.. _cubicasa-license:
+
+What's with the cubicasa license?
+---------------------------------
