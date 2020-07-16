@@ -30,7 +30,7 @@ void ragged(py::module &m, std::string name) {
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.doc() = R"pbdoc(
         This module contains all the rendering and physics CUDA kernels, and intended to operate on the state tensors held
-        by :class:`megastep.core.Core`. 
+        by :class:`~megastep.core.Core`. 
 
         **Internals**
 
@@ -67,7 +67,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         :type scenery: :class:`Scenery`
     )pbdoc", py::call_guard<py::gil_scoped_release>());
     m.def("physics", &physics, "scenery"_a, "agents"_a, R"pbdoc(
-        Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their momenta 
+        Advances the physics simulation, updating the :attr:`Agents`'s movement tensors based on their velocity 
         and possible collisions. It also returns the ``progress`` tensor with how far the agents moved before
         colliding with something.
 
@@ -102,8 +102,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 
     py::class_<Agents>(m, "Agents", py::module_local())
         .def(py::init<TT, TT, TT, TT>(),
-            "angles"_a, "positions"_a, "angmomenta"_a, "momenta"_a, R"pbdoc( 
-                Holds the state of the agents. Typically accessed through :attr:`megastep.core.Core.agents`.
+            "angles"_a, "positions"_a, "angvelocity"_a, "velocity"_a, R"pbdoc( 
+                Holds the state of the agents. Typically accessed through :attr:`~megastep.core.Core.agents`.
             
                 See the :ref:`agents <agents>` section for a discussion of this class's place in megastep.
                 
@@ -112,15 +112,15 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             An (n_env, n_agent)-tensor of agents' angles relative to the positive x axis, given in degrees.)pbdoc")
         .def_property_readonly("positions", [](Agents a) { return a.positions.t; }, R"pbdoc(
             An (n_env, n_agent, 2)-tensor of agents' positions, in meters.)pbdoc")
-        .def_property_readonly("angmomenta", [](Agents a) { return a.angmomenta.t; }, R"pbdoc(
+        .def_property_readonly("angvelocity", [](Agents a) { return a.angvelocity.t; }, R"pbdoc(
             An (n_env, n_agent)-tensor of agents' angular velocity, in degrees per second.)pbdoc")
-        .def_property_readonly("momenta", [](Agents a) { return a.momenta.t; }, R"pbdoc( 
+        .def_property_readonly("velocity", [](Agents a) { return a.velocity.t; }, R"pbdoc( 
             An (n_env, n_agent, 2)-tensor of agents' velocity, in meters per second.)pbdoc");
 
     py::class_<Scenery>(m, "Scenery", py::module_local()) 
         .def(py::init<int, Lights, Lines, Textures, TT>(),
             "n_agents"_a, "lights"_a, "lines"_a, "textures"_a, "model"_a, R"pbdoc(
-            Holds the state of the scenery. Typically accessed through :attr:`megastep.core.Core.scenery`. 
+            Holds the state of the scenery. Typically accessed through :attr:`~megastep.core.Core.scenery`. 
             
             See the :ref:`scenery <scenery>` section for a discussion of this class's place in megastep.
             
@@ -136,11 +136,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities 
              in the third.)pbdoc")
         .def_readonly("lines", &Scenery::lines, R"pbdoc(
-            An (n_lines, 2, 2)-:class:`megastep.ragged.Ragged` tensor giving the lines in each scenery.)pbdoc")
+            An (n_lines, 2, 2)-:class:`~megastep.ragged.Ragged` tensor giving the lines in each scenery.)pbdoc")
         .def_readonly("textures", &Scenery::textures, R"pbdoc(
-            An (n_texels, 3)-:class:`megastep.ragged.Ragged` tensor giving the texels in each line.)pbdoc")
+            An (n_texels, 3)-:class:`~megastep.ragged.Ragged` tensor giving the texels in each line.)pbdoc")
         .def_readonly("baked", &Scenery::baked, R"pbdoc(
-            An (n_texels,)-:class:`megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
+            An (n_texels,)-:class:`~megastep.ragged.Ragged` tensor giving the :func:`bake`-d illumination of each texel.)pbdoc");
 
     py::class_<Render>(m, "Render", py::module_local(), R"pbdoc(
         The result of a :func:`render` call, showing the scenery from the agents' points of view.

@@ -25,8 +25,8 @@ def _init_agents(n_envs, n_agents, device='cuda'):
     data = arrdict.arrdict(
             angles=torch.zeros((n_envs, n_agents)),
             positions=torch.zeros((n_envs, n_agents, 2)),
-            angmomenta=torch.zeros((n_envs, n_agents)),
-            momenta=torch.zeros((n_envs, n_agents, 2)))
+            angvelocity=torch.zeros((n_envs, n_agents)),
+            velocity=torch.zeros((n_envs, n_agents, 2)))
     return cuda.Agents(**data.to(device))
 
 class Core: 
@@ -34,12 +34,12 @@ class Core:
     def __init__(self, scenery, res=64, fov=130, fps=10):
         """The core rendering and physics interface. 
 
-        To create the Core, you pass a :class:`megastep.cuda.Scenery` that describes the environment. Once created, 
+        To create the Core, you pass a :class:`~megastep.cuda.Scenery` that describes the environment. Once created, 
         the tensors hanging off of the Core give the state of the world, and that state can be advanced with the 
-        functions in :mod:`megastep.cuda`.
+        functions in :mod:`~megastep.cuda`.
 
-        :var agents: A :class:`megastep.cuda.Agents` object describing the agents.
-        :var scenery: A :class:`megastep.cuda.Scenery` object describing the scene.
+        :var agents: A :class:`~megastep.cuda.Agents` object describing the agents.
+        :var scenery: A :class:`~megastep.cuda.Scenery` object describing the scene.
         :var progress: A (n_env, n_agent)-tensor giving how far the agent was able to move in the previous timestep as a 
             fraction of its intended movement, before running into an obstable. A value less than 1 means the agent collided
             with something. Useful for detecting collisions.
@@ -54,7 +54,7 @@ class Core:
             environments every time.
 
         :param scenery: Describes the static parts of the environment.
-        :type scenery: :class:`megastep.cuda.Scenery`.
+        :type scenery: :class:`~megastep.cuda.Scenery`.
         :param n_agents: the number of agents to put in each environment. Defaults to 1.
         :type n_agents: int
         :param res: The horizontal resolution of the observations. The resolution must be less than 1024, as

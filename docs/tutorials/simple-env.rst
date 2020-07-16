@@ -1,3 +1,5 @@
+.. _simple-env:
+
 ============================
 Writing a Simple Environment
 ============================
@@ -44,7 +46,7 @@ Scenery
 *******
 A geometry on its own is not enough for the renderer to go on though. For one it's missing texture, and for two it only 
 describes a single environment, when megastep's key advantage is the simulation of thousands of environments in parallel.
-To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
+To turn the geometry into something the renderer can use, we turn it into a :class:`~megastep.cuda.Scenery`::
 
     from megastep import scene
     geometries = 128*[toys.box()]
@@ -61,7 +63,7 @@ tutorial on writing your own scenery generator <tutorial-scenery>`.
 
 Rendering
 *********
-With the scenery in hand, the next thing to do is create a :class:`megastep.core.Core`::
+With the scenery in hand, the next thing to do is create a :class:`~megastep.core.Core`::
 
     from megastep import core
     c = core.Core(scenery)
@@ -70,7 +72,7 @@ The Core doesn't actually do very much; there're little code in it and all its v
 setup for you, but after that it's just a bag of useful attributes that you're going to pass to the physics and rendering
 engines. 
 
-One of things the core sets up is the :class:`megastep.cuda.Agents` datastructure, which stores where the agents are.
+One of things the core sets up is the :class:`~megastep.cuda.Agents` datastructure, which stores where the agents are.
 You can take a look with
 
 >>> import torch
@@ -90,7 +92,7 @@ And now we can render the agents' view ::
     from megastep import cuda
     r = cuda.render(c.scenery, c.agents)
 
-This ``r`` is a :class:`megastep.cuda.Render` object, which contains a lot of useful information that you can exploit
+This ``r`` is a :class:`~megastep.cuda.Render` object, which contains a lot of useful information that you can exploit
 when desiging environments. Principally, it contains what the agents see ::
 
     im = (r.screen
@@ -111,11 +113,11 @@ TODO: Moved image
 
 Physics
 *******
-Along with :func:`megastep.cuda.render`, the other important call in megastep is :func:`megastep.cuda.physics`. This
+Along with :func:`~megastep.cuda.render`, the other important call in megastep is :func:`~megastep.cuda.physics`. This
 call handles moving agents based on their velocities, and deals with any collisions that happen. If we set the agents'
 velocities to some obscene value, then make the physics call:
 
->>> c.agents.momenta[:] = torch.as_tensor([1000., 0.], device=c.device)
+>>> c.agents.velocity[:] = torch.as_tensor([1000., 0.], device=c.device)
 >>> p = cuda.physics(c.scenery, c.agents)
 >>> c.agents.positions
 tensor([[[5.8649, 3.0000]],
@@ -213,7 +215,7 @@ things are working as expected as you go. The first comment line is to 'set agen
 do this on the first reset, and then every time the agent collides with something and needs to be respawned at a new
 location.
 
-This is a pretty common task when building an environment, and so there's a :class:`megastep.modules.RandomSpawns`
+This is a pretty common task when building an environment, and so there's a :class:`~megastep.modules.RandomSpawns`
 module to do it for you. It gets added to the env in ``__init__``, ::
 
     from megastep import modules
@@ -224,7 +226,7 @@ and then you can call it with a mask of the agents you'd like to be respawned::
     reset = self.core.agent_full(True)
     self.spawner(reset)
 
-As an aside, the :method:`megastep.core.Core.agent_full` and :method:`megastep.core.Core.env_full` methods will create
+As an aside, the :meth:`~megastep.core.Core.agent_full` and :meth:`~megastep.core.Core.env_full` methods will create
 on-device tensors for you of shape (n_env, n
 
 This will move each agent to a random position in the room. You can see this directly by inspecting ``self.core.agents.positions``,
@@ -235,7 +237,7 @@ or you can render and display it::
 
 TODO: Respawned agent
 
-You can read more about how the respawning module works in the :class:`megastep.modules.RandomSpawns` documentation.
+You can read more about how the respawning module works in the :class:`~megastep.modules.RandomSpawns` documentation.
 
 Observations
 ************
@@ -248,7 +250,8 @@ This time, calling it gives you back a (n_env, n_agent, 1, res, 1)-tensor, suita
 
     obs = self.depth()
 
-The render method is called internally by ``depth``, saving us from having to do it explicitly ourselves. 
+The render method is called internally by ``depth``, saving us from having to do it explicitly ourselves. The class 
+documentation for :class:`~megastep.modules.Depth` has more details on how it works.
 
 Following the :ref:`decision-and-world <decision-world>` setup, this obs gets wrapped in a
 :class:`rebar.arrdict.arrdict` so that if we decide to nail any other information onto the side of our observations,
@@ -270,7 +273,7 @@ forward/backward, left/right, or turn left/right. Once again, there's a module f
     self.movement = modules.SimpleMovement(self.core)
 
 In the :ref:`decision-and-world <decision-world>` setup, the agent produces a ``decision`` arrdict with an
-``"actions"`` key. The :class:`megastep.modules.SimpleMovement` module expects the actions to be an integer tensor,
+``"actions"`` key. The :class:`~megastep.modules.SimpleMovement` module expects the actions to be an integer tensor,
 with values between 0 and 7. Each integer corresponds to a different movement. We can mock a decisions dict easily
 enough::
 
@@ -281,8 +284,17 @@ and calling the movement module will shift the agents forward::
     self.movement(decision)
 
 As with the ``depth`` module, the ``movement`` module makes the ``physics`` call internally, again saving us from having
-to do it ourselves.
+to do it ourselves. Like before, the class documentation for :class:`~megastep.modules.SimpleMovement` has more details 
+on how it's implemented.
 
+Rewards
+*******
+Up until now we've built a pretty generic environment. Agents get spawned, they receive depth observations, and
+return movement actions. This is about the simplest functional environment you can write in megastep, and if you want
+to build your own environment this is a good foundation to start from. You can find the code as it is so far in the
+:mod:`~megastep.demo.envs.minimal` module.
+
+The final comment is 'post-collision alterations'.
 
 Animation
 *********
@@ -317,7 +329,7 @@ Then to get the walls, we take all sequential pairs of corners and stack them::
     walls = np.stack(geometry.cyclic_pairs(corners))
 
 You can check that these walls are what we think they are by putting them in a :ref:`dotdict <dotdicts>` and using
-:func:`megastep.geometry.display`::
+:func:`~megastep.geometry.display`::
 
     geometry.display(dotdict.dotdict(
         walls=walls))
@@ -353,7 +365,7 @@ we've got both walls and masks, we just need to add the location of lights and t
 
 TODO: Image of geometry
 
-Here, the resolution is the one that :func:`megastep.geometry.masks` uses by default.
+Here, the resolution is the one that :func:`~megastep.geometry.masks` uses by default.
 
 It's mentioned in the :ref:`geometry <geometry>` section but worth re-mentioning here: geometries are dicts rather 
 than classes because as you develop your own environments, scene and geometries you'll likely find you have

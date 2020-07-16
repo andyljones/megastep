@@ -156,7 +156,7 @@ principal costs are that you lose type-safety, and your keys might clash with me
 Raggeds
 =======
 Ragged arrays and tensors are basically arrays-of-arrays, with the values stored in a contiguous backing array to speed up
-operations. **megastep** has both numpy and torch Raggeds, and both are created using :func:`megastep.ragged.Ragged`.
+operations. **megastep** has both numpy and torch Raggeds, and both are created using :func:`~megastep.ragged.Ragged`.
 
 As an example, here's a simple ragged array:: 
 
@@ -220,10 +220,10 @@ array([0, 0, 0, 1, 2, 2])
 
 Geometries
 ==========
-A *geometry* describes the static environment that the agents move around in. They're usually created by :mod:`megastep.cubicasa` 
-or with the functions in :mod:`megastep.toys` , and then passed en masse to an environment or :class:`megastep.core.Core` .
+A *geometry* describes the static environment that the agents move around in. They're usually created by :mod:`~megastep.cubicasa` 
+or with the functions in :mod:`~megastep.toys` , and then passed en masse to an environment or :class:`~megastep.core.Core` .
 
-You can visualize geometries with :mod:`megastep.geometry.display` :
+You can visualize geometries with :mod:`~megastep.geometry.display` :
 
 .. image:: _static/geometry.png
     :alt: A matplotlib visualization of a geometry
@@ -251,7 +251,7 @@ masks
     
     The mask is aligned with its lower-left corner on (0, 0), and each cell is **res** wide and high. You can map
     between the (i, j) indices of the mask and the (x, y) coords of the walls and lights with
-    :func:`megastep.geometries.centers` and :func:`megastep.geometries.indices`
+    :func:`~megastep.geometries.centers` and :func:`~megastep.geometries.indices`
 
     The mask is ``-1`` in cells touching a wall, and otherwise ``0`` in free space or positive integer if the cell is
     in a room. Each room gets its own positive integer. 

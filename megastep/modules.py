@@ -22,11 +22,11 @@ class SimpleMovement:
     def __init__(self, core, *args, accel=10, ang_accel=180, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self.core = core
-        momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
-        angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
+        velocity = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
+        angvelocity = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict.arrdict(
-            momenta=accel/core.fps*momenta,
-            angmomenta=ang_accel/core.fps*angmomenta
+            velocity=accel/core.fps*velocity,
+            angvelocity=ang_accel/core.fps*angvelocity
         ).to(core.device)
 
         self.space = spaces.MultiDiscrete(n_agents or core.n_agents, 7)
@@ -34,8 +34,8 @@ class SimpleMovement:
     def __call__(self, decision):
         core = self.core
         delta = self._actionset[decision.actions.long()]
-        core.agents.angmomenta[:] = delta.angmomenta
-        core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
+        core.agents.angvelocity[:] = delta.angvelocity
+        core.agents.velocity[:] = to_global_frame(core.agents.angles, delta.velocity)
         return cuda.physics(core.scenery, core.agents)
 
 class MomentumMovement:
@@ -43,11 +43,11 @@ class MomentumMovement:
     def __init__(self, core, *args, accel=5, ang_accel=180, decay=.125, n_agents=None, **kwargs):
         # noop, forward/backward, strafe left/right, turn left/right
         self.core = core
-        momenta = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
-        angmomenta = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
+        velocity = torch.tensor([[0., 0.], [0., 1.], [0.,-1.], [1., 0.], [-1.,0.], [0., 0.], [0., 0.]])
+        angvelocity = torch.tensor([0., 0., 0., 0., 0., +1., -1.])
         self._actionset = arrdict.arrdict(
-            momenta=accel/core.fps*momenta,
-            angmomenta=ang_accel/core.fps*angmomenta
+            velocity=accel/core.fps*velocity,
+            angvelocity=ang_accel/core.fps*angvelocity
         ).to(core.device)
 
         self._decay = decay
@@ -57,8 +57,8 @@ class MomentumMovement:
     def __call__(self, decision):
         core = self.core
         delta = self._actionset[decision.actions.long()]
-        core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
-        core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
+        core.agents.angvelocity[:] = (1 - self._decay)*core.agents.angvelocity + delta.angvelocity
+        core.agents.velocity[:] = (1 - self._decay)*core.agents.velocity + to_global_frame(core.agents.angles, delta.velocity)
         return cuda.physics(core.scenery, core.agents)
 
 def unpack(d):
@@ -133,8 +133,8 @@ class IMU:
 
     def __call__(self):
         return torch.cat([
-            self.core.agents.angmomenta[..., None]/360.,
-            to_local_frame(self.core.agents.angles, self.core.agents.momenta)/10.], -1)
+            self.core.agents.angvelocity[..., None]/360.,
+            to_local_frame(self.core.agents.angles, self.core.agents.velocity)/10.], -1)
 
 def random_empty_positions(geometries, n_agents, n_points):
     points = []
@@ -166,8 +166,8 @@ class RandomSpawns:
         choices = torch.randint_like(required[0], 0, self._spawns.angles.shape[1])
         core.agents.angles[required] = self._spawns.angles[(*required, choices)] 
         core.agents.positions[required] = self._spawns.positions[(*required, choices)] 
-        core.agents.momenta[required] = 0.
-        core.agents.angmomenta[required] = 0.
+        core.agents.velocity[required] = 0.
+        core.agents.angvelocity[required] = 0.
 
 class RandomLengths:
 

@@ -95,7 +95,7 @@ class Waypoint:
         return self.plot_state(arrdict.numpyify(self.state(d)))
 
     def decide(self, world):
-        accel = self._mover._actionset.momenta
+        accel = self._mover._actionset.velocity
         actions = (world.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
         return arrdict.arrdict(actions=actions)
 
@@ -182,6 +182,6 @@ class PointGoal:
         return self.plot_state(arrdict.numpyify(self.state(d)))
 
     def decide(self, world):
-        accel = self._mover._actionset.momenta
+        accel = self._mover._actionset.velocity
         actions = (world.obs.waypoint[..., None, :]*accel).sum(-1).argmax(-1)
         return arrdict.arrdict(actions=actions)

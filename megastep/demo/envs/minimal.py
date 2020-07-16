@@ -1,10 +1,13 @@
 from rebar import arrdict
 from megastep import modules, core, toys, scene
 
-class Collisioneer:
+class Minimal:
 
     def __init__(self):
-        geometries = 128*[toys.box()]
+        """A minimal environment, with a box env, depth observations and simple movement. A good foundation for
+        building your own environments. See :ref:`the simple environment tutorial for details <simple-env>`"""
+
+        geometries = [toys.box()]
         scenery = scene.scenery(geometries, n_agents=1)
         self.core = core.Core(scenery)
         self.spawner = modules.RandomSpawns(geometries, self.core)

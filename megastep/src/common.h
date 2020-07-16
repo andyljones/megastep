@@ -156,14 +156,14 @@ struct Ragged {
 
 using Angles = TensorProxy<float, 2>;
 using Positions = TensorProxy<float, 3>;
-using AngMomenta = TensorProxy<float, 2>;
-using Momenta = TensorProxy<float, 3>;
+using AngVelocity = TensorProxy<float, 2>;
+using Velocity = TensorProxy<float, 3>;
 
 struct Agents {
     Angles angles;
     Positions positions; 
-    AngMomenta angmomenta;
-    Momenta momenta; 
+    AngVelocity angvelocity;
+    Velocity velocity; 
 };
 
 using Lights = Ragged<float, 2>;

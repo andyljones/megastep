@@ -36,16 +36,23 @@ cuda
     :members: initialize, bake, physics, render, Render, Agents, Scenery, 
     :undoc-members:
 
+demo
+====
+
+.. automodule:: megastep.demo.envs.minimal
+    :members: Minimal 
+    :undoc-members:
+
 rebar
 =====
 .. automodule:: rebar
 
 dotdict
--------------
+-------
 .. automodule:: rebar.dotdict
     :members: dotdict, mapping, starmapping, leaves
 
 arrdict
--------------
+-------
 .. automodule:: rebar.arrdict
     :members: arrdict, torchify, numpyify, stack, cat

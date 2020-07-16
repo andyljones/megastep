@@ -33,6 +33,7 @@ release = '0.1'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.linkcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -70,3 +71,16 @@ html_static_path = ['_static']
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
+
+def linkcode_resolve(domain, info):
+    if domain != 'py':
+        return None
+    if not info['module']:
+        return None
+
+    if info['module'].endswith('cuda'):
+        filename = 'megastep/src/wrappers.cpp'
+    else:
+        filename = info['module'].replace('.', '/') + '.py'
+
+    return f"https://github.com/andyljones/megastep/tree/master/{filename}"

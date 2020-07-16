@@ -177,7 +177,7 @@ __host__ TT normalize_degrees(TT a) {
 using Progress = TensorProxy<float, 2>; 
 
 __global__ void collision_kernel(
-                int DF, Positions::PTA positions, Momenta::PTA momenta, 
+                int DF, Positions::PTA positions, Velocity::PTA velocity, 
                 Lines::PTA lines, Progress::PTA progress) {
     const auto N = positions.size(0);
     const auto D = positions.size(1);
@@ -187,13 +187,13 @@ __global__ void collision_kernel(
         const auto L = lines.widths[n];
         for (int d0=0; d0 < D; d0++) {
             const Point p0(positions[n][d0]);
-            const Point m0(momenta[n][d0]);
+            const Point m0(velocity[n][d0]);
 
             float x = 1.f;
             for (int d1=0; d1 < D; d1++) {
                 if (d0 != d1) {
                     const Point p1(positions[n][d1]);
-                    const Point m1(momenta[n][d1]);
+                    const Point m1(velocity[n][d1]);
 
                     x = fminf(x, collision(p0, m0/FPS_, p1, m1/FPS_));
                 }
@@ -217,14 +217,14 @@ __host__ Physics physics(const Scenery& scenery, const Agents& agents) {
     auto progress(Progress::empty({N, A}));
     const uint collision_blocks = (N + BLOCK - 1)/BLOCK;
     collision_kernel<<<collision_blocks, {BLOCK,}, 0, stream()>>>(
-        A*F, agents.positions.pta(), agents.momenta.pta(), scenery.lines.pta(), progress.pta());
+        A*F, agents.positions.pta(), agents.velocity.pta(), scenery.lines.pta(), progress.pta());
 
     //TODO: Collisions should only kill the normal component of momentum
     at::AutoNonVariableTypeMode nonvar{true};
-    agents.positions.t.set_(agents.positions.t + progress.t.unsqueeze(-1)*agents.momenta.t/FPS);
-    agents.momenta.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
-    agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angmomenta.t/FPS));
-    agents.angmomenta.t.masked_fill_(progress.t < 1, 0.f);
+    agents.positions.t.set_(agents.positions.t + progress.t.unsqueeze(-1)*agents.velocity.t/FPS);
+    agents.velocity.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
+    agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angvelocity.t/FPS));
+    agents.angvelocity.t.masked_fill_(progress.t < 1, 0.f);
 
     return {progress.t};
 }
