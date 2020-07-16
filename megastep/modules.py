@@ -90,8 +90,24 @@ class Depth:
         self._last_obs = downsample(depth, self.subsample).mean(-1).unsqueeze(3)
         return self._last_obs
     
-    def state(self, d):
-        return self._last_obs[d].clone()
+    def state(self, e):
+        return self._last_obs[e].clone()
+
+class RGB:
+
+    def __init__(self, core, *args, n_agents=None, subsample=1, **kwargs):
+        n_agents = n_agents or core.n_agents
+        self.core = core
+        self.space = spaces.MultiImage(n_agents, 3, 1, core.res//subsample)
+        self.subsample = subsample
+
+    def __call__(self, r=None):
+        r = self.render() if r is None else r
+        self._last_obs = downsample(render.screen, self.subsample)
+        return self._last_obs
+    
+    def state(self, e):
+        return self._last_obs[e].clone()
 
 class RGBD:
 

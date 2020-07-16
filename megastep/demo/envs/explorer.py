@@ -16,7 +16,7 @@ class Explorer:
         self._respawner = modules.RandomSpawns(self.core)
 
         self.action_space = self._mover.space
-        self.observation_space = self._rgbd.space
+        self.obs_space = self._rgbd.space
 
         self._tex_to_env = self.core.scenery.lines.inverse[self.core.scenery.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)

@@ -34,7 +34,7 @@ class Waypoint:
         self._goals = RandomGoals(self.core)
 
         self.action_space = self._mover.space
-        self.observation_space = arrdict.arrdict(
+        self.obs_space = arrdict.arrdict(
             **self._rgbd.space,
             waypoint=spaces.MultiVector(self.core.n_agents, 2))
 
@@ -115,7 +115,7 @@ class PointGoal:
             positions=torch.zeros_like(self.core.agents.positions))
 
         self.action_space = self._mover.space
-        self.observation_space = arrdict.arrdict(
+        self.obs_space = arrdict.arrdict(
             **self._rgbd.space,
             imu=self._imu.space,
             waypoint=spaces.MultiVector(self.core.n_agents, 2))

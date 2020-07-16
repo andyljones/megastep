@@ -43,7 +43,7 @@ class FSM:
 
         self._token = torch.full((self.n_envs,), -1, dtype=torch.long, device=device)
 
-        self.observation_space = MultiVector(1, fsm.d_obs) if fsm.d_obs else spaces.MultiEmpty()
+        self.obs_space = MultiVector(1, fsm.d_obs) if fsm.d_obs else spaces.MultiEmpty()
         self.action_space = MultiDiscrete(1, fsm.n_actions)
 
     def _reset(self, reset):

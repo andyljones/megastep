@@ -29,7 +29,7 @@ class Deathmatch:
         self._respawner = modules.RandomSpawns(geometries, self.core)
 
         self.action_space = self._mover.space
-        self.observation_space = dotdict.dotdict(
+        self.obs_space = dotdict.dotdict(
             **self._rgbd.space,
             imu=self._imu.space,
             health=spaces.MultiVector(1, 1))

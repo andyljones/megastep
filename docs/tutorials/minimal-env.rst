@@ -11,7 +11,7 @@ build off this base to build a an :ref:`exploration env <exploration-env>`, :ref
 and a :ref:`collaborative env <collaborative-env>`.
 
 This is a very detailed tutorial. If you'd prefer to explore the libary on your own, see the 
-:ref`*Playing With Megastep* <playing>` page.
+:ref`Playing With Megastep <playing>` page.
 
 TODO: Animation of minimal env
 
@@ -41,7 +41,7 @@ simplest-possible env, a single geometry will do. A single, simple geometry::
 
 TODO: Image of box env
 
-Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <minimal-env-geometry>`,
+Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <custom-geometry>`,
 and also a :ref:`brief discussion of its place in megastep <geometry>`.
 
 Scenery
@@ -243,17 +243,17 @@ You can read more about how the respawning module works in the :class:`~megastep
 
 Observations
 ************
-The next comment is 'generate an observation and send it to the agent'. For our find-a-wall-and-collide-with-it, the 
-only observation the agent will need is depth, and again there's a module for that::
+The next comment is 'generate an observation and send it to the agent'. For our minimal environment, the 
+observation will be a ye olde fashioned RGB (red-green-blue) camera, and again there's a module for that::
 
-    self.depth = modules.Depth(self.core)
+    self.rgb = modules.RGB(self.core)
 
-This time, calling it gives you back a (n_env, n_agent, 1, res, 1)-tensor, suitable for passing to a PyTorch convnet ::
+This time, calling it gives you back a (n_env, n_agent, 3, 1, res)-tensor, suitable for passing to a PyTorch convnet::
 
-    obs = self.depth()
+    obs = self.rgb()
 
-The render method is called internally by ``depth``, saving us from having to do it explicitly ourselves. The class 
-documentation for :class:`~megastep.modules.Depth` has more details on how it works.
+The render method is called internally by ``rgb``, saving us from having to do it explicitly ourselves. The class 
+documentation for :class:`~megastep.modules.RGB` has more details on how it works.
 
 Following the :ref:`decision-and-world <decision-world>` setup, this obs gets wrapped in a
 :class:`rebar.arrdict.arrdict` so that if we decide to nail any other information onto the side of our observations,
@@ -261,7 +261,7 @@ it's easy to do so. That means our ``reset`` method in all its glory is ::
 
     def reset(self):
         self.spawner(self.core.agent_full(True))
-        return arrdict.arrdict(obs=self.depth())
+        return arrdict.arrdict(obs=self.rgb())
 
 >>> self.reset()
 arrdict:
@@ -289,79 +289,85 @@ As with the ``depth`` module, the ``movement`` module makes the ``physics`` call
 to do it ourselves. Like before, the class documentation for :class:`~megastep.modules.SimpleMovement` has more details 
 on how it's implemented.
 
+Having implemented both actions and observations, we can now assemble our ``step`` method::
 
-Animation
+    def step(self, decision):
+        self.movement(decision)
+        return arrdict(obs=self.rgb())
+
+Agent
+*****
+That's it. That's the functional part of the environment done. All that's left is to wire up an agent to it, and
+then watch it run. 
+
+When you're doing reinforcement learning research, it helps if when you change the observations your environment emits,
+or the action spaces your environment takes, the network you're using to run your agent adapts automatically. The 
+megastep way to do this is to set ``.obs_space`` and ``.action_space`` on your environment, and then use a library of
+:mod:`~megastep.demo.heads` to automatically pick the inputs and outputs of your network.
+
+Using heads to create a network looks like this::
+
+    intake = heads.intake(env.obs_space, width)
+    output = heads.output(env.action_space, width)
+
+You ask for an intake that conforms to the observation space, and outputs a vector of a specified width. Similarly, 
+you ask for an output that conforms to the action space, and takes a vector of a specified with. Then all that's left
+to do is to nail one onto the other::
+
+    policy = nn.Sequential(intake, output)
+
+This network will spit out log-probabilities though, when our environment is expecting actions sampled from the 
+distribution given by the log-probabilities. Fortunately the output space knows exactly how to do this::
+
+    logits = policy(world.obs)
+    actions = output.sample(logits)
+    decision = arrdict.arrdict(logits=logits, actions=actions)
+
+or, all together::
+
+    class Agent(nn.Module):
+
+        def __init__(self, env, width=32):
+            super().__init__()
+            self.intake = heads.intake(env.obs_space, width)
+            self.output = heads.output(env.action_space, width)
+            self.policy = nn.Sequential(self.intake, self.output)
+            
+        def forward(self, world):
+            logits = self.policy(world.obs)
+            actions = self.output.sample(logits)
+            return arrdict.arrdict(logits=logits, actions=actions)
+
+Trying It Out
+*************
+We've now got enough to exercise everything together::
+
+    env = Minimal()
+    agent = Agent(env).cuda()
+
+    world = env.reset()
+    decision = agent(world)
+
+    world = env.step(decision)
+
+Hooray! When you're writing your own environments, you'll likely find yourself running this chunk of code more often
+than any other. It's about the smallest snippet possible that sets everything up and runs through ``reset``,
+``forward``, and ``step``. If you've got a bug somewhere, most of the time this snippet will tell you about it.
+
+Recording
 *********
-While the tempting thing to do is to start filling out those comment lines, writing environments can be tricky and 
-it's worth first doing some work to make bugs more obvious. One of the most powerful ways to spot bugs is to watch
-an agent interact with the environment.
+We've now got all the stuff we need to watch our environment in action. Recording a video basically entails plotting 
+the environment, stepping it forward, then plotting it again, and then feeding all those plots into a video encoder.
 
+In megastep, the recommended way to plot your environment is to do it in two pieces: first, write a method that 
+captures all the state of the environment in a single dict. Then, write another method that takes this state dict
+and generates the plot. You can read more about why this is a good idea :ref:`here <plotting>`, but the short of it is
+that plotting is frequently much slower than stepping the environment, and putting the slow part in it's own method 
+means we can do it in parallel.
 
-.. _minimal-env-geometry:
+First up, the state method::
 
-Geometry - in detail
---------------------
-To create the box geometry, we start with the corners in order::
-
-    import numpy as np
-    corners = np.array([
-        [0, 0]
-        [0, 1]
-        [1, 1]
-        [1, 0]]
-
-These corners give a 1m box, which is a bit too small for our purposes. We can scale it up by multiplying by the
-width we want. It's also a good idea to shift it 1m up and to the right, as lots of machinery in megastep assumes
-that everything happens in the top-right quadrant (ie, above and to the right of the origin). There's no fundamental
-reason for this, it just simplifes some stuff internally. ::
-
-    corners = 5*corners + 1
-
-Then to get the walls, we take all sequential pairs of corners and stack them::
-
-    from megastep import geometry
-    walls = np.stack(geometry.cyclic_pairs(corners))
-
-You can check that these walls are what we think they are by putting them in a :ref:`dotdict <dotdicts>` and using
-:func:`~megastep.geometry.display`::
-
-    geometry.display(dotdict.dotdict(
-        walls=walls))
-
-TODO: Image of walls
-
-With the walls in place, the other thing to deal with is rooms. There's no strict definition of a room; they're 
-just small, generic regions. The usual use of them is to make it easy to spawn multiple agents near eachother.
-
-In this case, our room is going to just be the corners we had before. That's a list of corners though, while our 
-geometry wants a mask. Fortunately there's already a function to turn one into the other::
-
-    masks = geometry.masks(walls, [corners])
-
-Again, we can plot it to check how it looks::
-
-    geometry.display(dotdict.dotdict(
-        walls=walls,
-        masks=masks))
-
-TODO: Image of walls and masks
-
-This ``masks`` array has a -1 where there's a wall, a 0 where there's free space, and a 1 where our room is. Now that
-we've got both walls and masks, we just need to add the location of lights and the resolution of the mask::
-
-    from rebar import dotdict
-    g = dotdict.dotdict(
-        walls=walls,
-        masks=masks,
-        lights=np.array([[3., 3.]]),
-        res=geometry.RES)
-    geometry.display(g)
-
-TODO: Image of geometry
-
-Here, the resolution is the one that :func:`~megastep.geometry.masks` uses by default.
-
-It's mentioned in the :ref:`geometry <geometry>` section but worth re-mentioning here: geometries are dicts rather 
-than classes because as you develop your own environments, scene and geometries you'll likely find you have
-different ideas about what information a geometry needs to carry around. A dotdict is much easier to modify in that
-case than a class.
+    def state(self, e=0):
+        return arrdict.arrdict(
+            **self.core.state(e),
+            rgb=self.rgb.state(e))

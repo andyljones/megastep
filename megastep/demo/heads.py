@@ -1,16 +1,10 @@
+"""
+
+"""
 import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
-
-class MultiEmptyIntake(nn.Module):
-
-    def __init__(self, space, width):
-        super().__init__()
-        self._width = width
-
-    def forward(self, obs, **kwargs):
-        return obs.new_zeros((*obs.shape[:-2], self._width))
 
 class MultiVectorIntake(nn.Module):
 
@@ -73,18 +67,6 @@ def intake(space, width):
     if name in globals():
         return globals()[name](space, width)
     raise ValueError(f'Can\'t handle {space}')
-
-class MultiConstantOutput(nn.Module):
-
-    def __init__(self, space, width):
-        super().__init__()
-        self.shape = space.shape
-
-    def forward(self, x, **kwargs):
-        return x.new_zeros((*x.shape[:-1], *self.shape, 1))
-
-    def sample(self, zeros):
-        return torch.zeros(zeros.shape[:-1], dtype=torch.int, device=zeros.device)
 
 class MultiDiscreteOutput(nn.Module):
 

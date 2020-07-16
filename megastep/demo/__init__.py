@@ -1,5 +1,5 @@
 import torch
-from . import learning, lstm, transformer, envs, parts
+from . import learning, lstm, transformer, envs, heads
 from .. import core
 from rebar import logging, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
@@ -16,18 +16,18 @@ def envfunc(n_envs=1024):
 
 class Agent(nn.Module):
 
-    def __init__(self, observation_space, action_space, width=256):
+    def __init__(self, obs_space, action_space, width=256):
         super().__init__()
-        out = parts.output(action_space, width)
+        out = heads.output(action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
-            parts.intake(observation_space, width),
+            heads.intake(obs_space, width),
             lstm.LSTM(d_model=width),
             out)
         self.value = recurrence.Sequential(
-            parts.intake(observation_space, width),
+            heads.intake(obs_space, width),
             lstm.LSTM(d_model=width),
-            parts.ValueOutput(width))
+            heads.ValueOutput(width))
 
     def forward(self, world, sample=False, value=False, test=False):
         outputs = arrdict.arrdict(
@@ -40,7 +40,7 @@ class Agent(nn.Module):
 
 def agentfunc():
     env = envfunc(n_envs=1)
-    return Agent(env.observation_space, env.action_space).cuda()
+    return Agent(env.obs_space, env.action_space).cuda()
 
 def as_chunk(buffer):
     chunk = arrdict.stack(buffer)
