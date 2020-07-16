@@ -9,8 +9,8 @@ There are some ideas that are referenced in many places in this documentation.
 dotdicts and arrdicts
 =====================
 dotdicts and arrdicts are used in many places in megastep in preference to custom classes. 
- * A :class:`rebar.dotdict.dotdict` is a dictionary with dot (attribute) access to its elements and a bunch of useful behaviours.
- * A :class:`rebar.arrdict.arrdict` does everything a dotdict does, but with extra support for array/tensor elements.
+ * A :class:`~rebar.dotdict.dotdict` is a dictionary with dot (attribute) access to its elements and a bunch of useful behaviours.
+ * A :class:`~rebar.arrdict.arrdict` does everything a dotdict does, but with extra support for array/tensor elements.
 
 There are several serious issues with giving up on static typing, but in a research workflow I believe the benefits
 outweigh those costs.
@@ -304,7 +304,7 @@ Models
 Subpackages
 ===========
 
-.. _spaces::
+.. _spaces:
 
-Spaces
-======
+Spaces & Heads
+==============

@@ -13,7 +13,7 @@ def _arrdict_factory():
     # the arrdict manually.
 
     class _arrdict_base(dotdict.dotdict):
-        """An arrdict is an :class:`rebar.dotdict.dotdict` with extra support for array and tensor values.
+        """An arrdict is an :class:`~rebar.dotdict.dotdict` with extra support for array and tensor values.
 
         arrdicts have a lot of unusual but extremely useful behaviours, which are documented in :ref:`the dotdicts
         and arrdicts concept section <dotdicts>` .
@@ -52,7 +52,7 @@ def torchify(a):
     """Converts an array or a dict of numpy arrays to CPU tensors.
 
     If you'd like CUDA tensors, follow the tensor-ification ``.cuda()`` ; the attribute delegation
-    built into :class:`rebar.dotdict.dotdict` s will do the rest.
+    built into :class:`~rebar.dotdict.dotdict` s will do the rest.
     
     Floats get mapped to 32-bit PyTorch floats; ints get mapped to 32-bit PyTorch ints. This is usually what you want in 
     machine learning work.
@@ -136,3 +136,11 @@ def cat(x, *args, **kwargs):
     if np.isscalar(x[0]):
         return np.array(x)
     raise ValueError(f'Can\'t cat {type(x[0])}')
+
+@dotdict.mapping
+def clone(t):
+    if hasattr(t, 'clone'):
+        return t.clone()
+    if hasattr(t, 'copy'):
+        return t.copy()
+    return t

@@ -18,6 +18,9 @@ class MultiVectorIntake(nn.Module):
                         nn.Linear(A*width, width), nn.ReLU(),)
         
     def forward(self, obs, **kwargs):
+        if obs.ndim == 3:
+            return self.forward(obs[None], **kwargs).squeeze(0)
+
         T, B, A, C = obs.shape
         x = self.core(obs.reshape(T*B*A, C)).reshape(T, B, -1)
         return self.proj(x)
@@ -41,6 +44,9 @@ class MultiImageIntake(nn.Module):
                         nn.Linear(width, width), nn.ReLU())
 
     def forward(self, obs, **kwargs):
+        if obs.ndim == 5:
+            return self.forward(obs[None], **kwargs).squeeze(0)
+
         T, B, A, C, H, W = obs.shape
         if obs.dtype == torch.uint8:
             obs = obs/255.

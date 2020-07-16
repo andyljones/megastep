@@ -3,7 +3,8 @@
 import numpy as np
 import torch
 from rebar import arrdict
-from . import spaces, geometry, cuda
+from . import spaces, geometry, cuda, plotting
+import matplotlib.pyplot as plt
 
 def to_local_frame(angles, p):
     a = np.pi/180*angles
@@ -102,12 +103,19 @@ class RGB:
         self.subsample = subsample
 
     def __call__(self, r=None):
-        r = self.render() if r is None else r
-        self._last_obs = downsample(render.screen, self.subsample)
+        r = render(self.core) if r is None else r
+        self._last_obs = downsample(r.screen, self.subsample).mean(-1)
         return self._last_obs
     
     def state(self, e):
         return self._last_obs[e].clone()
+
+    @classmethod
+    def plot_state(cls, state, axes=None):
+        n_agents = state.shape[0]
+        axes = plt.subplots(n_agents, 1, squeeze=False) if axes is None else axes
+        plotting.plot_images({'rgb': state}, axes)
+        return axes
 
 class RGBD:
 

@@ -108,6 +108,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
                 See the :ref:`agents <agents>` section for a discussion of this class's place in megastep.
                 
                 )pbdoc")
+        .def("state", &Agents::state, R"pbdoc(
+            Extracts the state for the ``e`` th scene, returning it as a :class:`~rebar.dotdict.dotdict`.
+            TODO: Explain why)pbdoc")
         .def_property_readonly("angles", [](Agents a) { return a.angles.t; }, R"pbdoc(
             An (n_env, n_agent)-tensor of agents' angles relative to the positive x axis, given in degrees.)pbdoc")
         .def_property_readonly("positions", [](Agents a) { return a.positions.t; }, R"pbdoc(
@@ -125,8 +128,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
             See the :ref:`scenery <scenery>` section for a discussion of this class's place in megastep.
             
             )pbdoc")
-        .def("__getitem__", [](Scenery self, int e) { return self[e]; }, R"pbdoc(
-            Extracts the state for the ``e``th scene, returning it as a :class:`rebar.dotdict.dotdict`.)pbdoc")
+        .def("state", &Scenery::state, R"pbdoc(
+            Extracts the state for the ``e`` th scene, returning it as a :class:`~rebar.arrdict.arrdict`.
+            TODO: Explain why)pbdoc")
         .def_property_readonly("model", [](Scenery s) { return s.model.t; }, R"pbdoc(
             An (n_model_line, 2, 2)-tensor giving the model - the set of lines - that make up the agent. This will be 
             shifted and rotated according to the :class:`Agents` angles and positions, then rendered into the scenery.)pbdoc")

@@ -3,6 +3,7 @@ from . import scene, cuda, ragged
 import torch
 import logging
 from rebar import arrdict, dotdict
+import matplotlib.pyplot as plt
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ class Core:
         self.progress = torch.ones((self.n_envs, self.n_agents), device=self.device)
 
     def state(self, e):
-        """Returns a :class:`rebar.arrdict.arrdict` tree representing the state of environment ``e``.
+        """Returns a :class:`~rebar.dotdict.dotdict` tree representing the state of environment ``e``.
 
         A typical state looks like this::
 
@@ -111,25 +112,25 @@ class Core:
             progress        Tensor((4,), torch.float32)
 
         This state tree is usually passed onto a :ref:`plotting` function.""" 
-        scenery = self.scenery
-        sd, ed = scenery.lines.starts[e], scenery.lines.ends[e]
-
         options = ('n_envs', 'n_agents', 'res', 'fov', 'agent_radius', 'fps')
         options = {k: getattr(self, k) for k in options}
 
-        return arrdict.arrdict(
-                    **options,
-                    scenery=arrdict.arrdict(
-                            model=self.scenery.model,
-                            lines=self.scenery.lines[e],
-                            lights=self.scenery.lights[e],
-                            #TODO: Fix up ragged so this works
-                            textures=self.scenery.textures[sd:ed],
-                            baked=self.scenery.baked[sd:ed]).clone(),
-                    agents=arrdict.arrdict(
-                            angles=self.agents.angles[e], 
-                            positions=self.agents.positions[e]).clone(),
-                    progress=self.progress[e].clone())
+        return arrdict.clone(dotdict.dotdict(
+                **options,
+                scenery=self.scenery.state(e),
+                agents=self.agents.state(e),
+                progress=self.progress[e]))
+    
+    @classmethod
+    def plot_state(cls, state, ax=None, zoom=False):
+        from . import plotting
+        ax = ax or plt.axes()
+        plotting.plot_lines(ax, state, zoom=zoom)
+        plotting.plot_lights(ax,state)
+        plotting.adjust_view(ax, state, zoom=zoom)
+        plotting.plot_fov(ax, state)
+        return ax
+
 
     def env_full(self, x):
         """Returns a (n_envs,)-tensor on the environment's device full of `x`.

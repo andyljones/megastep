@@ -11,7 +11,7 @@ build off this base to build a an :ref:`exploration env <exploration-env>`, :ref
 and a :ref:`collaborative env <collaborative-env>`.
 
 This is a very detailed tutorial. If you'd prefer to explore the libary on your own, see the 
-:ref`Playing With Megastep <playing>` page.
+:ref:`*Playing With Megastep* <playing>` page.
 
 TODO: Animation of minimal env
 
@@ -184,7 +184,7 @@ This is exactly the same code as was in the loop, just with the interation with 
 and while I think it works well, you're free to replace with your own. With this sugar though, the loop becomes much
 more flexible::
 
-    env = Collisioneer()
+    env = Minimal()
     world = env.reset()
     while True:
         decision = agent(world)
@@ -256,7 +256,7 @@ The render method is called internally by ``rgb``, saving us from having to do i
 documentation for :class:`~megastep.modules.RGB` has more details on how it works.
 
 Following the :ref:`decision-and-world <decision-world>` setup, this obs gets wrapped in a
-:class:`rebar.arrdict.arrdict` so that if we decide to nail any other information onto the side of our observations,
+:class:`~rebar.arrdict.arrdict` so that if we decide to nail any other information onto the side of our observations,
 it's easy to do so. That means our ``reset`` method in all its glory is ::
 
     def reset(self):
@@ -311,7 +311,7 @@ Using heads to create a network looks like this::
     output = heads.output(env.action_space, width)
 
 You ask for an intake that conforms to the observation space, and outputs a vector of a specified width. Similarly, 
-you ask for an output that conforms to the action space, and takes a vector of a specified with. Then all that's left
+you ask for an output that takes a vector of a specified width and conforms to the action space. Then all that's left
 to do is to nail one onto the other::
 
     policy = nn.Sequential(intake, output)
@@ -356,18 +356,48 @@ than any other. It's about the smallest snippet possible that sets everything up
 
 Recording
 *********
-We've now got all the stuff we need to watch our environment in action. Recording a video basically entails plotting 
-the environment, stepping it forward, then plotting it again, and then feeding all those plots into a video encoder.
+Having the code run isn't the same as watching it run however. To watch it run, we need to repeatedly step and plot the 
+environment, then string all the plots together into a video.
 
-In megastep, the recommended way to plot your environment is to do it in two pieces: first, write a method that 
+In megastep, the recommended way to plot your environment is a two-part process: first, write a method that 
 captures all the state of the environment in a single dict. Then, write another method that takes this state dict
 and generates the plot. You can read more about why this is a good idea :ref:`here <plotting>`, but the short of it is
 that plotting is frequently much slower than stepping the environment, and putting the slow part in it's own method 
 means we can do it in parallel.
 
-First up, the state method::
+First up, the state method. It simply combines the states of the relevant modules::
 
     def state(self, e=0):
         return arrdict.arrdict(
             **self.core.state(e),
             rgb=self.rgb.state(e))
+
+The ``e`` is because we're typically only interested in plotting a single env at a time, and so we only need to extract 
+the state for one env - in this case, env #0. 
+
+Next, the plotting method. This can be any combination of matplotlib calls you like, as long as it returns a figure::
+
+    def plot_state(self, state):
+        fig = plt.figure()
+        gs = plt.GridSpec(3, 1, fig)
+
+Finally, we can record a video::
+
+    from rebar import recording
+
+    with recording.ParallelEncoder(env.plot_state) as encoder:
+        env = Minimal()
+        agent = Agent(env).cuda()
+        world = env.reset()
+        for _ in range(64):
+            decision = agent(world)
+            world = env.step(decision)
+            
+            encoder(arrdict.numpyify(env.state()))
+
+    encoder.notebook()
+
+TODO: Video
+
+Here we're executing the same loop as before, just at the bottom of it we're pulling out the state and feeding it to
+the :class:`~rebar.recording.ParallelEncoder`.

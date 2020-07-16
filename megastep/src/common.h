@@ -164,6 +164,16 @@ struct Agents {
     Positions positions; 
     AngVelocity angvelocity;
     Velocity velocity; 
+
+    py::object state(const size_t e) {
+        const auto arrdict = py::module::import("rebar.arrdict").attr("arrdict");
+        return arrdict(
+            "angles"_a=angles.t[e],
+            "positions"_a=positions.t[e],
+            "angvelocity"_a=angvelocity.t[e],
+            "velocity"_a=velocity.t[e]);
+    }
+
 };
 
 using Lights = Ragged<float, 2>;
@@ -188,7 +198,7 @@ struct Scenery {
         baked(at::ones_like(textures.vals.select(1, 0)), textures.widths) {
     }
 
-    py::object operator[](const size_t e) {
+    py::object state(const size_t e) {
         const auto dotdict = py::module::import("rebar.dotdict").attr("dotdict");
         const auto se = lines.starts[e].item<int64_t>();
         const auto ee = lines.ends[e].item<int64_t>();

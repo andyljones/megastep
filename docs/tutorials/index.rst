@@ -3,12 +3,13 @@ Tutorials
 =========
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     playing
     minimal-env
     exploration-env
     deathmatch-env
     collaboration-env
+    geometry
     scenery
     kernels

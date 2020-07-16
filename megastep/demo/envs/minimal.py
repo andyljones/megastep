@@ -1,7 +1,8 @@
-from rebar import arrdict
-from megastep import modules, core, toys, scene
+from rebar import arrdict, dotdict
+from megastep import modules, core, toys, scene, plotting
 from torch import nn
 from megastep.demo import heads
+import matplotlib.pyplot as plt
 
 
 class Minimal:
@@ -27,6 +28,24 @@ class Minimal:
     def step(self, decision):
         self.movement(decision)
         return arrdict.arrdict(obs=self.rgb())
+
+    def state(self, e=0):
+        return dotdict.dotdict(
+            core=self.core.state(e),
+            rgb=self.rgb.state(e))
+    
+    @classmethod
+    def plot_state(self, state):
+        fig = plt.figure()
+        gs = plt.GridSpec(1, 3, fig)
+
+        plan = plt.subplot(gs[:, :2])
+        core.Core.plot_state(state.core, plan)
+
+        im = plt.subplot(gs[:, -1])
+        modules.RGB.plot_state(state.rgb, [im])
+
+        return fig
 
 class Agent(nn.Module):
 
