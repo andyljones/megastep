@@ -5,6 +5,10 @@ Tutorials
 .. toctree::
     :maxdepth: 2
 
-    simple-env
+    playing
+    minimal-env
+    exploration-env
+    deathmatch-env
+    collaboration-env
     scenery
     kernels

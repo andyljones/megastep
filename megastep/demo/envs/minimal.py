@@ -3,11 +3,11 @@ from megastep import modules, core, toys, scene
 
 class Minimal:
 
-    def __init__(self):
+    def __init__(self, n_envs=1):
         """A minimal environment, with a box env, depth observations and simple movement. A good foundation for
-        building your own environments. See :ref:`the simple environment tutorial for details <simple-env>`"""
+        building your own environments. See :ref:`the simple environment tutorial for details <minimal-env>`"""
 
-        geometries = [toys.box()]
+        geometries = n_envs*[toys.box()]
         scenery = scene.scenery(geometries, n_agents=1)
         self.core = core.Core(scenery)
         self.spawner = modules.RandomSpawns(geometries, self.core)

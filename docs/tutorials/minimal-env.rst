@@ -1,20 +1,22 @@
-.. _simple-env:
+.. _minimal-env:
 
-============================
-Writing a Simple Environment
-============================
+=============================
+A Minimal Environment
+=============================
 
-In this tutorial we're going to write the simplest possible environment. It's going to have one agent that gets
-rewarded for colliding with a wall. Not a particularly interesting task, but it'll be easy to follow, and give us a
-base of techniques that we can later build more interesting environments on top of.
+In this tutorial we're going to write the simplest possible environment. We're going to make something that has an 
+agent moving around and getting depth measurements of the world around it. We're going to be able to record animations
+of that agent's exploration, and we're going to generate a neural net that can control it. In later tutorials, we'll
+build off this base to build a an :ref:`exploration env <exploration-env>`, :ref:`deathmatch env <deathmatch-env>`, 
+and a :ref:`collaborative env <collaborative-env>`.
 
-TODO: Animation of collision env
+This is a very detailed tutorial. If you'd prefer to explore the libary on your own, see the 
+:ref`*Playing With Megastep* <playing>` page.
 
-The High Level
---------------
-This tutorial leads with a view-from-a-thousand-foot doing-without-understanding version, but there are links throughout
-that explain what's going on in detail. 
+TODO: Animation of minimal env
 
+Setup
+*****
 It'd a good idea to open yourself a `Jupyter notebook <https://jupyter.org/install>`_ or `colab
 <https://colab.research.google.com/>`_ and copy-paste the code as you go, experimenting with anything you don't quite
 understand.
@@ -39,7 +41,7 @@ simplest-possible env, a single geometry will do. A single, simple geometry::
 
 TODO: Image of box env
 
-Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <simple-env-geometry>`,
+Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <minimal-env-geometry>`,
 and also a :ref:`brief discussion of its place in megastep <geometry>`.
 
 Scenery
@@ -156,10 +158,10 @@ though, that 'while' loop needs to be abstracted away. The typical way to do thi
 <http://gym.openai.com/docs/#environments>`_, and while we're :ref:`not going to follow their interface exactly
 <openai-gym>` we are going to steal the ideas of a 'reset' method and a 'step' method::
 
-    class Collisioneer:
+    class Minimal:
 
-        def __init__(self):
-            geometries = 128*[toys.box()]
+        def __init__(self, n_envs):
+            geometries = n_envs*[toys.box()]
             scenery = scene.scenery(geometries, n_agents=1)
             self.c = cuda.Core(scenery)
 
@@ -193,10 +195,10 @@ Now all that's left to be done is to fill out those comment lines.
 An Aside
 ********
 Now that we're building up a class, it's going to be impractical for me to copy-paste the source every time I discuss
-a change. Instead, you should grab the completed Collisioneer class from megastep's demo repo::
+a change. Instead, you should grab the completed :class:`~megastep.demo.env.Minimal` class from megastep's demo module::
 
-    from megastep.demo.envs.collisioneer import *
-    self = Collisioneer()
+    from megastep.demo.envs.minimal import *
+    self = Minimal()
     world = self.reset()
 
 The remainder of the code segments will be small 'experiments' - for want of a better word - you can run on this env
@@ -287,14 +289,6 @@ As with the ``depth`` module, the ``movement`` module makes the ``physics`` call
 to do it ourselves. Like before, the class documentation for :class:`~megastep.modules.SimpleMovement` has more details 
 on how it's implemented.
 
-Rewards
-*******
-Up until now we've built a pretty generic environment. Agents get spawned, they receive depth observations, and
-return movement actions. This is about the simplest functional environment you can write in megastep, and if you want
-to build your own environment this is a good foundation to start from. You can find the code as it is so far in the
-:mod:`~megastep.demo.envs.minimal` module.
-
-The final comment is 'post-collision alterations'.
 
 Animation
 *********
@@ -303,7 +297,7 @@ it's worth first doing some work to make bugs more obvious. One of the most powe
 an agent interact with the environment.
 
 
-.. _simple-env-geometry:
+.. _minimal-env-geometry:
 
 Geometry - in detail
 --------------------

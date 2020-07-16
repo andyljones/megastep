@@ -1,4 +1,5 @@
 .. _kerneltutorial:
 
-Writing Your Own Kernels
-========================
+==============
+Custom Kernels
+==============
