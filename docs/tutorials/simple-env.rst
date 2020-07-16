@@ -8,11 +8,13 @@ base of techniques that we can later build more interesting environments on top 
 
 TODO: Animation of collision env
 
+The High Level
+--------------
 This tutorial leads with a view-from-a-thousand-foot doing-without-understanding version. There are links throughout
 that explain what's going on in detail. 
 
-The High Level
---------------
+Geometry
+********
 The place to start is with the :ref:`geometry <geometry>`. The geometry describes the walls, rooms and lights of
 an environment. In later tutorials we're going to generate thousands of unique geometries, but here for our
 simplest-possible env, a single geometry will do. A single, simple geometry::
@@ -27,12 +29,14 @@ TODO: Image of box env
 Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <simple-env-geometry>`,
 and also a :ref:`brief discussion of its place in megastep <geometry>`.
 
+Scenery
+*******
 A geometry on its own is not enough for the renderer to go on though. For one it's missing texture, and for two it only 
 describes a single environment, when megastep's key advantage is the simulation of thousands of environments in parallel.
 To turn the geometry into something the renderer can use, we turn it into a :class:`megastep.cuda.Scenery`::
 
     from megastep import scene
-    scenery = scene.scenery(1024*[g], n_agents=1)
+    scenery = scene.scenery(128*[g], n_agents=1)
 
     scene.display(scenery, e=126)
 
@@ -43,10 +47,12 @@ One copy is shown. You'll notice an agent has also been created and placed at th
 about what's going on here, there's :ref:`another brief discussion about scenery <scenery>` and :ref:`a tutorial on
 writing your own scenery generator <tutorial-scenery>`.
 
+Rendering
+*********
 With the scenery in hand, the next thing to do is create a :class:`megastep.core.Core`:
 
     from megastep import core
-    c = core.Core(scenery, n_agents=1)
+    c = core.Core(scenery)
 
 The Core doesn't actually do very much; there're little code in it and all its variables are public. It does do some
 setup for you, but after that it's just a bag of useful attributes that you're going to pass to the physics and rendering
@@ -93,9 +99,11 @@ agents' models to match their positions. Having moved all the agents to (3, 3) e
 
 TODO: Moved image
 
+Physics
+*******
 Along with :func:`megastep.cuda.render`, the other important call in megastep is :func:`megastep.cuda.physics`. This
 call handles moving agents based on their velocities, and deals with any collisions that happen. If we set the agents'
-velocities to some obscene value, then make the physics call::
+velocities to some obscene value, then make the physics call:
 
 >>> c.agents.momenta[:] = torch.as_tensor([1000., 0.], device=c.device)
 >>> p = cuda.physics(c.scenery, c.agents)
@@ -113,11 +121,67 @@ again::
 
 TODO: Updated position
 
+A Skeleton
+**********
+We've now illustrated the basic loop in megastep::
+
+    g = toys.box()
+    scenery = scene.scenery(n_envs*[g], n_agents=1)
+    c = cuda.Core(scenery)
+
+    # set agent location
+    r = cuda.render(c.scenery, c.agents)
+    # generate an observation and send it to the agent
+    while True:
+        # process decisions from the agent
+        p = cuda.physics(c.scenery, c.agents)
+        # post-collision alterations
+        r = cuda.render(c.scenery, c.agents)
+        # generate an observation and send it to the agent
+
+This loop will be hiding at the bottom of any environment you write. For the purposes of actually *using* the environment
+though, that 'while' loop needs to be abstracted away. The typical way to do this follows from the `OpenAI Gym
+<http://gym.openai.com/docs/#environments>`_, and while we're :ref:`not going to follow their interface exactly
+<openai-gym>` we are going to steal the ideas of a 'reset' method and a 'step' method::
+
+    class Collisioneer:
+
+        def __init__(self):
+            g = toys.box()
+            scenery = scene.scenery(128*[g], n_agents=1)
+            self.c = cuda.Core(scenery)
+
+        def reset(self):
+            # set agent location
+            r = cuda.render(self.c.scenery, self.c.agents)
+            # generate an observation and send it to the agent
+            return world
+
+        def step(self, decision):
+            # process decisions from the agent
+            p = cuda.physics(self.c.scenery, self.c.agents)
+            # post-collision alterations
+            r = cuda.render(self.c.scenery, self.c.agents)
+            # generate an observation and send it to the agent
+            return world
+
+This is exactly the same code as was in the loop, just with the interation with the agent made explicit through
+:ref:`'decision' and 'world' variables <decision-world>`. This is very my syntactic sugar for agent-env interactions,
+and while I think it works well, you're free to replace with your own. With this sugar though, the loop becomes much
+more flexible::
+
+    env = Collisioneer()
+    world = env.reset()
+    while True:
+        decision = agent(world)
+        world = env.step(decision)
+
+The question now is simply how to fill in those comment lines. 
 
 .. _simple-env-geometry:
 
-Geometry
---------
+Geometry - in detail
+--------------------
 To create the box geometry, we start with the corners in order::
 
     import numpy as np

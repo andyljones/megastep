@@ -7,8 +7,9 @@ megastep
 .. toctree::
     :maxdepth: 2
     
-    tutorials/index.rst
+    tutorials/index
     concepts
+    faq
 
 .. toctree::
     :maxdepth: 3
