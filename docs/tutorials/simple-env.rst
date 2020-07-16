@@ -17,10 +17,12 @@ It'd a good idea to open yourself a `Jupyter notebook <https://jupyter.org/insta
 <https://colab.research.google.com/>`_ and copy-paste the code as you go, experimenting with anything you don't quite
 understand.
 
-Once you've got your Jupyter install up and running, the first thing to do is to :ref:`install megastep <install>`,
-and the extra demo dependencies, which should be as simple as ::
+Once you've got your notebook up and running, the first thing to do is to :ref:`install megastep <install>`,
+and the extra demo dependencies, which should be as simple as running ::
 
-    pip install megastep[rebar]
+    !pip install megastep[rebar] --yes
+
+in a cell.
 
 Geometry
 ********
@@ -193,38 +195,94 @@ a change. Instead, you should grab the completed Collisioneer class from megaste
 
     from megastep.demo.envs.collisioneer import *
     self = Collisioneer()
+    world = self.reset()
 
 The remainder of the code segments will be small 'experiments' - for want of a better word - you can run on this env
 to understand what's happening and why it's set up the way it is. If you want to play with the class's definition, 
 then open an editor at ``self.__file__`` and copy-paste the contents into your notebook.
 
-(You could alternatively edit it in-place, or copy it into a file of your own. Both of those however either require
+(You could alternatively edit it in-place, or copy it into a file ofyour own. Both of those however either require
 restarting the kernel after each edit, or setting `autoreload
 <https://ipython.org/ipython-doc/3/config/extensions/autoreload.html>`_ up. Autoreload is magical and absolutely
 worth your time, but it is a tangent from this tutorial)
 
 Spawning
 ********
-Back to those comment lines! The first comment line is to 'set agent location'. We're going to want to do this on the
-first reset, and then every time the agent collides with something and needs to be respawned at a new location.
+Back to those comment lines! It's a good idea to work through them in order, since that means you can validate that
+things are working as expected as you go. The first comment line is to 'set agent location'. We're going to want to
+do this on the first reset, and then every time the agent collides with something and needs to be respawned at a new
+location.
 
 This is a pretty common task when building an environment, and so there's a :class:`megastep.modules.RandomSpawns`
-module to do it for you. It gets added to the env in ``__init__``, 
+module to do it for you. It gets added to the env in ``__init__``, ::
 
-    self.spawner = modules.RandomSpawns(geometries, self.c)
+    from megastep import modules
+    self.spawner = modules.RandomSpawns(geometries, self.core)
 
 and then you can call it with a mask of the agents you'd like to be respawned::
 
-    reset = self.c.agent_full(True)
+    reset = self.core.agent_full(True)
     self.spawner(reset)
 
-This will move each agent to a random position in the room. You can see this directly by inspecting ``self.c.agents.positions``,
+As an aside, the :method:`megastep.core.Core.agent_full` and :method:`megastep.core.Core.env_full` methods will create
+on-device tensors for you of shape (n_env, n
+
+This will move each agent to a random position in the room. You can see this directly by inspecting ``self.core.agents.positions``,
 or you can render and display it::
 
-    self.c.render(c.scenery, c.agents)
-    scenery.display(c.scenery)
+    self.core.render(self.core.scenery, self.core.agents)
+    scenery.display(self.core.scenery)
 
 TODO: Respawned agent
+
+You can read more about how the respawning module works in the :class:`megastep.modules.RandomSpawns` documentation.
+
+Observations
+************
+The next comment is 'generate an observation and send it to the agent'. For our find-a-wall-and-collide-with-it, the 
+only observation the agent will need is depth, and again there's a module for that::
+
+    self.depth = modules.Depth(self.core)
+
+This time, calling it gives you back a (n_env, n_agent, 1, res, 1)-tensor, suitable for passing to a PyTorch convnet ::
+
+    obs = self.depth()
+
+The render method is called internally by ``depth``, saving us from having to do it explicitly ourselves. 
+
+Following the :ref:`decision-and-world <decision-world>` setup, this obs gets wrapped in a
+:class:`rebar.arrdict.arrdict` so that if we decide to nail any other information onto the side of our observations,
+it's easy to do so. That means our ``reset`` method in all its glory is ::
+
+    def reset(self):
+        self.spawner(self.core.agent_full(True))
+        return arrdict.arrdict(obs=self.depth())
+
+>>> self.reset()
+arrdict:
+obs    Tensor((128, 1, 1, 1, 64), torch.float32)
+
+Actions
+*******
+The third comment is 'process decisions from the agent'. In our environment the action is simply whether to move 
+forward/backward, left/right, or turn left/right. Once again, there's a module for this::
+
+    self.movement = modules.SimpleMovement(self.core)
+
+In the :ref:`decision-and-world <decision-world>` setup, the agent produces a ``decision`` arrdict with an
+``"actions"`` key. The :class:`megastep.modules.SimpleMovement` module expects the actions to be an integer tensor,
+with values between 0 and 7. Each integer corresponds to a different movement. We can mock a decisions dict easily
+enough::
+
+    decision = arrdict.arrdict(actions=self.core.agent_full(3))
+
+and calling the movement module will shift the agents forward::
+
+    self.movement(decision)
+
+As with the ``depth`` module, the ``movement`` module makes the ``physics`` call internally, again saving us from having
+to do it ourselves.
+
 
 Animation
 *********

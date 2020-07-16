@@ -294,6 +294,11 @@ TODO: this
 Decision & World
 ================
 
+.. _models:
+
+Models
+======
+
 .. _subpackages:
 
 Subpackages

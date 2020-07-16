@@ -8,11 +8,14 @@ class Collisioneer:
     def __init__(self):
         geometries = 128*[toys.box()]
         scenery = scene.scenery(geometries, n_agents=1)
-        self.c = cuda.Core(scenery)
+        self.core = core.Core(scenery)
+        self.spawner = modules.RandomSpawns(geometries, self.core)
+        self.depth = modules.Depth(self.core)
+        self.movement = modules.SimpleMovement(self.core)
 
     def reset(self):
-        r = cuda.render(self.c.scenery, self.c.agents)
-        return world
+        self.spawner(self.core.agent_full(True))
+        return arrdict.arrdict(obs=self.depth())
 
     def step(self, decision):
         # process decisions from the agent

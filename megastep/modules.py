@@ -1,3 +1,5 @@
+"""TODO: Explain what modules are""" 
+
 import numpy as np
 import torch
 from rebar import arrdict
@@ -31,10 +33,10 @@ class SimpleMovement:
 
     def __call__(self, decision):
         core = self.core
-        delta = self._actionset[decision.actions]
+        delta = self._actionset[decision.actions.long()]
         core.agents.angmomenta[:] = delta.angmomenta
         core.agents.momenta[:] = to_global_frame(core.agents.angles, delta.momenta)
-        cuda.physics(core.scenery, core.agents, core.progress)
+        return cuda.physics(core.scenery, core.agents)
 
 class MomentumMovement:
 
@@ -54,16 +56,43 @@ class MomentumMovement:
 
     def __call__(self, decision):
         core = self.core
-        delta = self._actionset[decision.actions]
+        delta = self._actionset[decision.actions.long()]
         core.agents.angmomenta[:] = (1 - self._decay)*core.agents.angmomenta + delta.angmomenta
         core.agents.momenta[:] = (1 - self._decay)*core.agents.momenta + to_global_frame(core.agents.angles, delta.momenta)
-        cuda.physics(core.scenery, core.agents, core.progress)
+        return cuda.physics(core.scenery, core.agents)
 
 def unpack(d):
     if isinstance(d, torch.Tensor):
         return d
     return arrdict.arrdict({k: unpack(getattr(d, k)) for k in dir(d) if not k.startswith('_')})
-        
+
+def render(core):
+    render = unpack(cuda.render(core.scenery, core.agents))
+    render = arrdict.arrdict({k: v.unsqueeze(2) for k, v in render.items()})
+    render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
+    return render
+
+def downsample(screen, subsample):
+    return screen.view(*screen.shape[:-1], screen.shape[-1]//subsample, subsample)
+
+class Depth:
+
+    def __init__(self, core, *args, n_agents=None, subsample=1, max_depth=10, **kwargs):
+        n_agents = n_agents or core.n_agents
+        self.core = core
+        self.space = spaces.MultiImage(n_agents, 1, 1, core.res//subsample)
+        self.max_depth = max_depth
+        self.subsample = subsample
+
+    def __call__(self, r=None):
+        r = render(self.core) if r is None else r
+        depth = ((r.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
+        self._last_obs = downsample(depth, self.subsample).mean(-1).unsqueeze(3)
+        return self._last_obs
+    
+    def state(self, d):
+        return self._last_obs[d].clone()
+
 class RGBD:
 
     def __init__(self, core, *args, n_agents=None, subsample=1, max_depth=10, **kwargs):
