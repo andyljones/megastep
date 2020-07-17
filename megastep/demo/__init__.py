@@ -108,7 +108,7 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
 
     return kl_div
 
-def run():
+def train():
     buffer_size = 48
     n_envs = 4*1024
     batch_size = 4*1024
@@ -158,7 +158,6 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
 
     world = env.reset()
     steps = 0
-    traces = []
     with recording.ParallelEncoder(env.plot_state, N=N) as encoder, \
             tqdm(total=length) as pbar:
         while True:
@@ -170,15 +169,7 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
                 break
             state = env.state(d)
             encoder(arrdict.numpyify(arrdict.arrdict(**state, decision=decision)))
-            # traces.append(arrdict.numpyify(arrdict.arrdict(
-            #     state=state, 
-            #     world=world[d], 
-            #     decision=decision[d])))
             if (steps == length):
                 break
-    # traces = arrdict.stack(traces)
     encoder.notebook()
     return encoder
-
-def test_demo():
-    demo(env=envfunc(1), agent=agentfunc(), length=1)
