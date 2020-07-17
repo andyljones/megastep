@@ -17,13 +17,6 @@ log = logging.getLogger(__name__)
 
 def adjust_bbox(fig):
     bbox = fig.get_tightbbox(fig.canvas.get_renderer())
-
-    # Resolution must be a multiple of 2, else libx264 gets upset
-    dpi = fig.get_dpi()
-    w = 2*int(np.ceil(bbox.width*dpi/2))/dpi
-    h = 2*int(np.ceil(bbox.height*dpi/2))/dpi
-    bbox = bbox.shrunk(w/bbox.width, h/bbox.height)
-    
     tight_bbox.adjust_bbox(fig, bbox, fig.canvas.fixed_dpi)
 
 def array(fig):
@@ -31,9 +24,11 @@ def array(fig):
     fig.canvas.draw_idle()
     renderer = fig.canvas.get_renderer()
     w, h = int(renderer.width), int(renderer.height)
+    # Resolution must even, else libx264 gets upset
+    h2, w2 = 2*(h//2), 2*(w//2)
     return (np.frombuffer(renderer.buffer_rgba(), np.uint8)
                         .reshape((h, w, 4))
-                        [:, :, :3]
+                        [:h2, :w2, :3]
                         .copy())
 
 class Encoder:
