@@ -8,7 +8,7 @@
 megastep
 ########
 
-**megastep** helps you build 1-million FPS reinforcement learning environments.
+**megastep** helps you build 1-million FPS reinforcement learning environments *on a single GPU*.
 
 Examples
 ********
@@ -30,7 +30,7 @@ Features
 ********
  * Run thousands of environments in parallel, entirely on the GPU.
  * Write your own environments using PyTorch alone, no CUDA necessary.
- * 1D observations. The world is much more interesting horizontally than vertically.
+ * 1D observations. The world is more interesting horizontally than vertically.
  * One or many agents, and one or many cameras per agent.
  * A database of 5000 home layouts to explore, based on `Cubicasa5k <https://github.com/CubiCasa/CubiCasa5k>`_.
  * A minimal, modular library. Not a framework.

@@ -13,7 +13,7 @@ SCALE = 100
 from itertools import islice, cycle
 
 def cyclic_pairs(xs):
-    """Returns paxs[i]"""
+    """Returns pairs (xs[i], xs[i+1]), wrapping the last pair round to the start."""
     ys = islice(cycle(xs), 1, None)
     return list(zip(xs, ys))
 
