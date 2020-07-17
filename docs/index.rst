@@ -16,13 +16,13 @@ Examples
 
 .. raw:: html
 
-    <video controls src="_static/explorer.mp4" autoplay loop type="video/mp4" width=640></video>
+    <video controls src="_static/explorer.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 **Deathmatch**: 1.2m FPS, :github:`150 lines of Python <megastep/demo/envs/deathmatch.py>`.
 
 .. raw:: html
 
-    <video controls src="_static/deathmatch.mp4" autoplay loop type="video/mp4" width=640></video>
+    <video controls src="_static/deathmatch.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 Quoted FPS are for a single RTX 2080 Ti and random actions; visualizations are with a 256-neuron LSTM.
 

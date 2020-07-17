@@ -10,7 +10,7 @@ If you're working on an Ubuntu machine with CUDA already set up, it should be as
 
     pip install git+https://github.com/andyljones/megastep
 
-or if you want the :ref:`demo dependencies <subpackages>` too
+or if you want the :ref:`demo dependencies <subpackages>` too ::
 
     pip install git+https://github.com/andyljones/megastep[cubicasa,rebar]
 
