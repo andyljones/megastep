@@ -18,13 +18,13 @@ def imshow_arrays(arrs, transpose=False):
         layers = []
         for k, v in arrs.items():
             layer = v[a].astype(float)
-            if layer.shape[-1] == 1:
+            if layer.shape[0] == 1:
                 layer = layer.repeat(3, 0)
             else:
                 layer = core.gamma_encode(layer)
             layers.append(layer)
         layers = np.concatenate(layers, 1)
-        ims[a] = layer.transpose(1, 2, 0)
+        ims[a] = layers.transpose(1, 2, 0)
     return ims
 
 def plot_images(arrs, axes=None, aspect=1, **kwargs):
@@ -137,17 +137,4 @@ def plot_poses(poses, ax=None, radians=True, color='C9', **kwargs):
         offset = core.AGENT_RADIUS*np.array([np.cos(scale*angle), np.sin(scale*angle)])
         line = np.stack([position, position + offset])
         ax.plot(*line.T, color=color)
-    return ax
-
-def plotcore(state, ax=None, zoom=False):
-    _, ax = plt.subplots() if ax is None else (None, ax)
-
-    plot_lights(ax, state)
-    plot_lines(ax, state, zoom=zoom)
-    plot_fov(ax, state, 1)
-    adjust_view(ax, state, zoom=zoom)
-
-    ax.set_xticks([])
-    ax.set_yticks([])
-
     return ax

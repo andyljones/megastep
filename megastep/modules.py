@@ -117,38 +117,6 @@ class RGB:
         plotting.plot_images({'rgb': state}, axes)
         return axes
 
-class RGBD:
-
-    def __init__(self, core, *args, n_agents=None, subsample=1, max_depth=10, **kwargs):
-        n_agents = n_agents or core.n_agents
-        self.core = core
-        self.space = arrdict.arrdict(
-            rgb=spaces.MultiImage(n_agents, 3, 1, core.res//subsample),
-            d=spaces.MultiImage(n_agents, 1, 1, core.res//subsample),)
-        self.max_depth = max_depth
-        self.subsample = subsample
-
-    def render(self):
-        core = self.core
-        render = unpack(cuda.render(core.scenery, core.agents))
-        render = arrdict.arrdict({k: v.unsqueeze(2) for k, v in render.items()})
-        render['screen'] = render.screen.permute(0, 1, 4, 2, 3)
-        return render
-
-    def _downsample(self, screen):
-        return screen.view(*screen.shape[:-1], screen.shape[-1]//self.subsample, self.subsample).mean(-1)
-
-    def __call__(self, render=None):
-        render = self.render() if render is None else render
-        depth = ((render.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
-        self._last_obs = arrdict.arrdict(
-            rgb=self._downsample(render.screen),
-            d=self._downsample(depth).unsqueeze(3))
-        return self._last_obs
-    
-    def state(self, d):
-        return self._last_obs[d].clone()
-
 class IMU:
 
     def __init__(self, core, n_agents=None):

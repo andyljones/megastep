@@ -1,31 +1,29 @@
 import torch
-from . import learning, lstm, transformer, envs, heads
-from .. import core
+from megastep.demo import learning, lstm, heads
 from rebar import logging, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording
 import pandas as pd
-from megastep import spaces, cubicasa
 import numpy as np
-import pandas as pd
 from torch import nn
 from tqdm.auto import tqdm
 
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    return envs.Deathmatch(max(n_envs, 4)//4, n_agents=4)
+    from megastep.demo.envs import deathmatch
+    return deathmatch.Deathmatch(max(n_envs, 4)//4, n_agents=4)
 
 class Agent(nn.Module):
 
-    def __init__(self, obs_space, action_space, width=256):
+    def __init__(self, env, width=256):
         super().__init__()
-        out = heads.output(action_space, width)
+        out = heads.output(env.action_space, width)
         self.sampler = out.sample
         self.policy = recurrence.Sequential(
-            heads.intake(obs_space, width),
+            heads.intake(env.obs_space, width),
             lstm.LSTM(d_model=width),
             out)
         self.value = recurrence.Sequential(
-            heads.intake(obs_space, width),
+            heads.intake(env.obs_space, width),
             lstm.LSTM(d_model=width),
             heads.ValueOutput(width))
 
@@ -37,10 +35,6 @@ class Agent(nn.Module):
         if value:
             outputs['value'] = self.value(world.obs, reset=world.reset)
         return outputs
-
-def agentfunc():
-    env = envfunc(n_envs=1)
-    return Agent(env.obs_space, env.action_space).cuda()
 
 def as_chunk(buffer):
     chunk = arrdict.stack(buffer)
@@ -120,7 +114,7 @@ def run():
     batch_size = 16*1024
 
     env = envfunc(n_envs)
-    agent = agentfunc().cuda()
+    agent = Agent(env).cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
     run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
@@ -159,7 +153,7 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
     env = envfunc(d+1) if env is None else env
     world = env.reset()
     if agent is None:
-        agent = agentfunc().cuda()
+        agent = Agent(env).cuda()
         agent.load_state_dict(storing.load()['agent'], strict=False)
 
     world = env.reset()

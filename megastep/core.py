@@ -131,7 +131,6 @@ class Core:
         plotting.plot_fov(ax, state)
         return ax
 
-
     def env_full(self, x):
         """Returns a (n_envs,)-tensor on the environment's device full of `x`.
 

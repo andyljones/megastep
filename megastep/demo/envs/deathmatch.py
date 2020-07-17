@@ -22,66 +22,67 @@ class Deathmatch:
     def __init__(self, n_envs, n_agents, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
         scenery = scene.scenery(geometries, n_agents)
-        self.core = core.Core(scenery, *args, res=4*128, fov=60, **kwargs)
-        self._rgbd = modules.RGBD(self.core, n_agents=1, subsample=4)
-        self._imu = modules.IMU(self.core, n_agents=1)
-        self._mover = modules.MomentumMovement(self.core, n_agents=1)
-        self._respawner = modules.RandomSpawns(geometries, self.core)
+        self.core = core.Core(scenery, *args, res=4*128, fov=70, **kwargs)
+        self.rgb = modules.RGB(self.core, n_agents=1, subsample=4)
+        self.depth = modules.Depth(self.core, n_agents=1, subsample=4)
+        self.imu = modules.IMU(self.core, n_agents=1)
+        self.movement = modules.MomentumMovement(self.core, n_agents=1)
+        self.spawner = modules.RandomSpawns(geometries, self.core)
 
-        self.action_space = self._mover.space
+        self.action_space = self.movement.space
         self.obs_space = dotdict.dotdict(
-            **self._rgbd.space,
-            imu=self._imu.space,
+            rgb=self.rgb.space,
+            d=self.depth.space,
+            imu=self.imu.space,
             health=spaces.MultiVector(1, 1))
 
-        self._bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in geometries])).to(self.core.device)
-        self._health = self.core.agent_full(np.nan)
-        self._damage = self.core.agent_full(np.nan)
+        self.bounds = arrdict.torchify(np.stack([g.masks.shape*g.res for g in geometries])).to(self.core.device)
+        self.health = self.core.agent_full(np.nan)
+        self.damage = self.core.agent_full(np.nan)
 
         self.n_envs = self.core.n_envs*self.core.n_agents
         self.device = self.core.device
 
     def _reset(self, reset=None):
-        reset = (self._health <= 0) if reset is None else reset
-        self._respawner(reset)
-        self._health[reset] = 1.
-        self._damage[reset] = 0.
+        reset = (self.health <= 0) if reset is None else reset
+        self.spawner(reset)
+        self.health[reset] = 1.
+        self.damage[reset] = 0.
         return reset.reshape(-1)
-
-    def _downsample(self, screen):
-        idx = self._rgbd.subsample//2
-        return screen.view(*screen.shape[:-1], screen.shape[-1]//self._rgbd.subsample, self._rgbd.subsample)[..., idx]
 
     def _shoot(self, opponents):
         res = opponents.size(-1)
         middle = slice(res//2-1, res//2+1)
         agents = torch.arange(self.core.n_agents, device=self.core.device)
         matchings = (opponents[:, :, None] == agents[None, None, :, None, None])[..., middle].any(-1).any(-1)
-        self._matchings = matchings
+        self.matchings = matchings
         
         hits = matchings.sum(2).float()
         wounds = matchings.sum(1).float()
 
-        self._damage[:] += .05*hits
+        self.damage[:] += .05*hits
 
         pos = self.core.agents.positions 
-        outside = (pos < -CLEARANCE).any(-1) | (pos > (self._bounds[:, None] + CLEARANCE)).any(-1)
+        outside = (pos < -CLEARANCE).any(-1) | (pos > (self.bounds[:, None] + CLEARANCE)).any(-1)
 
-        self._health[:] += -.05*(wounds + outside) - .001
+        # 5% damage per hit, .1% damage per timestep
+        self.health[:] += -.05*(wounds + outside) - .001
         
         return hits.reshape(-1)
 
     def _observe(self):
-        render = self._rgbd.render()
-        indices = self._downsample(render.indices)
-        obj = indices//len(self.core.scenery.model)
-        mask = (0 <= indices) & (obj < self.core.n_agents)
-        opponents = obj.where(mask, torch.full_like(indices, -1))
+        render = modules.render(self.core)
+        line_idxs = modules.downsample(render.indices, self.rgb.subsample)[..., self.rgb.subsample//2]
+        obj_idxs = line_idxs//len(self.core.scenery.model)
+        mask = (0 <= line_idxs) & (obj_idxs < self.core.n_agents)
+        opponents = obj_idxs.where(mask, torch.full_like(line_idxs, -1))
         hits = self._shoot(opponents)
-        return arrdict.arrdict(
-            **self._rgbd(render), 
-            imu=self._imu(),
-            health=self._health.unsqueeze(-1).clone()), hits
+        obs = arrdict.arrdict(
+                rgb=self.rgb(render), 
+                d=self.depth(render), 
+                imu=self.imu(),
+                health=self.health.unsqueeze(-1).clone())
+        return obs, hits
 
     @torch.no_grad()
     def reset(self):
@@ -90,44 +91,43 @@ class Deathmatch:
         return arrdict.arrdict(
             obs=expand(obs),
             reward=reward,
-            reset=reset,
-            terminal=reset,)
+            reset=reset)
 
     @torch.no_grad()
     def step(self, decision):
         reset = self._reset()
-        self._mover(collapse(decision, self.core.n_agents))
+        self.movement(collapse(decision, self.core.n_agents))
         obs, reward = self._observe()
         return arrdict.arrdict(
             obs=expand(obs),
             reward=reward,
-            reset=reset,
-            terminal=reset,)
+            reset=reset)
 
     def state(self, e=0):
         return arrdict.arrdict(
-            **self.core.state(e),
-            obs=self._rgbd.state(e),
-            health=self._health[e].clone(),
-            damage=self._damage[e].clone(),
-            matchings=self._matchings[e].clone(),
-            bounds=self._bounds[e].clone())
+            core=self.core.state(e),
+            rgb=self.rgb.state(e),
+            d=self.depth.state(e),
+            health=self.health[e].clone(),
+            damage=self.damage[e].clone(),
+            matchings=self.matchings[e].clone(),
+            bounds=self.bounds[e].clone())
 
     @classmethod
-    def plot_state(cls, state, zoom=False):
-        n_agents = len(state.agents.angles)
+    def plot_state(cls, state):
+        n_agents = state.core.n_agents
         show_value = 'decision' in state
 
         fig = plt.figure()
         gs = plt.GridSpec(n_agents, 4 if show_value else 3, fig)
 
-        colors = [f'C{i}' for i in range(state.n_agents)]
+        colors = [f'C{i}' for i in range(n_agents)]
 
-        plan = plotting.plotcore(state, plt.subplot(gs[:-1, :-1]), zoom=zoom)
+        plan = core.Core.plot_state(state.core, plt.subplot(gs[:-1, :-1]))
 
         # Add hits
         origin, dest = state.matchings.nonzero()
-        lines = state.agents.positions[np.stack([origin, dest], 1)]
+        lines = state.core.agents.positions[np.stack([origin, dest], 1)]
         linecolors = np.array(colors)[origin]
         lines = mpl.collections.LineCollection(lines, color=linecolors, linewidth=1, alpha=.5)
         plan.add_collection(lines)
@@ -140,25 +140,25 @@ class Deathmatch:
         plan.add_artist(bounds)
 
         # Add observations
-        images = {k: v for k, v in state.obs.items() if k != 'imu'}
+        images = {'rgb': state.rgb, 'd': state.d}
         plotting.plot_images(images, [plt.subplot(gs[i, -1]) for i in range(n_agents)])
 
         ax = plt.subplot(gs[-1, 0])
-        ax.barh(np.arange(state.n_agents), state.health, color=colors)
+        ax.barh(np.arange(n_agents), state.health, color=colors)
         ax.set_ylabel('health')
         ax.set_yticks([])
         ax.invert_yaxis()
         ax.set_xlim(0, 1)
 
         ax = plt.subplot(gs[-1, 1])
-        ax.barh(np.arange(state.n_agents), state.damage, color=colors)
+        ax.barh(np.arange(n_agents), state.damage, color=colors)
         ax.set_ylabel('inflicted')
         ax.set_yticks([])
         ax.invert_yaxis()
 
         if show_value:
             ax = plt.subplot(gs[-1, 2])
-            ax.barh(np.arange(state.n_agents), state.decision.value, color=colors)
+            ax.barh(np.arange(n_agents), state.decision.value, color=colors)
             ax.set_ylabel('value')
             ax.set_yticks([])
             ax.invert_yaxis()
