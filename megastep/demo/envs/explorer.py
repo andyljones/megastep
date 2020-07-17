@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from megastep import modules, core, plotting, scene, cubicasa
-from rebar import arrdict
+from rebar import arrdict, dotdict
 import matplotlib.pyplot as plt
 
 class Explorer: 
@@ -9,14 +9,18 @@ class Explorer:
     def __init__(self, n_envs, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
         scenery = scene.scenery(geometries, 1)
-        self.core = core.Core(scenery, *args, **kwargs)
+        self.core = core.Core(scenery, *args, res=4*128, fov=130, **kwargs)
+        self._rgb = modules.RGB(self.core, n_agents=1, subsample=4)
+        self._depth = modules.Depth(self.core, n_agents=1, subsample=4)
         self._mover = modules.MomentumMovement(self.core)
-        self._rgbd = modules.RGBD(self.core)
         self._imu = modules.IMU(self.core)
-        self._respawner = modules.RandomSpawns(self.core)
+        self._respawner = modules.RandomSpawns(geometries, self.core)
 
         self.action_space = self._mover.space
-        self.obs_space = self._rgbd.space
+        self.obs_space = dotdict.dotdict(
+            rgb=self._rgb.space,
+            d=self._depth.space,
+            imu=self._imu.space)
 
         self._tex_to_env = self.core.scenery.lines.inverse[self.core.scenery.textures.inverse.to(torch.long)].to(torch.long)
         self._seen = torch.full_like(self._tex_to_env, False)
@@ -37,8 +41,8 @@ class Explorer:
         result[mask] = tex_s.to(torch.long) + tex_i.to(torch.long)
         return result.unsqueeze(2)
 
-    def _reward(self, render, reset):
-        texindices = self._tex_indices(render)
+    def _reward(self, r, reset):
+        texindices = self._tex_indices(r)
         self._seen[texindices] = True
 
         potential = torch.zeros_like(self._potential)
@@ -52,6 +56,15 @@ class Explorer:
 
         return reward
 
+    def _observe(self, reset):
+        r = modules.render(self.core)
+        obs = arrdict.arrdict(
+                rgb=self._rgb(r), 
+                d=self._depth(r), 
+                imu=self._imu())
+        reward = self._reward(r, reset)
+        return obs, reward
+
     def _reset(self, reset=None):
         self._respawner(reset.unsqueeze(-1))
         self._seen[reset[self._tex_to_env]] = False
@@ -62,12 +75,11 @@ class Explorer:
     def reset(self):
         reset = self.core.env_full(True)
         self._reset(reset)
-        render = self._rgbd.render()
+        obs, reward = self._observe(reset)
         return arrdict.arrdict(
-            obs=self._rgbd(render),
+            obs=obs,
             reset=reset, 
-            terminal=self.core.env_full(False), 
-            reward=self._reward(render, reset))
+            reward=reward)
 
     @torch.no_grad()
     def step(self, decision):
@@ -77,35 +89,35 @@ class Explorer:
 
         reset = (self._lengths >= self._potential + 200)
         self._reset(reset)
-        render = self._rgbd.render()
+        obs, reward = self._observe(reset)
         return arrdict.arrdict(
-            obs=self._rgbd(render),
+            obs=obs,
             reset=reset, 
-            terminal=self.core.env_full(False), 
-            reward=self._reward(render, reset))
+            reward=reward) 
 
-    def state(self, d=0):
-        seen = self._seen[self._tex_to_env == d]
+    def state(self, e=0):
+        seen = self._seen[self._tex_to_env == e]
         return arrdict.arrdict(
-            **self.core.state(d),
-            obs=self._rgbd.state(d),
-            potential=self._potential[d].clone(),
+            core=self.core.state(e),
+            rgb=self._rgb.state(e),
+            d=self._depth.state(e),
+            potential=self._potential[e].clone(),
             seen=seen.clone(),
-            length=self._lengths[d].clone(),
-            max_length=self._potential[d].add(200).clone())
+            length=self._lengths[e].clone(),
+            max_length=self._potential[e].add(200).clone())
 
     @classmethod
-    def plot_state(cls, state, zoom=False):
+    def plot_state(cls, state):
         fig = plt.figure()
         gs = plt.GridSpec(2, 2, fig, 0, 0, 1, 1)
 
         alpha = .1 + .9*state.seen.astype(float)
         # modifying this in place will bite me eventually. o for a lens
-        state['scenery']['textures'] = np.concatenate([state.scenery.textures, alpha[:, None]], 1)
-        ax = plotting.plotcore(state, plt.subplot(gs[:, 0]), zoom=zoom)
+        state.core.scenery.textures.vals = np.concatenate([state.core.scenery.textures.vals, alpha[:, None]], 1)
+        ax = core.Core.plot_state(state.core, plt.subplot(gs[:, 0]))
 
-        images = {k: v for k, v in state.obs.items() if k != 'imu'}
-        plotting.plot_images(images, [plt.subplot(gs[0, 1])])
+        images = {'rgb': state.rgb, 'd': state.d}
+        plotting.plot_images(images, [plt.subplot(gs[:, 1])])
 
         s = (f'length: {state.length:d}/{state.max_length:.0f}\n'
             f'potential: {state.potential:.0f}')

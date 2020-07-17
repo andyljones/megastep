@@ -308,3 +308,14 @@ Subpackages
 
 Spaces & Heads
 ==============
+
+.. _patterns:
+
+Env Patterns
+=============
+* Use modules where possible
+* Get your plotter working first
+* A display method
+* A _reset method
+* A _observe method
+* n_envs and device

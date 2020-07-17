@@ -129,6 +129,8 @@ class Core:
         plotting.plot_lights(ax,state)
         plotting.adjust_view(ax, state, zoom=zoom)
         plotting.plot_fov(ax, state)
+        ax.set_xticks([])
+        ax.set_yticks([])
         return ax
 
     def env_full(self, x):

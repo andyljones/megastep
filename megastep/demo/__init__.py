@@ -9,8 +9,8 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    from megastep.demo.envs import deathmatch
-    return deathmatch.Deathmatch(max(n_envs, 4)//4, n_agents=4)
+    from megastep.demo.envs import explorer
+    return explorer.Explorer(n_envs)
 
 class Agent(nn.Module):
 
