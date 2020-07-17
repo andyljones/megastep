@@ -70,7 +70,7 @@ Read the :ref:`setup instructions <install>` then
 Links
 *****
  * `Github <https://github.com/andyljones/megastep>`_
- * `Author <https://www.andyljones.com>`_
+ * `Author <https://andyljones.com>`_
 
 Index
 *****
