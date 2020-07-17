@@ -53,7 +53,7 @@ def as_chunk(buffer):
         stats.mean('traj-reward/negative', chunk.world.reward.clamp(None, 0).sum(), chunk.world.reset.sum())
     return chunk
 
-def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
+def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
     w, d0 = batch.world, batch.decision
     d = agent(w, value=True)
 
@@ -109,15 +109,15 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
     return kl_div
 
 def train():
-    buffer_size = 48
+    buffer_size = 32
     n_envs = 4*1024
-    batch_size = 4*1024
+    batch_size = 8*1024
 
     env = envfunc(n_envs)
     agent = Agent(env).cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
-    run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} deathmatch'
+    run_name = f'{pd.Timestamp.now():%Y-%m-%d %H%M%S} {type(env).__name__}'
     paths.clear(run_name)
     compositor = widgets.Compositor()
     with logging.via_dir(run_name, compositor), stats.via_dir(run_name, compositor):
