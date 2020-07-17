@@ -36,12 +36,36 @@ Features
  * A minimal, modular library. Not a framework.
  * Extensive documentation, tutorials and explanations. 
 
+.. _install:
+
+Install
+*******
+If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as ::
+
+    pip install git+https://github.com/andyljones/megastep.git#egg=megastep[cubicasa,rebar]
+
+This installs everything needed to run the demos and tutorials. If you want :ref:` something minimal <subpackages>` ::
+
+    pip install git+https://github.com/andyljones/megastep.git#egg=megastep[cubicasa,rebar]
+
+There are some fairly hefty dependencies so it might take a while to install, but it should get there fine. If it
+doesn't, my total guess is that it's the Pytorch install that will be the problem, in which case I refer you to
+`their install page <https://pytorch.org/get-started/locally/>`_. 
+
+**The first time you import megastep will be slow** as it compiles the C++ side of things.
+
+**If you haven't got CUDA, megastep will not work**. There are some parts of megastep - like the cubicasa package - 
+that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.
+
+If you're on a different OS, then it's possible megastep will work, but I can't provide you any support. You're welcome
+to ask for help on the GitHub issues page, but you'll be relying on the community to come up with an answer.
+
 Getting Started
 ***************
 Read the :ref:`setup instructions <install>` then 
  * If you'd like something comprehensive, read :ref:`Writing a Minimal Environment <minimal-env>`.
- * (Not yet written) If you'd like a lightweight introduction, head on over to :ref:`Playing With Megastep <playing>`.
- * Or, you can just take a look at the :github:`demo folder <megastep/demo>`.
+ * (Not yet written) If you'd like a lightweight introduction, read :ref:`Playing With Megastep <playing>`.
+ * Or, you can just take a look at the :github:`demos <megastep/demo>`.
 
 
 Index

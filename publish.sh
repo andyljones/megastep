@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Copied from https://stackoverflow.com/questions/48588908/deploying-ignored-dist-folder-to-github-pages
+set -e
 
 sphinx-build -E -b html docs docs/_build
 touch docs/_build/.nojekyll
