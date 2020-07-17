@@ -62,11 +62,11 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
     new_logits = learning.flatten(learning.gather(d.logits, d0.actions)).sum(-1)
     ratio = (new_logits - old_logits).exp().clamp(.05, 20)
 
-    v_target = learning.v_trace(ratio, d.value, w.reward, w.reset, w.terminal, gamma=gamma)
+    v_target = learning.v_trace(ratio, d.value, w.reward, w.reset, gamma=gamma)
     v_clipped = d0.value + torch.clamp(d.value - d0.value, -10, +10)
     v_loss = .5*torch.max((d.value - v_target)**2, (v_clipped - v_target)**2).mean()
 
-    adv = learning.generalized_advantages(d.value, w.reward, d.value, w.reset, w.terminal, gamma=gamma)
+    adv = learning.generalized_advantages(d.value, w.reward, d.value, w.reset, gamma=gamma)
     normed_adv = (adv - adv.mean())/(1e-3 + adv.std())
     free_adv = ratio*normed_adv
     clip_adv = torch.clamp(ratio, 1-clip, 1+clip)*normed_adv
@@ -110,8 +110,8 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.995, clip=.2):
 
 def run():
     buffer_size = 48
-    n_envs = 16*1024
-    batch_size = 16*1024
+    n_envs = 4*1024
+    batch_size = 4*1024
 
     env = envfunc(n_envs)
     agent = Agent(env).cuda()

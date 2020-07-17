@@ -22,28 +22,10 @@ def assert_same_shape(ref, *arrs):
     for a in arrs:
         assert ref.shape == a.shape
 
-def deltas(value, reward, target, reset, terminal, gamma=.99):
-    # Value comes from the decision before the world
-    # Reward, reset and terminal come from the world to the decision
-    #
-    # If ~terminal[t] & ~reset[t]:
-    #   * delta = reward[t] - (value[t] - gamma*value[t+1])
-    #   * Because it's the error between the reward you actually got and what's inferred from the value
-    # If terminal[t]: 
-    #   * delta = reward - value[t]
-    #   * Because value[t+1] is from another trajectory
-    # If reset[t] & ~terminal[t]: 
-    #   * delta = 0
-    #   * Because we don't know what the successor value is, and the most innocent option is to
-    #     assume it accounts for the reward perfectly 
-    #
-    # Because we're missing the value for the state after the final reward, we drop that final reward
-    #
-    # Indices of the output correspond to the front T-1 indices of the values. 
-    reward, reset, terminal = reward[1:], reset[1:], terminal[1:]
+def deltas(value, reward, target, reset, gamma=.99):
+    reward, reset = reward[1:], reset[1:]
     regular_deltas = (reward + gamma*target[1:]) - value[:-1]
-    terminated_deltas = torch.where(terminal, reward - value[:-1], regular_deltas)
-    return torch.where(reset & ~terminal, torch.zeros_like(reward), terminated_deltas)
+    return torch.where(reset, reward - value[:-1], regular_deltas)
 
 def present_value(dv, finals, reset, alpha):
     assert_same_shape(dv, reset)
@@ -56,25 +38,22 @@ def present_value(dv, finals, reset, alpha):
         result[t] = acc
     return result
 
-def generalized_advantages(value, reward, v, reset, terminal, gamma, lambd=.97):
-    assert_same_shape(value, reward, v, reset, terminal)
-    assert (reset | ~terminal).all()
+def generalized_advantages(value, reward, v, reset, gamma, lambd=.97):
+    assert_same_shape(value, reward, v, reset)
 
-    dv = deltas(value, reward, v, reset, terminal, gamma=gamma)
+    dv = deltas(value, reward, v, reset, gamma=gamma)
     finals = torch.zeros_like(dv[-1])
     return torch.cat([present_value(dv, finals, reset[1:], lambd*gamma), finals[None]], 0).detach()
 
-def reward_to_go(reward, value, reset, terminal, gamma):
-    terminated = torch.where(reset[1:] & ~terminal[1:], value[:-1], reward[1:])
-    return torch.cat([present_value(terminated, value[-1], reset[1:], gamma), value[[-1]]], 0).detach()
+def reward_to_go(reward, value, reset, gamma):
+    return torch.cat([present_value(reward[1:], value[-1], reset[1:], gamma), value[[-1]]], 0).detach()
 
-def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
-    assert_same_shape(ratios, value, reward, reset, terminal)
-    assert (reset | ~terminal).all()
+def v_trace(ratios, value, reward, reset, gamma, max_rho=1, max_c=1):
+    assert_same_shape(ratios, value, reward, reset)
 
     rho = ratios.clamp(0, max_rho)
     c = ratios.clamp(0, max_c)
-    dV = rho[:-1]*deltas(value, reward, value, reset, terminal, gamma=gamma)
+    dV = rho[:-1]*deltas(value, reward, value, reset, gamma=gamma)
 
     discount = (1 - reset.int())[1:]*gamma
 
@@ -92,7 +71,7 @@ def v_trace(ratios, value, reward, reset, terminal, gamma, max_rho=1, max_c=1):
 # TESTS #
 #########
 
-def v_trace_ref(ratios, value, reward, reset, terminal, gamma=.99, max_rho=1, max_c=1):
+def v_trace_ref(ratios, value, reward, reset, gamma=.99, max_rho=1, max_c=1):
     rho = ratios.clamp(0, max_rho)
     c = ratios.clamp(0, max_c)
 
@@ -100,14 +79,10 @@ def v_trace_ref(ratios, value, reward, reset, terminal, gamma=.99, max_rho=1, ma
     for s in range(len(v)-1):
         for t in range(s, len(v)-1):
             prod_c = c[s:t].prod()
-            if terminal[t+1]:
+            if reset[t+1]:
                 # If the next state is terminal, then the next value is zero
                 dV = rho[t]*(reward[t+1] - value[t])
                 v[s] += gamma**(t - s) * prod_c*dV
-                break
-            elif reset[t+1]:
-                # If the next state is a reset, assume the next value would've 
-                # explained the intervening reward perfectly
                 break
             else:
                 dV = rho[t]*(reward[t+1] + gamma*value[t+1] - value[t])
@@ -121,18 +96,11 @@ def test_v_trace():
     gamma = 1.
 
     reset = torch.tensor([False, False, False])
-    terminal = torch.tensor([False, False, False])
-    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+    actual = v_trace(ratios, value, reward, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([11., 9., 6.]))
 
     reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, False, False])
-    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([4., 9., 6.]))
-
-    reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, True, False])
-    actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+    actual = v_trace(ratios, value, reward, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([2., 9., 6.]))
 
 def test_v_trace_ref():
@@ -142,18 +110,11 @@ def test_v_trace_ref():
     gamma = 1.
 
     reset = torch.tensor([False, False, False])
-    terminal = torch.tensor([False, False, False])
-    actual = v_trace_ref(ratios, value, reward, reset, terminal, gamma)
+    actual = v_trace_ref(ratios, value, reward, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([11., 9., 6.]))
 
     reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, False, False])
-    actual = v_trace_ref(ratios, value, reward, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([4., 9., 6.]))
-
-    reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, True, False])
-    actual = v_trace_ref(ratios, value, reward, reset, terminal, gamma)
+    actual = v_trace_ref(ratios, value, reward, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([2., 9., 6.]))
 
 def test_v_trace_equivalent(R=100, T=10):
@@ -162,11 +123,10 @@ def test_v_trace_equivalent(R=100, T=10):
         value = torch.rand((T,))
         reward = torch.rand((T,))
         reset = torch.rand((T,)) > .8
-        terminal = reset & (torch.rand((T,)) > .5)
         gamma = torch.rand(())
 
-        expected = v_trace_ref(ratios, value, reward, reset, terminal, gamma)
-        actual = v_trace(ratios, value, reward, reset, terminal, gamma)
+        expected = v_trace_ref(ratios, value, reward, reset, gamma)
+        actual = v_trace(ratios, value, reward, reset, gamma)
 
         torch.testing.assert_allclose(expected, actual)
 
@@ -176,37 +136,23 @@ def test_reward_to_go():
     gamma = 1.
 
     reset = torch.tensor([False, False, False])
-    terminal = torch.tensor([False, False, False])
-    actual = reward_to_go(reward, value, reset, terminal, gamma)
+    actual = reward_to_go(reward, value, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([11., 9., 6.]))
 
     reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, False, False])
-    actual = reward_to_go(reward, value, reset, terminal, gamma)
-    torch.testing.assert_allclose(actual, torch.tensor([4., 9., 6.]))
-
-    reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, True, False])
-    actual = reward_to_go(reward, value, reset, terminal, gamma)
+    actual = reward_to_go(reward, value, reset, gamma)
     torch.testing.assert_allclose(actual, torch.tensor([2., 9., 6.]))
 
-def test_advantages():
+def test_generalized_advantages():
     reward = torch.tensor([1., 2., 3])
     value = torch.tensor([4., 5., 6.])
     gamma = 1.
     lambd = 1.
 
     reset = torch.tensor([False, False, False])
-    terminal = torch.tensor([False, False, False])
-    adv = generalized_advantages(value, reward, value, reset, terminal, gamma=gamma, lambd=lambd)
+    adv = generalized_advantages(value, reward, value, reset, gamma=gamma, lambd=lambd)
     torch.testing.assert_allclose(adv, torch.tensor([7., 4., 0.]))
 
     reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, False, False])
-    adv = generalized_advantages(value, reward, value, reset, terminal, gamma=gamma, lambd=lambd)
-    torch.testing.assert_allclose(adv, torch.tensor([0., 4., 0]))
-
-    reset = torch.tensor([False, True, False])
-    terminal = torch.tensor([False, True, False])
-    adv = generalized_advantages(value, reward, value, reset, terminal, gamma=gamma, lambd=lambd)
+    adv = generalized_advantages(value, reward, value, reset, gamma=gamma, lambd=lambd)
     torch.testing.assert_allclose(adv, torch.tensor([-2., 4., 0.]))
