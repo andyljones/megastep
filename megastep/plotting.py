@@ -46,6 +46,8 @@ def plot_images(arrs, axes=None, aspect=1, **kwargs):
         ax.set_xticks([])
         ax.set_title(f'agent #{a}', fontdict={'color': f'C{a}', 'weight': 'bold'})
 
+    return axes
+
 def n_agent_texels(scenery):
     A = scenery.n_agents
     M = len(scenery.model)

@@ -6,7 +6,7 @@ Tutorials
     :maxdepth: 1
 
     playing
-    minimal-env
+    minimal-env/index
     exploration-env
     deathmatch-env
     collaboration-env

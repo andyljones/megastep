@@ -5,15 +5,20 @@ A Minimal Environment
 =============================
 
 In this tutorial we're going to write the simplest possible environment. We're going to make something that has an 
-agent moving around and getting depth measurements of the world around it. We're going to be able to record animations
-of that agent's exploration, and we're going to generate a neural net that can control it. In later tutorials, we'll
-build off this base to build a an :ref:`exploration env <exploration-env>`, :ref:`deathmatch env <deathmatch-env>`, 
-and a :ref:`collaborative env <collaborative-env>`.
+agent moving around and getting visual observations of the world around it. We're going to be able to record animations
+of that agent's exploration, and we're going to generate a neural net that can control it. 
+
+.. raw:: html
+
+    <video controls src="/_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
+
+It might not look like much, but this is the basis off which we'll later build an :ref:`exploration env
+<exploration-env>` and an :ref:`deathmatch env <deathmatch-env>`. Getting this boring little environment working
+first will let us discuss a lot of the fundamentals of megastep without getting caught up in the details of a
+specific task.
 
 This is a very detailed tutorial. If you'd prefer to explore the libary on your own, see the 
-:ref:`*Playing With Megastep* <playing>` page.
-
-TODO: Animation of minimal env
+:ref:`Playing With Megastep <playing>` page.
 
 Setup
 *****
@@ -39,7 +44,9 @@ simplest-possible env, a single geometry will do. A single, simple geometry::
     g = toys.box()
     geometry.display(g)
 
-TODO: Image of box env
+.. image:: geometry.png
+    :alt: A visualization of a box geometry
+    :width: 400
 
 Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <custom-geometry>`,
 and also a :ref:`brief discussion of its place in megastep <geometry>`.
@@ -56,12 +63,14 @@ To turn the geometry into something the renderer can use, we turn it into a :cla
 
     scene.display(scenery, e=126)
 
-TODO: Image of scenery
+.. image:: scenery.png
+    :alt: A visualization of a box scenery
+    :width: 400
 
-This code creates scenery for 1024 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
-One copy is shown. You'll notice an :ref:`agent has also been created and placed at the origin <models>`. If you want
-to know more about what's going on here, there's :ref:`another brief discussion about scenery <scenery>` and :ref:`a
-tutorial on writing your own scenery generator <tutorial-scenery>`.
+This code creates scenery for 128 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
+One copy - copy #126 - is shown. You'll also notice a :ref:`model of an agent has also been created and placed at the
+origin <models>`. If you want to know more about what's going on here, there's :ref:`another brief discussion about
+scenery <scenery>` and :ref:`a tutorial on writing your own scenery generator <tutorial-scenery>`.
 
 Rendering
 *********
@@ -97,21 +106,26 @@ And now we can render the agents' view ::
 This ``r`` is a :class:`~megastep.cuda.Render` object, which contains a lot of useful information that you can exploit
 when desiging environments. Principally, it contains what the agents see ::
 
+    from megastep import plotting
     im = (r.screen
             [[0]]            # get the screen for agents in env #0
             .cpu().numpy())  # move them to cpu & numpy
     plotting.plot_images({'rgb': im}, transpose=True, aspect=.1)
 
-TODO: Plotted image
+.. image:: render.png
+    :alt: A visualization of the agent's viewpoint
+    :width: 400
 
 This is a 1-pixel-high image out from the front of the agent. You can read more about the rendering system in :ref:`this
 section <rendering>`. As well as filling up the Render object, calling render does something else: it updates the
 agents' models to match their positions. Having moved all the agents to (3, 3) earlier by assigning to
 ``c.agents.positions``, plotting the scenery again shows that the agents' models have moved from the origin to (3, 3):
 
-    scenery.display(scene)
+    scene.display(scenery)
 
-TODO: Moved image
+.. image:: moved.png
+    :alt: A visualization of how the agent has moved after the render call
+    :width: 400
 
 Physics
 *******
@@ -126,14 +140,16 @@ tensor([[[5.8649, 3.0000]],
         ...
         [[5.8649, 3.0000]]], device='cuda:0')
 
-we see that afterwards, the agents positions have been updated to *roughly* where the right wall is. If we check the 
+we see that afterwards, the agents positions have been updated to where the right wall is. If we check the 
 scenery right now though, the agents' models will still be at (3, 3) however. To update them, we need to call render
 again:: 
 
     cuda.render(c.scenery, c.agents)
     scene.display(c.scenery)
 
-TODO: Updated position
+.. image:: collided.png
+    :alt: A visualization of how the agent has collided with the right wall
+    :width: 400
 
 A Skeleton
 **********
@@ -235,9 +251,11 @@ This will move each agent to a random position in the room. You can see this dir
 or you can render and display it::
 
     self.core.render(self.core.scenery, self.core.agents)
-    scenery.display(self.core.scenery)
+    scene.display(self.core.scenery)
 
-TODO: Respawned agent
+.. image:: respawned.png
+    :alt: A visualization of how the agent has collided with the right wall
+    :width: 400
 
 You can read more about how the respawning module works in the :class:`~megastep.modules.RandomSpawns` documentation.
 
@@ -385,9 +403,10 @@ Finally, we can record a video::
 
     from rebar import recording
 
+    env = Minimal()
+    agent = Agent(env).cuda()
+
     with recording.ParallelEncoder(env.plot_state) as encoder:
-        env = Minimal()
-        agent = Agent(env).cuda()
         world = env.reset()
         for _ in range(64):
             decision = agent(world)
@@ -397,7 +416,15 @@ Finally, we can record a video::
 
     encoder.notebook()
 
-TODO: Video
+.. raw:: html
+
+    <video controls src="/_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 Here we're executing the same loop as before, just at the bottom of it we're pulling out the state and feeding it to
 the :class:`~rebar.recording.ParallelEncoder`.
+
+Next Steps
+**********
+That's it! We've got a basic environment and an agent that can interact with it. The next step is to actually define
+a task of some sort and then train the agent to solve the task. To learn how to do that, move on to the
+:ref:`exploration env tutorial <exploration-env>` or the :ref:`deathmatch env tutorial <deathmatch-env>`.

@@ -161,3 +161,5 @@ def display(g):
         cm = ax.imshow(g.masks, extent=extent, cmap='tab20')
         ticks = np.arange(g.masks.min(), g.masks.max()+1)
         plt.colorbar(cm, values=ticks, ticks=ticks)
+    
+    return fig

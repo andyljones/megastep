@@ -103,11 +103,11 @@ def display(scenery, e=0):
 
     state = arrdict.numpyify(
         arrdict.arrdict(
-            scenery=scenery[e]))
+            scenery=scenery.state(e)))
 
     plotting.plot_lines(ax, state, zoom=False)
     plotting.plot_lights(ax, state)
 
     plotting.adjust_view(ax, state, zoom=False)
 
-    return ax
+    return ax.figure
