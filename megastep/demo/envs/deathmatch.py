@@ -20,7 +20,7 @@ def collapse(x, n_agents):
 class Deathmatch:
 
     def __init__(self, n_envs, n_agents, *args, **kwargs):
-        geometries = cubicasa.sample(n_envs)
+        geometries = cubicasa.sample(max(n_envs//4, 1))
         scenery = scene.scenery(geometries, n_agents)
         self.core = core.Core(scenery, *args, res=4*128, fov=70, **kwargs)
         self._rgb = modules.RGB(self.core, n_agents=1, subsample=4)

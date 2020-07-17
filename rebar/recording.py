@@ -11,6 +11,7 @@ from .parallel import parallel
 import logging
 import time
 import multiprocessing
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -91,11 +92,6 @@ def html_tag(video, height=None, **kwargs):
 def notebook(video, height=960):
     return display(HTML(html_tag(video, height)))
 
-def save(video, path):
-    if isinstance(video, Encoder):
-        video = video.value
-    Path(path).write_text(video)
-
 def _init():
     # Suppress keyboard interrupt of workers, since exiting the context 
     # manager in the parent will shut them down.
@@ -163,6 +159,10 @@ class ParallelEncoder:
 
     def notebook(self):
         return notebook(self.result())
+
+    def save(self, path):
+        Path(path).write_bytes(self.result())
+
 
 
 def encode(f, *indexable, fps=20, N=0, n_frames=None, **kwargs):

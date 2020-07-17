@@ -9,8 +9,8 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    from megastep.demo.envs import explorer
-    return explorer.Explorer(n_envs)
+    from megastep.demo.envs import deathmatch
+    return deathmatch.Deathmatch(n_envs, n_agents=4)
 
 class Agent(nn.Module):
 
@@ -110,8 +110,8 @@ def optimize(agent, opt, batch, entropy=1e-2, gamma=.99, clip=.2):
 
 def train():
     buffer_size = 32
-    n_envs = 4*1024
-    batch_size = 8*1024
+    n_envs = 8*1024
+    batch_size = 16*1024
 
     env = envfunc(n_envs)
     agent = Agent(env).cuda()
