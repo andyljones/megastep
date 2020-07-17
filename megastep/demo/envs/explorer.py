@@ -9,7 +9,7 @@ class Explorer:
     def __init__(self, n_envs, *args, **kwargs):
         geometries = cubicasa.sample(n_envs)
         scenery = scene.scenery(geometries, 1)
-        self.core = core.Core(scenery, *args, res=4*128, fov=130, **kwargs)
+        self.core = core.Core(scenery, *args, res=4*64, fov=130, **kwargs)
         self._rgb = modules.RGB(self.core, n_agents=1, subsample=4)
         self._depth = modules.Depth(self.core, n_agents=1, subsample=4)
         self._mover = modules.MomentumMovement(self.core)
@@ -48,7 +48,7 @@ class Explorer:
         potential = torch.zeros_like(self._potential)
         potential.scatter_add_(0, self._tex_to_env, self._seen.float())
 
-        reward = (potential - self._potential)/self.core.res
+        reward = (potential - self._potential)/(self.core.res//self._rgb.subsample)
         self._potential = potential
 
         # Should I render twice so that the last reward is accurate?
