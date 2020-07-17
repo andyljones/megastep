@@ -115,3 +115,8 @@ That's me though! If you're interested in taking megastep forward, here are some
 
 I consider megastep to be feature complete, but I'm happy to provide pointers and my own thoughts on these topics to
 anyone who's interested in forking it to build something greater.
+
+What are some alternatives to megastep?
+---------------------------------------
+ * `Sample Factory <https://github.com/alex-petrenko/sample-factory>`_
+ * `Multiagent Particle Env <https://github.com/openai/multiagent-particle-envs>`_
