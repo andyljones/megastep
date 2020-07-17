@@ -39,8 +39,9 @@ Features
 Getting Started
 ***************
 Read the :ref:`setup instructions <install>` then 
- * If you'd like a lightweight introduction, head on over to :ref:`Playing With Megastep <playing>`.
  * If you'd like something comprehensive, read :ref:`Writing a Minimal Environment <minimal-env>`.
+ * (Not yet written) If you'd like a lightweight introduction, head on over to :ref:`Playing With Megastep <playing>`.
+ * Or, you can just take a look at the :github:`demo folder <megastep/demo>`.
 
 
 Index
