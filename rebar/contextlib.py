@@ -1,4 +1,4 @@
-from contextlib import contextmanager, asynccontextmanager
+from contextlib import contextmanager
 from functools import wraps
 
 class MaybeAsyncGeneratorContextManager:
@@ -21,6 +21,9 @@ class MaybeAsyncGeneratorContextManager:
 
     def __aenter__(self):
         if self._async is None:
+            # Hide this 3.8 import; most users will never hit it
+            from contextlib import asynccontextmanager
+
             @asynccontextmanager
             async def asyncfunc(*args, **kwargs):
                 with contextmanager(self._func)(*args, **kwargs):
