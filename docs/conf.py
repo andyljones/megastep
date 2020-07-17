@@ -54,7 +54,13 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = "alabaster"
 
 html_theme_options = {
-    'description': 'RL at 1m FPS'
+    'description': 'RL at 1m FPS',
+    'fixed_sidebar': True,
+    'github_button': True,
+    'github_user': 'andyljones',
+    'github_repo': 'megastep',
+    'github_type': 'star',
+    'github_count': False,
 }
 
 html_sidebars = {
@@ -69,6 +75,7 @@ html_sidebars = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_style = 'custom.css'
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'

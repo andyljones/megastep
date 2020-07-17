@@ -67,11 +67,6 @@ Read the :ref:`setup instructions <install>` then
  * (Not yet written) If you'd like a lightweight introduction, read :ref:`Playing With Megastep <playing>`.
  * Or, you can just take a look at the :github:`demos <megastep/demo>`.
 
-Links
-*****
- * `Github <https://github.com/andyljones/megastep>`_
- * `Author <https://andyljones.com>`_
-
 Index
 *****
 .. toctree::
