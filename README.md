@@ -4,4 +4,4 @@
 
 **megastep** helps you build 1-million FPS reinforcement learning environments with a single consumer GPU.
 
-## [Homepage](http://andyljones.github.io/megastep)
+## [Homepage](https://andyljones.com/megastep)
