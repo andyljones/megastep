@@ -24,7 +24,7 @@ understand.
 Once you've got your notebook up and running, the first thing to do is to :ref:`install megastep <install>`,
 and the extra demo dependencies, which should be as simple as running ::
 
-    !pip install megastep[rebar] --yes
+    !pip install git+https://github.com/andyljones/megastep[cubicasa,rebar] --yes
 
 in a cell.
 

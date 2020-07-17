@@ -33,7 +33,8 @@ release = '0.1'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.linkcode'
+    'sphinx.ext.linkcode',
+    'sphinx.ext.extlinks'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -71,6 +72,8 @@ html_static_path = ['_static']
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
+
+extlinks = {'github': ('https://github.com/andyljones/megastep/tree/master/%s', '')}
 
 def linkcode_resolve(domain, info):
     if domain != 'py':

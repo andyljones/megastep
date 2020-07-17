@@ -9,6 +9,9 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
+    # from megastep.demo.envs import explorer
+    # return explorer.Explorer(n_envs)
+
     from megastep.demo.envs import deathmatch
     return deathmatch.Deathmatch(n_envs, n_agents=4)
 
@@ -154,7 +157,7 @@ def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
     world = env.reset()
     if agent is None:
         agent = Agent(env).cuda()
-        agent.load_state_dict(storing.load()['agent'], strict=False)
+        agent.load_state_dict(storing.load(run)['agent'], strict=False)
 
     world = env.reset()
     steps = 0

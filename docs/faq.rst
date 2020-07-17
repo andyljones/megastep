@@ -8,11 +8,11 @@ How do I install megastep?
 --------------------------
 If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as ::
 
-    pip install megastep
+    pip install git+https://github.com/andyljones/megastep
 
 or if you want the :ref:`demo dependencies <subpackages>` too
 
-    pip install megastep[cubicasa,rebar]
+    pip install git+https://github.com/andyljones/megastep[cubicasa,rebar]
 
 There are some fairly hefty dependencies so it might take a while, but it should get there fine. If it
 doesn't, my total guess is that it's the Pytorch install that will be the problem, in which case I refer you to

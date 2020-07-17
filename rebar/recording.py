@@ -11,11 +11,23 @@ from .parallel import parallel
 import logging
 import time
 import multiprocessing
-from pathlib import Path
+from matplotlib import tight_bbox
 
 log = logging.getLogger(__name__)
 
+def adjust_bbox(fig):
+    bbox = fig.get_tightbbox(fig.canvas.get_renderer())
+
+    # Resolution must be a multiple of 2, else libx264 gets upset
+    dpi = fig.get_dpi()
+    w = 2*int(np.ceil(bbox.width*dpi/2))/dpi
+    h = 2*int(np.ceil(bbox.height*dpi/2))/dpi
+    bbox = bbox.shrunk(w/bbox.width, h/bbox.height)
+    
+    tight_bbox.adjust_bbox(fig, bbox, fig.canvas.fixed_dpi)
+
 def array(fig):
+    adjust_bbox(fig)
     fig.canvas.draw_idle()
     renderer = fig.canvas.get_renderer()
     w, h = int(renderer.width), int(renderer.height)
@@ -89,7 +101,7 @@ def html_tag(video, height=None, **kwargs):
     Your browser does not support the video tag.
 </video>"""
 
-def notebook(video, height=960):
+def notebook(video, height=640):
     return display(HTML(html_tag(video, height)))
 
 def _init():
@@ -162,8 +174,6 @@ class ParallelEncoder:
 
     def save(self, path):
         Path(path).write_bytes(self.result())
-
-
 
 def encode(f, *indexable, fps=20, N=0, n_frames=None, **kwargs):
     """To use this with N > 0, you need to return an array and - if it's a new figure each time - 

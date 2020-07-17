@@ -4,35 +4,6 @@
 
 **megastep** helps you build 1-million FPS reinforcement learning environments with a single consumer GPU.
 
-## Examples
-Quoted FPS are for a single RTX 2080 Ti and random actions; visualizations are with a 512-neuron LSTM:
-
-**[Deathmatch](megastep/demo/envs/deathmatch.py)**: 150 lines of Python, 1.2m FPS.
-
-**[Explorer](megastep/demo/envs/explorer.py)**: 100 lines of Python, 180k FPS.
-
-**[PointGoal](megastep/demo/envs/waypoint.py)**: 100 lines of Python, 1.1m FPS.
-
-## Features
-* Run thousands of environments in parallel, entirely on the GPU.
-* Write your own environments using PyTorch alone, no CUDA necessary.
-* 1D observations. The world is much more interesting horizontally than vertically.
-* One or many agents, and one or many cameras per agent.
-* A database of 5000 home layouts to explore, based on [Cubicasa5k](https://github.com/CubiCasa/CubiCasa5k)
-* A minimal, modular library. Not a framework.
-* Extensive documentation, tutorials and explanations. 
-
-## Setup
-**This is a GPU-only package**. 
-```
-pip install megastep
-```
-or, for the full demo,
-```
-pip install megastep[cubicasa,rebar]
-```
-It's tested on [the 'build' stage of this Docker image](docker/Dockerfile).
-
 ## Documentation
 * Tutorials
     * Setting Things Up

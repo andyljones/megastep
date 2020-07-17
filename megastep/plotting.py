@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from . import core
 from rebar import arrdict, dotdict
+from matplotlib import tight_bbox
 
 VIEW_RADIUS = 5
 
