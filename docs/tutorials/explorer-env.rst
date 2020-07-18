@@ -9,7 +9,7 @@ the :class:`~megastep.demo.envs.explorer.Explorer` environment.
 
 .. raw:: html
 
-    <video controls src="_static/explorer.mp4" autoplay loop muted type="video/mp4" width=640></video>
+    <video controls src="../_static/explorer.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 Compared to the minimal env, the explorer env
  * Has compound RGB-depth-`IMU <https://en.wikipedia.org/wiki/Inertial_measurement_unit>`_ observations.

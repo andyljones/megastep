@@ -9,7 +9,7 @@ the :class:`~megastep.demo.envs.deathmatch.Deathmatch` environment.
 
 .. raw:: html
 
-    <video controls src="_static/deathmatch.mp4" autoplay loop muted type="video/mp4" width=640></video>
+    <video controls src="../_static/deathmatch.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 Compared to the explorer env, the deathmatch env is a competitive, multiagent environment with a very different reward
 function.

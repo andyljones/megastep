@@ -292,7 +292,7 @@ Scenery is the information the :ref:`renderer <rendering>` uses to produce obser
 :class:`~megastep.cuda.Scenery` object.
 
 Versus Geometry
-***************
+---------------
 There are a couple of things that separate scenery from geometry. First, scenery has texture and light intensity
 information that the source geometry is missing. This separation is because generating randomly-varying textures and
 lights is a lot easier than generating high-quality random geometries.
@@ -304,16 +304,16 @@ kernels can access efficiently.
 Finally, a geometry doesn't specify how many agent-models there are. Scenery does. 
 
 Implementation Details
-**********************
+----------------------
 The most important - and most confusing - parts of the scenery object are the :attr:`~megastep.cuda.Scenery.lines` 
 and the :attr:`~megastep.cuda.Scenery.textures`. 
 
-The lines are a :ref:`ragged <ragged>` giving the, well, lines for each environment. If you index into it at position 
+The lines are a :ref:`ragged <raggeds>` giving the, well, lines for each environment. If you index into it at position 
 ``i``, you'll get back a (n_lines, 2, 2)-tensor giving the endpoints of all the lines in that environment. The first
 ``n_agents * model_size`` lines of each environment are the lines of that environment's agents, with the first agent
 occupying the first ``model_size`` lines and so on.
 
-The textures are another :ref:`ragged <ragged>` giving the texels for each line. The texels are a fixed-resolution (5cm
+The textures are another :ref:`ragged <raggeds>` giving the texels for each line. The texels are a fixed-resolution (5cm
 default) texture for the lines. If line ``j`` is 1m long, then indexing into the textures at ``j`` will give you 
 a 20-element array with the colour of the line in each 5cm interval.
 

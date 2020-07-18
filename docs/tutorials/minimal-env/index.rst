@@ -10,7 +10,7 @@ of that agent's exploration, and we're going to generate a neural net that can c
 
 .. raw:: html
 
-    <video controls src="/_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
+    <video controls src="../../_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 It might not look like much, but this is the basis off which we'll later build an :ref:`exploration env
 <explorer-env>` and an :ref:`deathmatch env <deathmatch-env>`. Getting this boring little environment working
@@ -419,7 +419,7 @@ Finally, we can record a video::
 
 .. raw:: html
 
-    <video controls src="/_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
+    <video controls src="../../_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 Here we're executing the same loop as before, just at the bottom of it we're pulling out the state and feeding it to
 the :class:`~rebar.recording.ParallelEncoder`.
