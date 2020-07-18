@@ -267,7 +267,20 @@ personal :ref:`aversion to inheritance hierarchies in research code<inheritance>
 
 Agents
 ======
-TODO: Agents concept
+'Agents' can - confusingly - refer to a few different things in megastep. Which is meant is usually clear from context.
+
+For one, the agent is the thing that interacts with the environment. It receives observations and emits actions, and
+usually it's controlled by a neural net of some sort. You'll often see the Pytorch module that holds the policy network
+being called ``agent``. 
+ 
+For two, there's also the agent-as-a-specific-model-and-camera-in-the-world. Confusingly though, the
+agent-as-a-neural-net can have more than one agent-as-a-model-and-camera that it receives observations from and emits
+actions for. For example, a drone swarm might have a single net that controls multiple drones.
+
+In terms of behaviour, agents-as-models-and-cameras are represented by the :class:`~megastep.cuda.Agents` datastructure.
+This datastructure holds the agents' positions and velocities, and when you call :func:`~megastep.cuda.render`, the 
+models in the world are updated to match the positions in the datastructure. The positions in the datastructure are
+also the ones used for :ref:`rendering <rendering>`.
 
 .. _scenery:
 
