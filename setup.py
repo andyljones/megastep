@@ -9,7 +9,7 @@ setup(
     description='Helps build million-frame-per-second reinforcement learning environments',
     author='Andy Jones',
     author_email='andyjones.ed@gmail.com',
-    url='www.github.com/andyljones/megastep',
+    url='http://andyljones.com/megastep',
     packages=find_packages(include=['megastep*', 'rebar*']),
     install_requires=[
         'numpy>=1.18',

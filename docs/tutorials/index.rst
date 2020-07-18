@@ -7,9 +7,8 @@ Tutorials
 
     playing
     minimal-env/index
-    exploration-env
+    explorer-env
     deathmatch-env
-    collaboration-env
-    geometry
+    geometry/index
     scenery
     kernels

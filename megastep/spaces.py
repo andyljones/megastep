@@ -1,3 +1,5 @@
+"""TODO: Spaces docs"""
+
 class MultiEmpty:
     
     def __init__(self):

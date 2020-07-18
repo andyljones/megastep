@@ -1,15 +1,16 @@
 from rebar import arrdict, dotdict
-from megastep import modules, core, toys, scene, plotting
+from megastep import modules, core, toys, scene
 from torch import nn
 from megastep.demo import heads
 import matplotlib.pyplot as plt
-
 
 class Minimal:
 
     def __init__(self, n_envs=1):
         """A minimal environment, with a box env, depth observations and simple movement. A good foundation for
-        building your own environments. See :ref:`the simple environment tutorial for details <minimal-env>`"""
+        building your own environments.
+        
+        See :ref:`the simple environment tutorial for details <minimal-env>`."""
 
         geometries = n_envs*[toys.box()]
         scenery = scene.scenery(geometries, n_agents=1)
@@ -48,6 +49,10 @@ class Minimal:
         return fig
 
 class Agent(nn.Module):
+    """A minimal agent to go with the minimal environment.
+
+    See :ref:`the simple environment tutorial for details <minimal-env>`.
+    """
 
     def __init__(self, env, width=32):
         super().__init__()

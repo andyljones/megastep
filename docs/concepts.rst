@@ -227,7 +227,7 @@ You can visualize geometries with :mod:`~megastep.geometry.display` :
 
 .. image:: _static/geometry.png
     :alt: A matplotlib visualization of a geometry
-    :width: 400
+    :width: 640
 
 Practically speaking, a geometry is a :ref:`dotdict <dotdicts>` with the following attributes:
 
@@ -267,52 +267,62 @@ personal :ref:`aversion to inheritance hierarchies in research code<inheritance>
 
 Agents
 ======
+TODO: Agents concept
 
 .. _scenery:
 
 Scenery
 =======
+TODO: Scenery concept
 
 .. _rendering:
 
 Rendering
 =========
+TODO: Rendering concept
 
 .. _physics:
 
 Physics
 =======
+TODO: Physics concept
 
 .. _plotting:
 
 Plotting
 ========
-TODO: this
+TODO: Plotting concept
 
 .. _decision-world:
 
 Decision & World
 ================
+TODO: Decision/world concept
 
 .. _models:
 
 Models
 ======
+TODO: Models concept
 
 .. _subpackages:
 
 Subpackages
 ===========
+TODO: Subpackages concept
 
 .. _spaces:
 
 Spaces & Heads
 ==============
+TODO: Spaces and heads concept
 
 .. _patterns:
 
 Env Patterns
 =============
+TODO: Env patterns concept
+
 * Use modules where possible
 * Get your plotter working first
 * A display method

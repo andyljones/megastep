@@ -1,8 +1,8 @@
 .. _minimal-env:
 
-=============================
-A Minimal Environment
-=============================
+=============
+A Minimal Env
+=============
 
 In this tutorial we're going to write the simplest possible environment. We're going to make something that has an 
 agent moving around and getting visual observations of the world around it. We're going to be able to record animations
@@ -13,12 +13,13 @@ of that agent's exploration, and we're going to generate a neural net that can c
     <video controls src="/_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video>
 
 It might not look like much, but this is the basis off which we'll later build an :ref:`exploration env
-<exploration-env>` and an :ref:`deathmatch env <deathmatch-env>`. Getting this boring little environment working
+<explorer-env>` and an :ref:`deathmatch env <deathmatch-env>`. Getting this boring little environment working
 first will let us discuss a lot of the fundamentals of megastep without getting caught up in the details of a
 specific task.
 
-This is a very detailed tutorial. If you'd prefer to explore the libary on your own, see the 
-:ref:`Playing With Megastep <playing>` page.
+This is a very detailed tutorial. It's 2,500 words to discuss :github:`fifty lines of code
+<megastep/demo/envs/minimal.py>`. If you'd prefer to explore the libary on your own, take a look at :ref:`Playing With
+Megastep <playing>`.
 
 Setup
 *****
@@ -46,7 +47,7 @@ simplest-possible env, a single geometry will do. A single, simple geometry::
 
 .. image:: geometry.png
     :alt: A visualization of a box geometry
-    :width: 400
+    :width: 640
 
 Yup, it's a box. Four walls and one room. There's :ref:`more below about how the geometry is made <custom-geometry>`,
 and also a :ref:`brief discussion of its place in megastep <geometry>`.
@@ -65,7 +66,7 @@ To turn the geometry into something the renderer can use, we turn it into a :cla
 
 .. image:: scenery.png
     :alt: A visualization of a box scenery
-    :width: 400
+    :width: 640
 
 This code creates scenery for 128 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
 One copy - copy #126 - is shown. You'll also notice a :ref:`model of an agent has also been created and placed at the
@@ -114,7 +115,7 @@ when desiging environments. Principally, it contains what the agents see ::
 
 .. image:: render.png
     :alt: A visualization of the agent's viewpoint
-    :width: 400
+    :width: 640
 
 This is a 1-pixel-high image out from the front of the agent. You can read more about the rendering system in :ref:`this
 section <rendering>`. As well as filling up the Render object, calling render does something else: it updates the
@@ -125,7 +126,7 @@ agents' models to match their positions. Having moved all the agents to (3, 3) e
 
 .. image:: moved.png
     :alt: A visualization of how the agent has moved after the render call
-    :width: 400
+    :width: 640
 
 Physics
 *******
@@ -149,7 +150,7 @@ again::
 
 .. image:: collided.png
     :alt: A visualization of how the agent has collided with the right wall
-    :width: 400
+    :width: 640
 
 A Skeleton
 **********
@@ -255,7 +256,7 @@ or you can render and display it::
 
 .. image:: respawned.png
     :alt: A visualization of how the agent has collided with the right wall
-    :width: 400
+    :width: 640
 
 You can read more about how the respawning module works in the :class:`~megastep.modules.RandomSpawns` documentation.
 
@@ -427,4 +428,4 @@ Next Steps
 **********
 That's it! We've got a basic environment and an agent that can interact with it. The next step is to actually define
 a task of some sort and then train the agent to solve the task. To learn how to do that, move on to the
-:ref:`exploration env tutorial <exploration-env>` or the :ref:`deathmatch env tutorial <deathmatch-env>`.
+:ref:`exploration env tutorial <explorer-env>` or the :ref:`deathmatch env tutorial <deathmatch-env>`.

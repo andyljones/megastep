@@ -1,3 +1,4 @@
+"""TODO: Geometry docs"""
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
@@ -141,12 +142,14 @@ def display(g):
     
     Supports visualizing partial geometries, that only have a subset of id/masks/walls/lights"""
     fig, ax = plt.subplots()
+    ax.set_aspect(1)
 
     if 'id' in g:
         ax.set_title(g.id)
 
     if 'walls' in g:
-        lines = mpl.collections.LineCollection(g.walls, color='w', linewidth=2)
+        color = 'k' if 'masks' in g else 'k'
+        lines = mpl.collections.LineCollection(g.walls, color=color, linewidth=2)
         ax.add_collection(lines)
         ax.autoscale()
 

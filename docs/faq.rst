@@ -6,7 +6,6 @@ FAQ
 
 Why doesn't megastep use inheritance?
 -------------------------------------
-TODO: Figure out a better way to phrase this
 
 One way to think about inheritance in software development is that's about offering a secondary interface to a class.
 
@@ -32,17 +31,19 @@ easily.
 Since **megastep** is explicitly intended to be a foundation for research, it's designed with the third interface in mind.
 There are few private methods, and any state that is likely interesting to a user is there for the taking.
 
+TODO: Revise the inheritance section
+
 .. _openai-gym:
 
 Why don't you use the OpenAI Gym interface?
 ---------------------------------------------
-
+TODO: OpenAI gym question
 
 .. _cubicasa-license:
 
 What's with the cubicasa license?
 ---------------------------------
-
+TODO: Cubicasa license question
 
 .. _why:
 
@@ -98,3 +99,13 @@ What are some alternatives to megastep?
 ---------------------------------------
  * `Sample Factory <https://github.com/alex-petrenko/sample-factory>`_
  * `Multiagent Particle Env <https://github.com/openai/multiagent-particle-envs>`_
+
+What about other OSes?
+----------------------
+If you're on a different OS, then it's possible megastep will work, but I can't provide you any support. You're welcome
+to ask for help on the GitHub issues page, but you'll be relying on the community to come up with an answer.
+
+What if I don't have CUDA?
+--------------------------
+If you haven't got CUDA, megastep will not work. There are some parts of megastep - like the cubicasa package - 
+that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.

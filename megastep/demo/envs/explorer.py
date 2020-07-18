@@ -1,3 +1,4 @@
+"""TODO: Explorer docs"""
 import numpy as np
 import torch
 from megastep import modules, core, plotting, scene, cubicasa
@@ -22,7 +23,7 @@ class Explorer:
             d=self._depth.space,
             imu=self._imu.space)
 
-        self._tex_to_env = self.core.scenery.lines.inverse[self.core.scenery.textures.inverse.to(torch.long)].to(torch.long)
+        self._tex_to_env = self.core.scenery.lines.inverse[self.core.scenery.textures.inverse.long()].long()
         self._seen = torch.full_like(self._tex_to_env, False)
         self._potential = self.core.env_full(0.)
 

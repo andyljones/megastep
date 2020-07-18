@@ -1,4 +1,4 @@
-"""TODO: Explain what modules are""" 
+"""TODO: Module docs""" 
 
 import numpy as np
 import torch
