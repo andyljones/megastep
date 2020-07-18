@@ -88,7 +88,8 @@ That's me though! If you're interested in taking megastep forward, here are some
  * Generative geometric modelling. Deepmind have a cool paper on learning priors about the world `from egomotion alone <https://deepmind.com/blog/article/neural-scene-representation-and-rendering>`_. 
    Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator? 
  * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs shouldn't be GPU
-   accelerated too. 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color
+   accelerated too. 
+ * 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color
    half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of
    off-policy algorithms?
 
@@ -99,6 +100,8 @@ What are some alternatives to megastep?
 ---------------------------------------
  * `Sample Factory <https://github.com/alex-petrenko/sample-factory>`_
  * `Multiagent Particle Env <https://github.com/openai/multiagent-particle-envs>`_
+ * `VizDoom <https://github.com/mwydmuch/ViZDoom>`_
+ * `dmlab30 <https://github.com/deepmind/lab>`_
 
 What about other OSes?
 ----------------------

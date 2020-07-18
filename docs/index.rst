@@ -1,8 +1,6 @@
 .. raw:: html
 
-    <bold><span style="color: red">This repo is still pre-release. It's public because it makes some bits of testing &
-    distribution setup easier. If you come across it before this warning is removed, don't expect things to
-    work reliably or consistently.</span></bold>
+    <bold><span style="color: red">This repo is still pre-release. The documentation is still incomplete. </span></bold>
 
 ########
 megastep
