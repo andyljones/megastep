@@ -10,11 +10,11 @@ from tqdm.auto import tqdm
 log = logging.getLogger(__name__)
 
 def envfunc(n_envs=1024):
-    # from megastep.demo.envs import explorer
-    # return explorer.Explorer(n_envs)
+    from megastep.demo.envs import explorer
+    return explorer.Explorer(n_envs)
 
-    from megastep.demo.envs import deathmatch
-    return deathmatch.Deathmatch(n_envs, n_agents=4)
+    # from megastep.demo.envs import deathmatch
+    # return deathmatch.Deathmatch(n_envs, n_agents=4)
 
 class Agent(nn.Module):
 
