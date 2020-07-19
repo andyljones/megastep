@@ -1,4 +1,4 @@
-"""TODO: Module docs""" 
+"""TODO-DOCS Module docs""" 
 
 import numpy as np
 import torch

@@ -1,4 +1,4 @@
-"""TODO: Demo docs"""
+"""TODO-DOCS Demo docs"""
 import torch
 from megastep.demo import learning, lstm, heads
 from rebar import logging, paths, stats, widgets, storing, arrdict, dotdict, recurrence, recording

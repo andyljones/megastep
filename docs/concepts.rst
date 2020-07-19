@@ -324,49 +324,49 @@ As well as the lines and textures, there's also :attr:`~megastep.cuda.Scenery.ba
 
 Rendering
 =========
-TODO: Rendering concept
+TODO-DOCS Rendering concept
 
 .. _physics:
 
 Physics
 =======
-TODO: Physics concept
+TODO-DOCS Physics concept
 
 .. _plotting:
 
 Plotting
 ========
-TODO: Plotting concept
+TODO-DOCS Plotting concept
 
 .. _decision-world:
 
 Decision & World
 ================
-TODO: Decision/world concept
+TODO-DOCS Decision/world concept
 
 .. _models:
 
 Models
 ======
-TODO: Models concept
+TODO-DOCS Models concept
 
 .. _subpackages:
 
 Subpackages
 ===========
-TODO: Subpackages concept
+TODO-DOCS Subpackages concept
 
 .. _spaces:
 
 Spaces & Heads
 ==============
-TODO: Spaces and heads concept
+TODO-DOCS Spaces and heads concept
 
 .. _patterns:
 
 Env Patterns
 =============
-TODO: Env patterns concept
+TODO-DOCS Env patterns concept
 
 * Use modules where possible
 * Get your plotter working first

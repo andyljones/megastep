@@ -28,4 +28,4 @@ Getting Started
 The first thing to do is to make sure you can actually run the complete explorer environment. Open up a notebook or
 IPython console and
 
-TODO: Rest of the explorer tutorial
+TODO-DOCS Rest of the explorer tutorial

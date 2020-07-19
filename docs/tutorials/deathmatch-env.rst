@@ -20,4 +20,4 @@ Like in the second half of the minimal environment tutorial, when discussing the
 isn't feasible to copy-paste the entire definition every time. Instead, the snippets here are going to be small 
 'experiments' that demonstrate how a particular part of the class works.
 
-TODO: Rest of the deathmatch tutorial
+TODO-DOCS Rest of the deathmatch tutorial

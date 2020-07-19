@@ -1,4 +1,4 @@
-"""TODO: LSTM docs"""
+"""TODO-DOCS LSTM docs"""
 import torch
 from torch import nn
 from rebar import recurrence, dotdict

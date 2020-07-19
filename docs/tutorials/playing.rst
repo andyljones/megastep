@@ -32,4 +32,4 @@ Agent Tasks
 Training Tasks
 **************
 
-TODO: Finish the Playing tutorial
+TODO-DOCS Finish the Playing tutorial

@@ -1,4 +1,4 @@
-"""TODO: Explorer docs"""
+"""TODO-DOCS Explorer docs"""
 import numpy as np
 import torch
 from megastep import modules, core, plotting, scene, cubicasa
