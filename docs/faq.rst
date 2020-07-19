@@ -144,3 +144,15 @@ minimal::
 
 ie, omit the bit in square brackets. You can read more about what's missing in the :ref:`subpackages <subpackages>`
 section.
+
+How should I cite this?
+-----------------------
+.. code-block:: bib
+
+    @software{megastep,
+      author = {{Andy L Jones}},
+      title = {megastep},
+      url = {https://andyljones.com/megastep},
+      version = {0.1},
+      date = {2020-07-07},
+    }

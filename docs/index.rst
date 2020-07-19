@@ -59,7 +59,7 @@ If you'd like something comprehensive, read :ref:`Writing a Minimal Environment 
 
 If you'd like a more self-propelled introduction, read :ref:`Playing With Megastep <playing>`.
 
-Or, you can simply browse the :github:`demos <megastep/demo>`.
+Or, you can simply browse the :github:`demos <megastep/demo/__init__.py>`.
 
 Index
 *****
