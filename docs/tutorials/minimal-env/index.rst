@@ -120,7 +120,7 @@ when desiging environments. Principally, it contains what the agents see ::
 This is a 1-pixel-high image out from the front of the agent. You can read more about the rendering system in :ref:`this
 section <rendering>`. As well as filling up the Render object, calling render does something else: it updates the
 agents' models to match their positions. Having moved all the agents to (3, 3) earlier by assigning to
-``c.agents.positions``, plotting the scenery again shows that the agents' models have moved from the origin to (3, 3):
+``c.agents.positions``, plotting the scenery again shows that the agents' models have moved from the origin to (3, 3)::
 
     scene.display(scenery)
 

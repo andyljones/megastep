@@ -13,4 +13,4 @@ Tutorials
     deathmatch-env
     geometry/index
     scenery
-    kernels
+    kernels/index
