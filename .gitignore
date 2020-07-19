@@ -12,3 +12,4 @@ docs/_templates
 build 
 dist
 .env
+.cubicasa-confirmed

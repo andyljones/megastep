@@ -6,32 +6,17 @@ FAQ
 
 Why doesn't megastep use inheritance?
 -------------------------------------
+A general adage in software is to prefer `composition over inheritance <https://stackoverflow.com/questions/49002/prefer-composition-over-inheritance>`_.
+It's a good rule of thumb, but I feel that of the realities of research code make the preference even more extreme.
 
-One way to think about inheritance in software development is that's about offering a secondary interface to a class.
-
-The primary interface to a class is its public methods. When you write a class for some other part of your program to 
-use, this is usually what you have in mind.
-
-When you encourage people to inherit from your classes though, you're effectively declaring a secondary interface,
-saying 'here are some useful ways to exploit its private state'.
-
-The thing is, Python's ideas of public and private amount to gentle suggestions. This leads to a tertiary interface
-to every class, which is where you totally ignore what the designer of the class intended you to do and rely instead
-entirely on how the class *actually works*. You freely read and write its private state, monkey patch its methods and
-generally let slip the dogs of terrible software development.
-
-Researchers are very fond of this tertiary wild-west interface. The reason researchers are fond of it is either
-because they're terrible developers (the popular answer), or because research code is a very unusual kind of code.
-It's `written many times and read once (if ever) <https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>`_,
+Research code is a very unusual kind of code. It's `written many times and read once (if ever) <https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>`_,
 it's typically written by one person in a short period of time and it's typically only a few thousand lines of code
 that are understood inside and out. Because of this, researchers can happily trade off a lot of otherwise-good
 development practices in favour of iteration velocity - the ability to adapt your codebase to a new idea quickly and
 easily.
 
-Since **megastep** is explicitly intended to be a foundation for research, it's designed with the third interface in mind.
-There are few private methods, and any state that is likely interesting to a user is there for the taking.
-
-TODO: Revise the inheritance section
+Since megastep is explicitly intended to be a foundation for research, flexibility and iteration velocity feel far more 
+important than the reduction in verbosity you get from inheritance. 
 
 .. _openai-gym:
 
@@ -43,7 +28,19 @@ TODO: OpenAI gym question
 
 What's with the cubicasa license?
 ---------------------------------
-TODO: Cubicasa license question
+The cubicasa dataset - the dataset of 5000 home layouts - is derived from the `Cubicasa5k <https://github.com/CubiCasa/CubiCasa5k>`_ 
+dataset. This dataset was released under a CreativeCommons Non-Commercial License, while megastep as a whole is under a 
+MIT license. Since the cubicasa dataset in this project is a heavily-modified version of the original dataset, I think
+it could be plausibly considered `transformative use <https://www.copyright.gov/fair-use/more-info.html#:~:text=Transformative%20uses%20are%20those%20that,purpose%20of%20encouraging%20creative%20expression.>`_
+and so be re-released under an MIT license. But as an independent researcher with no legal team, I can't risk claiming 
+that. Rather I've emailed Cubicasa and asked for their blessing on this interpretation.
+
+In the meantime though, downloading the cubicasa dataset is hidden behind a is-this-commercial-use prompt. Not ideal,
+but the best I could come up with.
+
+If you would like to use megastep for commercial purposes, you are absolutely welcome to - just use a different geometry
+sampler to the default one. There are the :mod:`~megastep.toys` geometries already available, and writing a maze 
+generator should be fairly simple - just output a dict conforming :ref:`to the spec <geometry>`.
 
 .. _why:
 

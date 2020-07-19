@@ -9,8 +9,58 @@ import gzip
 import numpy as np
 from rebar import parallel, dotdict
 import ast
+from pkg_resources import resource_filename
+from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+LICENSE = """The cubicasa geometry is based on the Cubicasa5k dataset. 
+While megastep as a whole can be used for any purpose, this geometry 
+specifically is offered for non-commercial use only. You can read 
+more about this - and about alternatives - in the megastep FAQ at 
+
+http://andyljones.com/megastep/faq
+"""
+
+REJECTION = """
+You entered "{i}". You cannot download the cubicasa dataset 
+without confirming you understand the licensing conditions. Please read 
+the FAQ for suggestions about alternative geometries. 
+
+If your problem is specifically entering the 'Y' character, you can run 
+this snippet from a console:
+```
+python -c "from megastep import cubicasa; cubicasa.force_confirm()
+```
+"""
+
+PATH = Path(resource_filename(__package__, '.cubicasa-confirmed'))
+
+def confirm():
+    if PATH.exists():
+        return 
+
+    print(LICENSE)
+    print('Please enter "Y" to confirm you understand this.\n', flush=True)
+    i = input('[Y/N]: ')
+    if i in 'yY':
+        PATH.touch()
+        print('\nConfirmed.')
+        return 
+    else:
+        print(REJECTION.format(i=i))
+        raise ValueError('You refused to confirm that you understand the license restrictions.')
+
+def force_confirm():
+    """:ref:`As described in the FAQ <cubicasa-license>, the cubicasa dataset has a non-commercial use restriction`. 
+    
+    Most users will be prompted for their understanding of this restriction when they first download the dataset, but
+    this might cause trouble for people who are using automated systems, so calling this function 
+    is offered as an alternative.
+    """
+    print(LICENSE)
+    print('By calling `force_confirm`, you confirm you understand this.')
+    PATH.touch()
 
 def download(url):
     bs = BytesIO()
@@ -153,6 +203,7 @@ def sample(n_geometries, split='training', seed=1):
 
     :return: A list of geometries.
     """
+    confirm()
     global _cache
     if _cache is None:
         _cache = geometry_data()
