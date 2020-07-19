@@ -4,6 +4,17 @@
 FAQ
 ===
 
+How is megastep so fast?
+------------------------
+It cheats. It uses an extremely stripped down physics and rendering engine (most notably 1D observations) and it 
+simulates thousands of environments in parallel on the GPU. 
+
+How is megastep so flexible?
+----------------------------
+All the state is kept in `pytorch <https://pytorch.org/>`_ tensors, and only the compute-intensive physics and 
+rendering kernels are written in CUDA. Game logic is pretty fast compared to physics and rendering, so that
+can be done in Python with the ops provided by pytorch. Thanks, pytorch. 
+
 .. _inheritance:
 
 Why doesn't megastep use inheritance?
