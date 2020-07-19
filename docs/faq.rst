@@ -16,13 +16,24 @@ development practices in favour of iteration velocity - the ability to adapt you
 easily.
 
 Since megastep is explicitly intended to be a foundation for research, flexibility and iteration velocity feel far more 
-important than the reduction in verbosity you get from inheritance. 
+important than the robustness you get from inheritance. 
 
 .. _openai-gym:
 
 Why don't you use the OpenAI Gym interface?
----------------------------------------------
-TODO: OpenAI gym question
+-------------------------------------------
+There are a couple of ways in which megastep departs from the `Gym interface <https://gym.openai.com/docs/#environments>`_.
+
+The first way is that all the observations, rewards, and resets are vectorized. This is necessary, as megastep is 
+naturally vectorized in a way that the Gym envs aren't. 
+
+The second, more debatable way is that the Gym returns observations, rewards and resets as a tuple, and takes actions. 
+megastep meanwhile :ref:`passes dicts of these things in both directions <decisions-worlds>`. The advantage of this is
+opacity: if you want to pass some extra information between env and agent - the most common kind being when a reset 
+occurs so that the agent can clear its memory - it's just an extra key in the dict. The experience collection loop 
+that mediates between env and agent doesn't need to know anything about it. 
+
+Writing a shim that turns any megastep env into an Gym env should be easy enough if you're so inclined.
 
 .. _cubicasa-license:
 
