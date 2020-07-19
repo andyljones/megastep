@@ -1,4 +1,3 @@
-"""TODO: Recording docs"""
 import av
 from io import BytesIO
 import numpy as np
@@ -13,6 +12,7 @@ import logging
 import time
 import multiprocessing
 from matplotlib import tight_bbox
+import numbers
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +34,24 @@ def array(fig):
 
 class Encoder:
 
-    def __init__(self, fps):
-        """This follows the [PyAV cookbook](http://docs.mikeboers.com/pyav/develop/cookbook/numpy.html#generating-video)"""
+    def __init__(self, fps=20):
+        """A context manager for encoding frames of video. Usually you'll want to use :class:`ParallelEncoder` instead.
+        
+        Typically used as ::
+
+            with Encoder() as encoder:
+                # Call it with each frame in turn.
+                for frame in frames:
+                    encoder(frame)
+
+            # Now write it out.
+            with open('test.mp4', 'b') as f:
+                f.write(encoder.value)
+
+        In this example, ``frame`` is a (H, W, 1 or 3)-dim numpy array, or a matplotlib figure.
+        
+        This follows the `PyAV cookbook <http://docs.mikeboers.com/pyav/develop/cookbook/numpy.html#generating-video>`_.
+        """
         self._fps = fps
         self._initialized = False
 
@@ -118,7 +134,37 @@ def _array(f, *args, **kwargs):
 class ParallelEncoder:
 
     def __init__(self, f, fps=20, N=None):
-        N = multiprocessing.cpu_count()//4 if N is None else N
+        """A context manager for encoding frames of video in parallel. Typically used as ::
+        
+            with ParallelEncoder(f) as encoder:
+                for x in xs:
+                    encoder(x)
+            encoder.notebook()  # to display the video in your notebook
+            encoder.save(path)  # to save the video
+        
+        In this example, ``f`` is a function that takes some arguments and returns a (H, W, 1 or 3)-dim numpy array, 
+        or a matplotlib figure. Whatever you call ``encoder`` with will be forwarded to ``f`` in a separate process,
+        and the resulting array will be brought back to this process for encoding.
+
+        This aligns with the common scenario where generating each frame with matplotlib is much slower than actually
+        getting the arguments needed to do the generation, or doing the encoding itself. 
+
+        :param fps: The framerate. Defaults to 20.
+        :type fps: int
+        :param N: The number of processes to use. Can be an integer or a float indicating the fraction of CPUs to
+            use. Defaults to using 1/2 the CPUs.
+        :type N: int, float
+        """
+        cpus = multiprocessing.cpu_count()
+        if N is None:
+            N = cpus//2
+        elif isinstance(N, numbers.Integral):
+            N = N
+        elif isinstance(N, numbers.Real):
+            N = int(cpus*N)
+        else:
+            raise ValueError(f'Number of processes must be an integer, a float, or None. Got a "{type(N)}"')
+
         self._encoder = Encoder(fps)
         self._f = f
         self._pool = parallel(_array, progress=False, N=N, initializer=_init)
@@ -170,32 +216,3 @@ class ParallelEncoder:
 
     def save(self, path):
         Path(path).write_bytes(self.result())
-
-def encode(f, *indexable, fps=20, N=0, n_frames=None, **kwargs):
-    """To use this with N > 0, you need to return an array and - if it's a new figure each time - 
-    close it afterwards"""
-    n_frames = len(indexable[0]) if n_frames is None else n_frames
-    log.info(f'Encoding begun on {n_frames} frames')
-    queuesize = 2*cpu_count() 
-    submitted, contiguous = 0, 0
-    futures = {}
-    with Encoder(fps) as encoder, parallel(f, progress=False, N=N) as p, tqdm(total=n_frames) as pbar:
-        while True:
-            if (submitted < n_frames) and (len(futures) < queuesize):
-                futures[submitted] = p(*[iable[submitted] for iable in indexable], **kwargs)
-                submitted += 1
-            if (contiguous in futures) and futures[contiguous].done():
-                result = futures[contiguous].result()
-                if isinstance(result, plt.Figure):
-                    fig = result
-                    result = array(fig)
-                    plt.close(fig)
-                encoder(result)
-                del futures[contiguous]
-                contiguous += 1
-                pbar.update(1)
-                if (N == 0) and (contiguous % 100 == 0):
-                    log.info(f'Finished {contiguous}/{n_frames} frames')
-            if contiguous == n_frames:
-                log.info('Encoding finished')
-                return encoder

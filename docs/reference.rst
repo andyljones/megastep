@@ -114,4 +114,5 @@ dotdict
 recording
 ---------
 .. automodule:: rebar.recording
-    :members:
+    :members: Encoder, ParallelEncoder
+    :undoc-members:

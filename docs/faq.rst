@@ -28,7 +28,7 @@ The first way is that all the observations, rewards, and resets are vectorized. 
 naturally vectorized in a way that the Gym envs aren't. 
 
 The second, more debatable way is that the Gym returns observations, rewards and resets as a tuple, and takes actions. 
-megastep meanwhile :ref:`passes dicts of these things in both directions <decisions-worlds>`. The advantage of this is
+megastep meanwhile :ref:`passes dicts of these things in both directions <decision-world>`. The advantage of this is
 opacity: if you want to pass some extra information between env and agent - the most common kind being when a reset 
 occurs so that the agent can clear its memory - it's just an extra key in the dict. The experience collection loop 
 that mediates between env and agent doesn't need to know anything about it. 
