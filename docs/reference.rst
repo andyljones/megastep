@@ -33,11 +33,13 @@ modules
 -------
 .. automodule:: megastep.modules
     :members: 
+    :undoc-members:
 
 plotting
 --------
 .. automodule:: megastep.plotting
     :members:
+    :undoc-members:
 
 ragged
 ------
@@ -49,11 +51,13 @@ scene
 -----
 .. automodule:: megastep.scene
     :members: 
+    :undoc-members:
 
 spaces
 ------
 .. automodule:: megastep.spaces
     :members:
+    :undoc-members:
 
 toys 
 ----
@@ -69,16 +73,19 @@ heads
 -----
 .. automodule:: megastep.demo.heads
     :members:
+    :undoc-members:
 
 learning
 --------
 .. automodule:: megastep.demo.learning
     :members:
+    :undoc-members:
 
 lstm
 ----
 .. automodule:: megastep.demo.lstm
     :members:
+    :undoc-members:
 
 demo.envs
 =========
