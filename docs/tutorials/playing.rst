@@ -15,7 +15,7 @@ Run the Demo
 :ref:`Install megastep <install>` and record an untrained :mod:`~megastep.demo` agent::
 
     from megastep.demo import *
-    env = envfunc(1)
+    env = explorer.Explorer(1)
     agent = Agent(env).cuda()
     demo(env=env, agent=agent, length=64) 
 

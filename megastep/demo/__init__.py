@@ -6,15 +6,9 @@ import pandas as pd
 import numpy as np
 from torch import nn
 from tqdm.auto import tqdm
+from megastep.demo.envs import explorer, deathmatch
 
 log = logging.getLogger(__name__)
-
-def envfunc(n_envs=1024):
-    from megastep.demo.envs import explorer
-    return explorer.Explorer(n_envs)
-
-    # from megastep.demo.envs import deathmatch
-    # return deathmatch.Deathmatch(n_envs, n_agents=4)
 
 class Agent(nn.Module):
 
@@ -117,7 +111,7 @@ def train():
     n_envs = 8*1024
     batch_size = 16*1024
 
-    env = envfunc(n_envs)
+    env = explorer.Explorer(n_envs)
     agent = Agent(env).cuda()
     opt = torch.optim.Adam(agent.parameters(), lr=3e-4, amsgrad=True)
 
@@ -154,7 +148,7 @@ def train():
             stats.gpu.vitals(0, throttle=15)
 
 def demo(run=-1, length=None, test=True, N=None, env=None, agent=None, d=0):
-    env = envfunc(d+1) if env is None else env
+    env = explorer.Explorer(d+1) if env is None else env
     world = env.reset()
     if agent is None:
         agent = Agent(env).cuda()

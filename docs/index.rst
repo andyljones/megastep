@@ -40,11 +40,14 @@ Install
 *******
 If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as ::
 
-    pip install git+https://github.com/andyljones/megastep.git#egg=megastep[cubicasa,rebar]
+    pip install megastep[cubicasa,rebar]
 
-This installs everything needed to run the demos and tutorials. If you want :ref:`something minimal <subpackages>` ::
+To check everything works, run ::
 
-    pip install git+https://github.com/andyljones/megastep.git
+    from megastep.demo import *
+    env = explorer.Explorer(1)
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64)
 
 **The first time you import megastep on your machine will be slow** as it compiles the C++ side of things.
 

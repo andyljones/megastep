@@ -122,3 +122,13 @@ What if I don't have CUDA?
 --------------------------
 If you haven't got CUDA, megastep will not work. There are some parts of megastep - like the cubicasa package - 
 that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.
+
+How can I install *just* megastep?
+----------------------------------
+The default :ref:`install <install>` pulls in everything needed to run the demos and tutorials. If you want something
+minimal::
+
+    pip install megastep
+
+ie, omit the bit in square brackets. You can read more about what's missing in the :ref:`subpackages <subpackages>`
+section.
