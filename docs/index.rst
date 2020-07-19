@@ -32,7 +32,7 @@ Features
  * One or many agents, and one or many cameras per agent.
  * A database of 5000 home layouts to explore, based on `Cubicasa5k <https://github.com/CubiCasa/CubiCasa5k>`_.
  * A minimal, modular library. Not a framework.
- * Extensive documentation, tutorials and explanations. 
+ * (In progress) Extensive documentation, tutorials and explanations. 
 
 .. _install:
 

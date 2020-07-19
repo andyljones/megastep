@@ -5,7 +5,7 @@ from setuptools import find_packages
 
 setup(
     name='megastep',
-    version='0.1',
+    version='0.2',
     description='Helps build million-frame-per-second reinforcement learning environments',
     author='Andy Jones',
     author_email='andyjones.ed@gmail.com',
@@ -35,4 +35,4 @@ setup(
         'test': [
             'pytest>=5']},
     package_data={'megastep': ['src/*']}
-      )
+)
