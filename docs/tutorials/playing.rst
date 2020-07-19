@@ -8,6 +8,130 @@ tutorial instead takes an existing interesting environment and tasks you to adap
 these tasks, you'll learn how megastep is structured while hopefully keeping the problem-solving part of your brain
 from losing interest.
 
+At the bottom of the page are some links to resources you might find helpful with these.
+
+Run the Demo
+************
+:ref:`Install megastep <install>` and record an untrained :mod:`~megastep.demo` agent::
+
+    from megastep.demo import *
+    env = envfunc(1)
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64) 
+
+TODO-DOCS Demo video
+
+Swap Out The Geometry
+*********************
+Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env and replace the default toy geometry
+:ref:`geometry <geometry>` with :mod:`~megastep.cubicasa` geometry. Plot it to check that it works::
+
+    env = AlteredMinimal()
+    env.display()
+
+TODO-DOCS cubicasa geometry
+
+Triangular Geometry
+*******************
+Read the :github:`toy geometry code <megastep/toys.py>` and alter it to write your own triangular-box geometry. Try 
+it out with :func:`~megastep.geometry.display`::
+
+    from megastep import geometry
+    geometry.display(tri)
+
+TODO-DOCS Triangular geometry
+
+Change the Lights
+*****************
+Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the :func:`~megastep.scene.scenery` 
+call with your own function. Have this function first call the original scene function, but then modify its baked
+lighting to be all 1s. Check that it works with :func:`~megastep.scene.display`::
+
+    from megastep import scene
+    scene.display(bright)
+
+TODO-DOCS Illuminated textures
+
+Change the Colours
+******************
+Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the :func:`~megastep.scene.scenery` 
+call with your own function. Have this function first call the original scene function, but then modify its 
+textures to be all white. Check that it works with :func:`~megastep.scene.display`::
+
+    from megastep import scene
+    scene.display(white)
+
+TODO-DOCS White textures
+
+Change the Observations
+***********************
+Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the RGB observations 
+with a :class:`~megastep.modules.Depth` observation. Alter the ``plot_state`` method so you can see your change in 
+action::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64) 
+
+TOOD-DOCS Depth demo
+
+Custom Observations
+*******************
+**Trickier**. Write a module like :class:`~megastep.modules.Depth` that returns a visualization of *indices* 
+of the lines it's looking at. You'll want to read the :class:`~megastep.cuda.Render` documentation.
+
+Check it works by copying and pasting the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, 
+then running it through the demo recorder::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64) 
+
+To get this to work, you'll need to update the ``plot_state`` and the observation space too.
+
+TODO-DOCS Seeing by numbers demo
+
+Change the Movement
+*******************
+Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the jump-y simple-motion
+actions with :class:`~megastep.modules.MomentumMovement`. Check that it works with the demo recorder::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64) 
+
+TOOD-DOCS Smooth movement demo
+
+Custom Movement
+***************
+**Trickier**. Write a module like :class:`~megastep.modules.MomentumMovement` that teleports the agent in a different
+direction depending on which action is chosen.
+
+Check it works by copying and pasting the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, 
+then running it through the demo recorder::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64) 
+
+TODO-DOCS Teleporter demo
+
+Spawning Tasks
+**************
+TODO-DOCS Spawning tasks
+
+Agent Tasks
+***********
+TODO-DOCS Agent tasks
+
+Training Tasks
+**************
+TODO-DOCS Training tasks
+
 Resources
 *********
 Here are some tools that might help with these tasks.
@@ -52,26 +176,3 @@ Library Breakpoints
 Demos
     The :github:`demo module <megastep/demo/__init__.py>` has examples of two environments and an example of how to 
     train them.
-
-Setup Tasks
-***********
-
-Geometry Tasks
-**************
-
-Scenery Tasks
-**************
-
-Rendering Tasks
-***************
-
-Action Tasks
-************
-
-Agent Tasks
-***********
-
-Training Tasks
-**************
-
-TODO-DOCS Finish the Playing tutorial
