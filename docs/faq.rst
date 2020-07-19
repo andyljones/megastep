@@ -123,6 +123,7 @@ What are some alternatives to megastep?
  * `Multiagent Particle Env <https://github.com/openai/multiagent-particle-envs>`_
  * `VizDoom <https://github.com/mwydmuch/ViZDoom>`_
  * `dmlab30 <https://github.com/deepmind/lab>`_
+ * `CuLE <https://github.com/NVlabs/cule>`_
 
 What about other OSes?
 ----------------------

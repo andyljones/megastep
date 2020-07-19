@@ -13,6 +13,7 @@ import time
 import multiprocessing
 from matplotlib import tight_bbox
 import numbers
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -167,8 +168,13 @@ class ParallelEncoder:
 
         self._encoder = Encoder(fps)
         self._f = f
-        self._pool = parallel(_array, progress=False, N=N, initializer=_init)
         self._queuelen = N
+
+        # Only Python >=3.7 has initializers for the process pool. 
+        if sys.version_info[1] < 7:
+            self._pool = parallel(_array, progress=False, N=N)
+        else:
+            self._pool = parallel(_array, progress=False, N=N, initializer=_init)
 
     def __enter__(self):
         self._futures = {}

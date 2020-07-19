@@ -5,7 +5,7 @@ from setuptools import find_packages
 
 setup(
     name='megastep',
-    version='0.2',
+    version='0.2.1',
     description='Helps build million-frame-per-second reinforcement learning environments',
     author='Andy Jones',
     author_email='andyjones.ed@gmail.com',
