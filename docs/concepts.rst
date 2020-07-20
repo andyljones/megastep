@@ -356,8 +356,20 @@ TODO-DOCS Models concept
 
 Subpackages
 ===========
+There are several roughly independent pieces of code in megastep.
 
-TODO-DOCS Subpackages concept
+Firstly there's megastep itself. This is the environment development library, with its CUDA kernels and modules 
+and raggeds.
+
+Then there's :mod:`~megastep.cubicasa`, which is a database of 5000 floorplans. The cubicasa module while small in
+and of itself, requires some hefty geospatial dependencies. It uses these to cut the original floorplan SVGs into
+pieces and reassemble them as arrays that are useful for reinforcement learning research. It's offered as an extra
+install because many users might want to avoid installing all those dependencies.
+
+Finally there's :mod:`~rebar`. rebar is my - Andy Jones's - personal reinforcement learning toolbox. While the bits
+of it that megastep depend on are stable and well-documented, the rest of it is not. That it's still in the megastep
+repo is a bit of a historical artefact. One of my next tasks after getting megastep sorted is to get rebar equally
+well documented and tested, and then probably carve the unstable bits out into their own repo and package.
 
 .. _spaces:
 
