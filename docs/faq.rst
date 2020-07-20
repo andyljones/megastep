@@ -25,6 +25,10 @@ What if I don't have CUDA?
 If you haven't got CUDA, megastep will not work. There are some parts of megastep - like the cubicasa package - 
 that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.
 
+I have a question for the developer
+-----------------------------------
+Check the :ref:`support section <support>`.
+
 How can I install *just* megastep?
 ----------------------------------
 The default :ref:`install <install>` pulls in everything needed to run the demos and tutorials. If you want something
@@ -150,5 +154,3 @@ occurs so that the agent can clear its memory - it's just an extra key in the di
 that mediates between env and agent doesn't need to know anything about it. 
 
 Writing a shim that turns any megastep env into an Gym env should be easy enough if you're so inclined.
-
- 

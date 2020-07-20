@@ -63,6 +63,18 @@ If you'd like a more self-propelled introduction, read :ref:`Playing With Megast
 
 Or, you can simply browse the :github:`demos <megastep/demo/__init__.py>`.
 
+.. _support:
+
+Support
+*******
+I am an independent developer, so just how much support I can give is limited. But you're absolutely welcome to `open
+a GitHub issue <https://github.com/andyljones/megastep/issues>`_ or `see if I'm around on
+Gitter <https://gitter.im/megastep-rl/community>`_. At the very least I'll try to point you in the right direction.
+
+You can also find me `on Twitter <https://twitter.com/andy_l_jones>`_ or you can `email me <andyjones.ed@gmail.com>`_. Of
+the options, a GitHub issue is likely the best choice as if you have a question, there are likely other people
+out there with the same exact question! And if they don't, maybe someone else will have an answer for you.
+
 Index
 *****
 .. toctree::
