@@ -79,20 +79,10 @@ The obvious solution is to get rid of either the GPUs or the CPUs. Getting rid o
 since neural nets are deathly slow without them. Getting rid of the CPUs means writing environments in CUDA, which
 isn't for the faint of heart.
 
-Thing is, most RL environments burn their resources - both code and flops - on information that's irrelevant to the
-experiments you want to conduct. `AirSim <https://microsoft.github.io/AirSim/>`_ is an amazing piece of work, but if
-you train a nav policy in there you're basically discovering just how inefficiently your agents can learn to see. It
-turns out that while writing a full sim in CUDA is a bit scary, it doesn't take much work to get something that'll be
-produce interesting behaviour.
-
-Now follow this logic through to its natural conclusion and you'll find yourself building finite state machines and
-gridworlds. These though are a bit _too_ simplified to support certain skills - like odometry or geometric reasoning
-- that we might be interested in.
-
-**megastep** is intended to be midpoint between these two extremes, between full 3D simulators and gridworlds. Thanks
-to gravity making the world suspiciously flat, many of the behaviours we'd like to investigate in 3D are just as
-plausible in 2D. And in 2D, things are simple enough that one fool can bolt together a CUDA game engine without
-breaking a sweat.
+Thing is, most RL environments are much more complex than are needed to capture the basic behaviours you're looking
+for in an agent. By simplifying things down to a 2D flatland, megastep keeps *just* enough complexity in its simulation
+to capture interesting behaviours, while keeping the engine code short enough that one fool can bolt it together in 
+CUDA without breaking a sweat.
 
 Where might this go in future?
 ------------------------------
@@ -124,6 +114,7 @@ What are some alternatives to megastep?
  * `VizDoom <https://github.com/mwydmuch/ViZDoom>`_
  * `dmlab30 <https://github.com/deepmind/lab>`_
  * `CuLE <https://github.com/NVlabs/cule>`_
+ * `AirSim <https://microsoft.github.io/AirSim/>`_
 
 What about other OSes?
 ----------------------
