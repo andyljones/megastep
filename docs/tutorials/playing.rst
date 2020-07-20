@@ -8,7 +8,7 @@ tutorial instead takes an existing interesting environment and tasks you to adap
 these tasks, you'll learn how megastep is structured while hopefully keeping the problem-solving part of your brain
 from losing interest.
 
-At the bottom of the page are some links to resources you might find helpful with these.
+At the bottom of the page are some links to :ref:`resources <playing-resources>` you might find helpful with these.
 
 Run the Demo
 ************
@@ -131,6 +131,8 @@ TODO-DOCS Agent tasks
 Training Tasks
 **************
 TODO-DOCS Training tasks
+
+.. _playing-resources:
 
 Resources
 *********

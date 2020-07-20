@@ -98,8 +98,8 @@ That's me though! If you're interested in taking megastep forward, here are some
    be transferred to an expensive sim like `AirSim <https://microsoft.github.io/AirSim/>`_?
  * Generative geometric modelling. Deepmind have a cool paper on learning priors about the world `from egomotion alone <https://deepmind.com/blog/article/neural-scene-representation-and-rendering>`_. 
    Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator? 
- * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs shouldn't be GPU
-   accelerated too. 
+ * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs
+   shouldn't be GPU accelerated too.
  * 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color
    half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of
    off-policy algorithms?
@@ -129,7 +129,9 @@ that you may still find useful, but in that case I recommend just copy-pasting t
 How can I install *just* megastep?
 ----------------------------------
 The default :ref:`install <install>` pulls in everything needed to run the demos and tutorials. If you want something
-minimal::
+minimal:
+ 
+..code-block:: shell 
 
     pip install megastep
 

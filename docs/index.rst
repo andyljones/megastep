@@ -38,7 +38,9 @@ Features
 
 Install
 *******
-If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as ::
+If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as
+
+.. code-block:: shell
 
     pip install megastep[cubicasa,rebar]
 

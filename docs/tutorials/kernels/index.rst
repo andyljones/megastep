@@ -18,16 +18,28 @@ something written here, you can get another perspective on it there. However tha
 discussing things like gradients that aren't as interesting to us.
 
 At a high level, this tutorial is first going to discuss compiling C++ into a Python module. Then we're going to
-talk about using C++ to do PyTorch computations, and then we're going to discuss using CUDA to do PyTorch computations. 
+talk about using C++ to do pytorch computations, and then we're going to discuss using CUDA to do pytorch computations. 
 
 Prerequesites
 *************
 TODO-DOCS Explain the prerequesites
 
+While I usually do my Python development in a Jupyter notebook, when messing with C++ I'd recommend running most 
+of your tests from the terminal. In a notebook, a failed compilation can sometimes be silently 'covered' by torch
+loading an old version of your module, and that way madness lies. Better to run things in a terminal a la
+
+.. code-block:: shell
+
+    python -c "print('hello world')"
+
+and never have to worry about restarting the kernel after every compilation cycle.
+
 Turning C++ into Python
 ***********************
-The start of our journey is with a C++ file, which we're going to call ``wrappers.cpp`` for reasons that will become
-clear later. Make yourself a ``wrappers.cpp`` file in your working directory with the following strange incantations:
+For our first trick, we're going to send data from Python to C++, we're going to do some computation in C++, and then
+we're going to get the result back in Python. 
+
+Now make yourself a ``wrappers.cpp`` file in your working directory with the following strange incantations:
 
 .. code-block:: cpp
 
@@ -51,7 +63,7 @@ Let's work through this.
  * ``m.def``: Finally, we specify the address of the thing we want to call from Python - ``&addone`` - and we
    give specify the name that thing should be known by on the Python side - ``"addone"``.
 
-Now, the Python side. Make an ``wrapper.py`` file in the same directory containing ::
+Now, the Python side. Make an ``compiler.py`` file in the same directory containing ::
 
     import torch.utils.cpp_extension
     import sysconfig
@@ -75,24 +87,53 @@ what our new C++ module will be added to the import system under - and the list 
 the options :ref:`below <switches>` if you're interested, but frankly you can skip reading it until such time as compilation is 
 giving you trouble.
 
-With this file defined, we can test things out! Find yourself a terminal and run ::
+With this file defined, we can test things out! Find yourself a terminal and run
 
-    python -c "from wrapper import *; print(cuda.addone(1))"
+>>> from compiler import *
+>>> two = cuda.addone(1)
+>>> print(two)
+2
 
 It should hang for a while while it compiles in the background, then print 2! If it does, congrats - you're sending data 
-over to Python, doing some computation, and getting it back! 
+over to Python, doing some computation, and getting it back!
 
 If for some reason it *doesn't* work, the first thing to do is to add a ``verbose=True`` arg to the ``load()`` call. 
 That'll give you much more detailed debugging information, and hopefully let you ID the problem. 
 
-As an aside, while I usually work from a notebook but when doing lots of Python/C++ developmet I prefer to invoke
-things from a terminal. In a notebook, a failed compilation can sometimes be silently 'covered' by torch
-loading an old version of your module, and that way madness lies.
+Adding In PyTorch
+*****************
+For our next trick, let's do the same again with a pytorch tensor rather than a simple integer. All we need to do is to
+update our ``addone`` function to take and return tensors rather than ints::
+
+.. code-block:: cpp
+
+    using TT = at::Tensor;
+
+    TT addone(TT x) { return x + 1; }
+
+The ``at::Tensor`` type we're defining here is pytorch's basic tensor type. It's going to show up all over the place in
+our code, which is why we're aliasing it as ``TT``.
+
+This time, test it with ::
+
+>>> import torch
+>>> from compiler import *
+>>> one = torch.as_tensor(1)
+>>> two = cuda.addone(one)
+>>> print(two)
+tensor(2)
+
+If that works, hooray again - you're sending a tensor to C++, doing some computation, and getting it back in Python!
+
+All the Way to CUDA
+*******************
 
 .. _switches:
 
 Compilation Switches
---------------------
+********************
+TODO: Check how minimal these compilation switches actually are.
+
 To save some scrolling, here's the compilation snippet from earlier::
 
     import torch.utils.cpp_extension
@@ -106,7 +147,7 @@ To save some scrolling, here's the compilation snippet from earlier::
         name='testkernels',
         sources=['wrappers.cpp'],
         extra_cflags=['-std=c++17'],
-        extra_cuda_cflags=['-std=c++14', '-lineinfo'],
+        extra_cuda_cflags=['-std=c++14', '-lineinfo', '--use_fast_math'],
         extra_ldflags=[
             f'-lpython{libpython_ver}', '-ltorch', '-ltorch_python', '-lc10_cuda', '-lc10', 
             f'-L{torch_libdir}', f'-Wl,-rpath,{torch_libdir}',
@@ -125,7 +166,10 @@ And the notes:
    years, and compiling a modern version makes for a much more pleasant time writing C++.
  * ``extra_cuda_cflags``: And here we say we want the CUDA side of things compiled as C++14 code. Not quite as nice as C++17 code,
    but the best the CUDA compiler could support as of the time I wrote this. We also chuck in the ``-lineinfo`` switch, which 
-   will give us more useful debugging information when things go wrong. 
+   will give us more useful debugging information when things go wrong, and the ``--use_fast_math`` switch, which lets the 
+   CUDA compiler user faster - but slightly less accurate - maths. 
  * ``extra_ldflags``: And finally, we list off all the libraries that need to be included when linking the compiled code.
+   The ``-l`` switches name specific libraries; the ``-L`` switches give the directories to look in for dynamic linking,
+   and the ``-Wl,-rpath`` switches give the directories to look in for static linking. I think I have that right.
 
 TODO-DOCS finish the kernels tutorial
