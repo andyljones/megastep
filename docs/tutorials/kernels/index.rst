@@ -103,7 +103,7 @@ That'll give you much more detailed debugging information, and hopefully let you
 Adding In PyTorch
 *****************
 For our next trick, let's do the same again with a pytorch tensor rather than a simple integer. All we need to do is to
-update our ``addone`` function to take and return tensors rather than ints::
+update our ``addone`` function to take and return tensors rather than ints:
 
 .. code-block:: cpp
 
@@ -114,7 +114,7 @@ update our ``addone`` function to take and return tensors rather than ints::
 The ``at::Tensor`` type we're defining here is pytorch's basic tensor type. It's going to show up all over the place in
 our code, which is why we're aliasing it as ``TT``.
 
-This time, test it with ::
+This time, test it with
 
 >>> import torch
 >>> from compiler import *
