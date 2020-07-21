@@ -67,7 +67,8 @@ toys
 demo
 ====
 .. automodule:: megastep.demo
-    :members:
+    :members: Agent, demo, train
+    :undoc-members:
 
 heads
 -----
