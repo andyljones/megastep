@@ -421,7 +421,7 @@ objects.
 
 ``decision`` objects are :ref:`arrdicts <dotdicts>` with an ``actions`` key. The ``actions`` value should correspond
 to the environment's :ref:`action space <spaces>`. For example, suppose the environment has one sub-environment and
- this action space::
+this action space::
 
     from megastep import spaces
     from rebar import dotdict
@@ -429,7 +429,7 @@ to the environment's :ref:`action space <spaces>`. For example, suppose the envi
         movement=spaces.MultiDiscrete(2, 7),
         fire=spaces.MultiDiscrete(2, 2))
 
-Then the corresponding decision object might be 
+Then the corresponding decision object might be ::
 
     from rebar import arrdict
     decision = arrdict.arrdict(
