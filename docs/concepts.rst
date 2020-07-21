@@ -414,7 +414,49 @@ without dragging the large, complex object it's hanging off of with it.
 
 Decision & World
 ================
-TODO-DOCS Decision/world concept
+megastep isn't prescriptive about how you handle actions and observations, but here are some suggestions.
+
+The :github:`demo envs <megastep/demo/envs>`'s step methods all take ``decision`` objects and return ``world`` 
+objects. 
+
+``decision`` objects are :ref:`arrdicts <dotdicts>` with an ``actions`` key. The ``actions`` value should correspond
+to the environment's :ref:`action space <spaces>`. For example, suppose the environment has one sub-environment and
+ this action space::
+
+    from megastep import spaces
+    from rebar import dotdict
+    action_space = dotdict.dotdict(
+        movement=spaces.MultiDiscrete(2, 7),
+        fire=spaces.MultiDiscrete(2, 2))
+
+Then the corresponding decision object might be 
+
+    from rebar import arrdict
+    decision = arrdict.arrdict(
+        actions=arrdict.arrdict(
+            movement=torch.as_tensor([[5, 6]]),
+            fire=torch.as_tensor([[0, 1]])))
+
+The advantage of passing the ``actions`` inside a dict is that you'll often find you want return extra information 
+from your agent (like logits), and this lets the environment decide which bits of the agent's output it wants to use.
+The alternative is to return the actions and the other information separately, but then the experience collection 
+loop would need to be aware of the details of the agent and environment.
+
+Similarly, ``world`` objects are :ref:`arrdicts <dotdicts>` with an ``obs`` key. The ``obs`` value should correspond to 
+the environment's :ref:`observation space <spaces>`. As with ``decision``, the advantage of this is that the 
+environment can return much more than just ``obs``, and the agent can pull out what it wants without the experience
+collection loop being any the wiser.  
+
+All together, the experience collection loop will typically look like this::
+
+    world = env.reset()
+    for _ in range(64):
+        decision = agent(world)
+        world = env.step(decision)
+
+If you're still confused, take a look at the :ref:`minimal env tutorial <minimal-env>` or the :github:`demo envs
+<megastep/demo/__init__.py>`.
+
 
 .. _models:
 
