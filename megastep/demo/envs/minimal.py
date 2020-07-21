@@ -48,6 +48,9 @@ class Minimal:
 
         return fig
 
+    def display(self, e=0):
+        return self.plot_state(arrdict.numpyify(self.state(e)))
+
 class Agent(nn.Module):
     """A minimal agent to go with the minimal environment.
 

@@ -8,6 +8,8 @@ tutorial instead takes an existing interesting environment and tasks you to adap
 these tasks, you'll learn how megastep is structured while hopefully keeping the problem-solving part of your brain
 from losing interest.
 
+The best way to do these experiments is in a `notebook <https://jupyter.org/>`_ of some sort.
+
 At the bottom of the page are some links to :ref:`resources <playing-resources>` you might find helpful with these.
 
 Run the Demo
@@ -19,17 +21,14 @@ Run the Demo
     agent = Agent(env).cuda()
     demo(env=env, agent=agent, length=64) 
 
-TODO-DOCS Demo video
-
 Swap Out The Geometry
 *********************
 Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env and replace the default toy geometry
 :ref:`geometry <geometry>` with :mod:`~megastep.cubicasa` geometry. Plot it to check that it works::
 
     env = AlteredMinimal()
+    env.reset()
     env.display()
-
-TODO-DOCS cubicasa geometry
 
 Triangular Geometry
 *******************
@@ -38,8 +37,6 @@ it out with :func:`~megastep.geometry.display`::
 
     from megastep import geometry
     geometry.display(tri)
-
-TODO-DOCS Triangular geometry
 
 Change the Lights
 *****************
@@ -50,8 +47,6 @@ lighting to be all 1s. Check that it works with :func:`~megastep.scene.display`:
     from megastep import scene
     scene.display(bright)
 
-TODO-DOCS Illuminated textures
-
 Change the Colours
 ******************
 Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the :func:`~megastep.scene.scenery` 
@@ -60,8 +55,6 @@ textures to be all white. Check that it works with :func:`~megastep.scene.displa
 
     from megastep import scene
     scene.display(white)
-
-TODO-DOCS White textures
 
 Change the Observations
 ***********************
@@ -73,8 +66,6 @@ action::
     env = AlteredMinimal()
     agent = Agent(env).cuda()
     demo(env=env, agent=agent, length=64) 
-
-TOOD-DOCS Depth demo
 
 Custom Observations
 *******************
@@ -91,8 +82,6 @@ then running it through the demo recorder::
 
 To get this to work, you'll need to update the ``plot_state`` and the observation space too.
 
-TODO-DOCS Seeing by numbers demo
-
 Change the Movement
 *******************
 Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the jump-y simple-motion
@@ -102,8 +91,6 @@ actions with :class:`~megastep.modules.MomentumMovement`. Check that it works wi
     env = AlteredMinimal()
     agent = Agent(env).cuda()
     demo(env=env, agent=agent, length=64) 
-
-TOOD-DOCS Smooth movement demo
 
 Custom Movement
 ***************
@@ -118,11 +105,22 @@ then running it through the demo recorder::
     agent = Agent(env).cuda()
     demo(env=env, agent=agent, length=64) 
 
-TODO-DOCS Teleporter demo
+Custom Spawning
+***************
+**Trickier**. Write a module like :class:`~megastep.modules.RandomSpawns` that spawns the even-numbered agents facing 
+right and the odd-numbered agents facing left.  
 
-Spawning Tasks
-**************
-TODO-DOCS Spawning tasks
+Check it works by copying and pasting the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, 
+increasing the number of agents, then resetting and displaying it::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    env.reset()
+    env.display()
+
+Spaces Tasks
+************
+TODO-DOCS Spaces tasks
 
 Agent Tasks
 ***********
