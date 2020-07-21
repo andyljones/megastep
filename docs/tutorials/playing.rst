@@ -8,7 +8,9 @@ tutorial instead takes an existing interesting environment and tasks you to adap
 these tasks, you'll learn how megastep is structured while hopefully keeping the problem-solving part of your brain
 from losing interest.
 
-The best way to do these experiments is in a `notebook <https://jupyter.org/>`_ of some sort.
+The best way to do these experiments is in a `notebook <https://jupyter.org/>`_ of some sort. In a pinch, you can 
+also use `this Google Colab <https://colab.research.google.com/drive/16X2fgapozFAgnkDCS1o-UzR7Gcg6vIrg?usp=sharing>`_.
+The main problem is the font rendering is a bit weird.
 
 At the bottom of the page are some links to :ref:`resources <playing-resources>` you might find helpful with these.
 
@@ -218,3 +220,5 @@ Library Breakpoints
 Demos
     The :github:`demo module <megastep/demo/__init__.py>` has examples of two environments and an example of how to 
     train them.
+
+TODO-DOCS Add demos of all of these

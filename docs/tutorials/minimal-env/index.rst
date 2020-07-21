@@ -27,6 +27,9 @@ It'd a good idea to open yourself a `Jupyter notebook <https://jupyter.org/insta
 <https://colab.research.google.com/>`_ and copy-paste the code as you go, experimenting with anything you don't quite
 understand.
 
+In a pinch, you can also `try things out in this Google Colab <https://colab.research.google.com/drive/16X2fgapozFAgnkDCS1o-UzR7Gcg6vIrg?usp=sharing>`_.
+The main problem is the font rendering is a bit weird.
+
 Once you've got your notebook up and running, the first thing to do is to :ref:`install megastep <install>`,
 and the extra demo dependencies, which should be as simple as running ::
 
