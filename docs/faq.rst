@@ -34,7 +34,7 @@ How can I install *just* megastep?
 The default :ref:`install <install>` pulls in everything needed to run the demos and tutorials. If you want something
 minimal:
  
-..code-block:: shell 
+.. code-block:: sh 
 
     pip install megastep
 

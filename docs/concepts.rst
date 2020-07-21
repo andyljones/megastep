@@ -383,7 +383,32 @@ You can see the exact implementation in the :github:`physics definition of the k
 
 Plotting
 ========
-TODO-DOCS Plotting concept
+megastep itself isn't prescriptive about how environments are visualized, but here are some suggestions. 
+
+Implementing plotting megastep-style means implementing two methods. 
+
+First, there's a :meth:`~megastep.demo.envs.explorer.Explorer.state` method that returns one sub-environment's current
+state as a :ref:`dotdict <dotdicts>` of tensors. Then, there's a
+:meth:`~megastep.demo.envs.explorer.Explorer.plot_state` classmethod that takes a :func:`~rebar.arrdict.numpyify`'d
+version of that state and returns a `matplotlib <http://matplotlib.org/>`_ figure.
+
+The various :mod:`~rebar.modules` that are commonly used in constructing megastep environments often have their own
+``state`` and ``plot_state`` methods, which can make implementing the methods for your library as simple as calling the 
+module methods. See the :github:`the demo envs <megastep/demo/envs>` for examples.
+
+The reason for separating things into get-state and plot-state is that frequently getting the state is much, much faster
+than actually plotting it. By separating the two, the get-state can be done in the main process, and the plot-state 
+can be done in a pool of background processes. This makes recording videos of environments much faster, and there 
+are tools like :class:`~rebar.recording.ParallelEncoder` to help out with this.
+
+The reason for getting torch state but passing numpy state is because the state method turns out to be useful for
+lots of other small tasks, and if it returned numpy state directly it'd get in the way of those other things. It's also
+because initializing Pytorch in a process is pretty expensive and `burns about a gigabyte of GPU memory per process
+<https://github.com/pytorch/pytorch/issues/20532>`_. This can be lethal if you've got some memory-intensive training
+going on in the background.
+
+The reason for making the plot-state method a classmethod is so that the function can be passed to another process
+without dragging the large, complex object it's hanging off of with it.
 
 .. _decision-world:
 
