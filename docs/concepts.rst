@@ -326,7 +326,34 @@ As well as the lines and textures, there's also :attr:`~megastep.cuda.Scenery.ba
 
 Rendering
 =========
-TODO-DOCS Rendering concept
+Rendering in megastep is extremely simple. 
+
+When the :ref:`scenery` is first created, :func:`~megastep.cuda.bake` is called to pre-compute the lighting for
+all wall texels. Wall texels are the colours and patterns that are applied to the walls. They make up the vast
+majority of the texels in the world, so this baking step saves a lot of runtime. The downside is it means that
+megastep does not have any dynamic shadows.
+
+Then, each timestep :func:`~megastep.cuda.render` gets called. 
+
+The first thing it does is update the positions of the agent-model's :attr:`~megastep.cuda.Scenery.lines` to match the
+positions given in :class:`~megastep.cuda.Agents`.
+
+Next, it computes dynamic lighting for the agent texels of the world. Agent texels are the colours and patterns that
+are applied to the agent-models. There aren't many agent texels, so although this has to be done every timestep 
+(unlike the wall's baked lighting) it's fast. The results of the dynamic lighting are used to update the
+:attr:`~megastep.cuda.Scenery.baked` tensor, because I am bad at naming things.
+
+Then, each agent has a camera of a specified horizontal resolution and field of vision, and rays are cast from the camera
+through each pixel out into the world. These rays are compared against the scenery
+:attr:`~megastep.cuda.Scenery.lines`, and whichever line is closest to the camera along the ray is recorded. These
+'hits' give the :attr:`~megastep.cuda.Render.indices` and :attr:`~megastep.cuda.Render.locations` tensors. 
+
+Finally, these line indices and locations are used to index into the :attr:`~megastep.cuda.Scenery.textures` tensor 
+and lookup what the colour should be at that pixel. Linear interpolation is used when a hit falls between two texels,
+and after multiplying by the light intensity the result is returned in the :attr:`~megastep.cuda.Render.screen` tensor.
+
+When you visualize the screen tensor yourself, make sure to :func:`~megastep.core.gamma_encode` it, else the world
+will look suspiciously dark.
 
 .. _physics:
 

@@ -67,7 +67,7 @@ Or, you can simply browse the :github:`demos <megastep/demo/__init__.py>`.
 
 Support
 *******
-I am an independent developer, so just how much support I can give is limited. But you're absolutely welcome to `open
+I am an independent researcher, so just how much support I can give is limited. But you're absolutely welcome to `open
 a GitHub issue <https://github.com/andyljones/megastep/issues>`_ or `see if I'm around on
 Gitter <https://gitter.im/megastep-rl/community>`_. At the very least I'll try to point you in the right direction.
 

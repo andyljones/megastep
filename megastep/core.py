@@ -14,11 +14,11 @@ TEXTURE_RES = .05
 AGENT_RADIUS = 1/2**.5*AGENT_WIDTH
 
 def gamma_encode(x): 
-    """Converts to viewable values"""
+    """Converts RGB data to `viewable values <https://en.wikipedia.org/wiki/Gamma_correction>`_."""
     return x**(1/2.2)
 
 def gamma_decode(x):
-    """Converts to interpolatable values"""
+    """Converts RGB data to `interpolatable values <https://en.wikipedia.org/wiki/Gamma_correction>`_."""
     return x**2.2
 
 def _init_agents(n_envs, n_agents, device='cuda'):
