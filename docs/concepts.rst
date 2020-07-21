@@ -355,11 +355,29 @@ and after multiplying by the light intensity the result is returned in the :attr
 When you visualize the screen tensor yourself, make sure to :func:`~megastep.core.gamma_encode` it, else the world
 will look suspiciously dark.
 
+You can see the exact implementation in the :github:`render definition of the kernels file <megastep/src/kernels.cu>`.
+
 .. _physics:
 
 Physics
 =======
-TODO-DOCS Physics concept
+Physics in megastep is extremely simple.
+
+Typically an environment will set the :class:`~megastep.cuda.Agents` velocity tensors at each timestep. Then when 
+:func:`~megastep.cuda.physics` is called, the agent's position tensors are updated based on their velocities and 
+any collisions that happen.
+
+As far as collisions go, agents are modelled as discs slightly larger than their :ref:`models`. When a disc looks
+like its current velocity will take it through a wall - or another disc - in the current timestep, the point is found
+where the collision would happen, and the the agent's position is set to be a little short of that point.
+
+As well as setting the position, when any sort of collision happens the velocity of the agent is set to zero. Not very
+physical, but simple!
+
+The :func:`~megastep.cuda.physics` call returns a :class:`~megastep.cuda.Physics` object that can tell you whether a 
+collision occured.
+
+You can see the exact implementation in the :github:`physics definition of the kernels file <megastep/src/kernels.cu>`.
 
 .. _plotting:
 
