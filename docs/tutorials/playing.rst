@@ -56,6 +56,8 @@ textures to be all white. Check that it works with :func:`~megastep.scene.displa
     from megastep import scene
     scene.display(white)
 
+.. _changeobs:
+
 Change the Observations
 ***********************
 Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and replace the RGB observations 
@@ -118,17 +120,57 @@ increasing the number of agents, then resetting and displaying it::
     env.reset()
     env.display()
 
-Spaces Tasks
-************
-TODO-DOCS Spaces tasks
+Multiple Actions
+****************
+**Trickier**. Copy and paste the code for the :class:`~megastep.demo.envs.minimal.Minimal` env, and add a second set
+of actions in parallel to the movement actions that cause the agent to respawn at a random location. Multiple actions
+are not used in either of the examples, so to point you in the right direction, you want your action space to look
+like this::
 
-Agent Tasks
-***********
-TODO-DOCS Agent tasks
+    self.action_space = dotdict.dotdict(
+        movement=self.movement.space,
+        respawn=spaces.MultiDiscrete(self.n_agents, 2))
 
-Training Tasks
+Check it works by running it through the demo recorder::
+
+    from megastep.demo import *
+    env = AlteredMinimal()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64)     
+
+Custom Agents
+*************
+**Trickier**. The default :class:`~megastep.demo.Agent` in the demo class uses a neural net to control things. Rewrite
+it to go forward while it's more than 2m away from the nearest object in its field of vision, and to go backward when
+it's less than 1m away.
+
+Test it out on :class:`~megastep.demo.envs.explorer.Explorer` env, which has a depth observation by default. You 
+may want to have a look through the source for the :class:`~megastep.modules.Depth` module to understand how depth is
+perceived.
+
+Check it works by running it through the demo recorder::
+
+    from megastep.demo import *
+    env = Explorer()
+    agent = Agent(env).cuda()
+    demo(env=env, agent=agent, length=64)    
+
+Watch It Learn
 **************
-TODO-DOCS Training tasks
+**Trickiest**. The default demo has a :func:`~megastep.demo.train` func that'll train an exploration agent in ~ten 
+minutes on a RTX 2080 TI. Check that it works. You can view how training is progressing by opening a second notebook 
+and, after training has begun, running ::
+
+    from rebar import plots; 
+    plots.view()
+
+This is using my entirely undocumented :mod:`~megastep.rebar` toolkit, which is why I've marked it as trickiest. You 
+can watch demos as the agent learns by running ::
+
+    from megastep.demo import *
+    demo(run=-1, length=64)
+
+It'll start off moving randomly, but as the reward improves it'll get obviously better.
 
 .. _playing-resources:
 
