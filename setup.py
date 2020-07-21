@@ -5,12 +5,13 @@ from setuptools import find_packages
 
 setup(
     name='megastep',
-    version='0.2.2',
+    version='0.2.3',
     description='Helps build million-frame-per-second reinforcement learning environments',
     author='Andy Jones',
     author_email='andyjones.ed@gmail.com',
     url='http://andyljones.com/megastep',
     packages=find_packages(include=['megastep*', 'rebar*']),
+    python_requires='>=3.6',
     install_requires=[
         'numpy>=1.18',
         'torch>=1.5',

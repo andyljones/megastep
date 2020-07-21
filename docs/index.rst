@@ -38,7 +38,7 @@ Features
 
 Install
 *******
-If you're working on an Ubuntu machine with CUDA already set up, it should be as simple as
+If you're working on an Ubuntu machine with CUDA already set up and Python 3.6 or higher, it should be as simple as
 
 .. code-block:: shell
 
