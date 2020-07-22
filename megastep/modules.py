@@ -156,8 +156,7 @@ class Depth:
         :param subsample: How many horizontal pixels to average when generating the observations. For example, if the 
             core is rendering at 256 pixels and ``subsample`` is 4, then 64-pixel observations will be returned. 
             A higher subsampling rate makes for slower rendering, but smoother observations. 
-        :param max_depth: The depth observations run from 1 at the near clipping plane (set by
-            :attr:`~megastep.core.AGENT_RADIUS`) to 0 at ``max_depth``. Given in meters.
+        :param max_depth: The maximum depth, corresponding to a zero in the observation. Given in meters.
 
         :var space: The :ref:`observation space <spaces>` to present to the controlling network.
         :var max_depth: The value of the ``max_depth`` parameter.
@@ -173,35 +172,67 @@ class Depth:
         """Generates a depth observation. 
 
         This means calling :func:`~megastep.cuda.render` (if ``r`` isn't passed), then using it to create and return a
-        (n_env, n_agent, 1, res)-tensor of values between 0 and 1.
+        depth tensor of values between 0 and 1. The values interpolate linearly between one at the near clipping plane
+        (given by :attr:`megastep.core.AGENT_RADIUS`) and zero at ``max_depth``.
 
+        :param r: The output of :func:`render`. :func:`render` will be called if this isn't passed.
+            It's useful to pass ``r`` if you're doing other things with the render output.
+        :return: A (n_env, n_agent, 1, res)-tensor of values between 0 and 1.
         """
         r = render(self.core) if r is None else r
         depth = ((r.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
         self._last_obs = downsample(depth, self.subsample).mean(-1).unsqueeze(3)
         return self._last_obs
     
-    def state(self, e):
+    def state(self, e=0):
+        """The state of the module in sub-env ``e``, which is to say its last observation for ``e``. Useful in
+        :ref:`plotting <plotting>`"""
         return self._last_obs[e].clone()
 
 class RGB:
 
     def __init__(self, core, n_agents=None, subsample=1):
+        """Generates RGB observations.
+        
+        :param core: The :class:`~megastep.core.Core` used by the environment.
+        :param n_agents: The number of agents to generate observations for. This is usually taken from the core; it can be usefully
+            overridden in :ref:`multiagent environments <deathmatch-env>`.
+        :param subsample: How many horizontal pixels to average when generating the observations. For example, if the 
+            core is rendering at 256 pixels and ``subsample`` is 4, then 64-pixel observations will be returned. 
+            A higher subsampling rate makes for slower rendering, but smoother observations. 
+
+        :var space: The :ref:`observation space <spaces>` to present to the controlling network.
+        :var subsample: The value of the ``subsample`` parameter.
+        """
         n_agents = n_agents or core.n_agents
         self.core = core
         self.space = spaces.MultiImage(n_agents, 3, 1, core.res//subsample)
         self.subsample = subsample
 
     def __call__(self, r=None):
+        """Generates a depth observation. 
+
+        This means calling :func:`~megastep.cuda.render` (if ``r`` isn't passed), then using it to create and return a
+        RGB tensor. The RGB tensor needs :func:`~megastep.core.gamma_encode`'ing if you want to plot it.
+
+        :param r: The output of :func:`render`. :func:`render` will be called if this isn't passed.
+            It's useful to pass ``r`` if you're doing other things with the render output.
+        :return: A (n_env, n_agent, 3, 1, res)-tensor of values between 0 and 1.
+        """
+
         r = render(self.core) if r is None else r
         self._last_obs = downsample(r.screen, self.subsample).mean(-1)
         return self._last_obs
     
-    def state(self, e):
+    def state(self, e=0):
+        """The state of the module in sub-env ``e``, which is to say its last observation for ``e``. Useful in
+        :ref:`plotting <plotting>`"""
         return self._last_obs[e].clone()
 
     @classmethod
     def plot_state(cls, state, axes=None):
+        """Plots the state of this module using imshow. Make sure to :func:`~rebar.arrdict.numpyify` the state 
+        before passing it here. Useful in :ref:`plotting <plotting>`."""
         n_agents = state.shape[0]
         axes = plt.subplots(n_agents, 1, squeeze=False) if axes is None else axes
         plotting.plot_images({'rgb': state}, axes)
@@ -209,14 +240,26 @@ class RGB:
 
 class IMU:
 
-    def __init__(self, core, n_agents=None):
+    def __init__(self, core, speed_scale=10., ang_scale=360., n_agents=None,):
+        """Generate a linear-and-angular-velocity measurement. Kinda like a `inertial measurement unit
+        <https://en.wikipedia.org/wiki/Inertial_measurement_unit>`_.
+
+        :param core: The :class:`~megastep.core.Core` used by the environment.
+        :param n_agents: The number of agents to generate observations for. This is usually taken from the core; it can be usefully
+            overridden in :ref:`multiagent environments <deathmatch-env>`.
+        :param speed_scale: The scale of speeds to use, with this value corresponding to an observation of 1. Given in meters per second.
+        :param ang_scale: The scale of angular speeds to use, with this value corresponding to an observation of 1. Given in degrees.
+
+        """
         self.core = core
         self.space = spaces.MultiVector(n_agents or core.n_agents, 3)
+        self.speed_scale = speed_scale
+        self.ang_scale = ang_scale
 
     def __call__(self):
         return torch.cat([
-            self.core.agents.angvelocity[..., None]/360.,
-            to_local_frame(self.core.agents.angles, self.core.agents.velocity)/10.], -1)
+            self.core.agents.angvelocity[..., None]/self.ang_scale,
+            to_local_frame(self.core.agents.angles, self.core.agents.velocity)/self.speed_scale], -1)
 
 def random_empty_positions(geometries, n_agents, n_points):
     points = []
