@@ -410,14 +410,49 @@ going on in the background.
 The reason for making the plot-state method a classmethod is so that the function can be passed to another process
 without dragging the large, complex object it's hanging off of with it.
 
+.. _models:
+
+Models
+======
+Models are the set of lines that are used to represent agents in the world. Right now there can only be one model 
+that's shared by all agents, though each agent's texture can be different. The model is defined by the 
+:attr:`~megastep.cuda.Scenery.model` tensor, and when you call :func:`~megastep.cuda.render` the model is translated
+and rotated into the :attr:`~megastep.cuda.Scenery.lines`. 
+
+Right now there's a bit of bad coding where the radius of the disc used for physics calculations and for the near 
+clipping plane is hard-coded as :attr:`~megastep.core.AGENT_RADIUS`. If you decide to alter the model, make sure to
+alter this too.
+
+TODO: Derive the AGENT_RADIUS from the model as necessary
+
+.. _subpackages:
+
+Subpackages
+===========
+There are several roughly independent pieces of code in megastep.
+
+Firstly there's megastep itself. This is the environment development library, with its CUDA kernels and modules 
+and raggeds.
+
+Then there's :mod:`~megastep.cubicasa`, which is a database of 5000 floorplans. The cubicasa module while small in
+and of itself, requires some hefty geospatial dependencies. It uses these to cut the original floorplan SVGs into
+pieces and reassemble them as arrays that are useful for reinforcement learning research. It's offered as an extra
+install because many users might want to avoid installing all those dependencies.
+
+Finally there's :mod:`~rebar`. rebar is my - Andy Jones's - personal reinforcement learning toolbox. While the bits
+of it that megastep depend on are stable and well-documented, the rest of it is not. That it's still in the megastep
+repo is a bit of a historical artefact. One of my next tasks after getting megastep sorted is to get rebar equally
+well documented and tested, and then probably carve the unstable bits out into their own repo and package.
+
 .. _decision-world:
 
 Decision & World
 ================
-megastep isn't prescriptive about how you handle actions and observations, but here are some suggestions.
+megastep isn't prescriptive about how you hook your agent up to your environment, but here are some ideas that 
+influence how the :github:`demo envs <megastep/demo/__init__.py>` were written. 
 
-The :github:`demo envs <megastep/demo/envs>`'s step methods all take ``decision`` objects and return ``world`` 
-objects. 
+The demo envs's step methods depart from the :ref:`OpenAI Gym API <openai-gym>` in that they all take ``decision``
+objects and return ``world`` objects.
 
 ``decision`` objects are :ref:`arrdicts <dotdicts>` with an ``actions`` key. The ``actions`` value should correspond
 to the environment's :ref:`action space <spaces>`. For example, suppose the environment has one sub-environment and
@@ -457,37 +492,50 @@ All together, the experience collection loop will typically look like this::
 If you're still confused, take a look at the :ref:`minimal env tutorial <minimal-env>` or the :github:`demo envs
 <megastep/demo/__init__.py>`.
 
-
-.. _models:
-
-Models
-======
-TODO-DOCS Models concept
-
-.. _subpackages:
-
-Subpackages
-===========
-There are several roughly independent pieces of code in megastep.
-
-Firstly there's megastep itself. This is the environment development library, with its CUDA kernels and modules 
-and raggeds.
-
-Then there's :mod:`~megastep.cubicasa`, which is a database of 5000 floorplans. The cubicasa module while small in
-and of itself, requires some hefty geospatial dependencies. It uses these to cut the original floorplan SVGs into
-pieces and reassemble them as arrays that are useful for reinforcement learning research. It's offered as an extra
-install because many users might want to avoid installing all those dependencies.
-
-Finally there's :mod:`~rebar`. rebar is my - Andy Jones's - personal reinforcement learning toolbox. While the bits
-of it that megastep depend on are stable and well-documented, the rest of it is not. That it's still in the megastep
-repo is a bit of a historical artefact. One of my next tasks after getting megastep sorted is to get rebar equally
-well documented and tested, and then probably carve the unstable bits out into their own repo and package.
-
 .. _spaces:
 
 Spaces & Heads
 ==============
-TODO-DOCS Spaces and heads concept
+megastep isn't prescriptive about how you hook your agent up to your environment, but here are some ideas that 
+influence how the :github:`demo envs <megastep/demo/__init__.py>` were written. 
+
+Often when you're playing with environments, you're not interested in the environment in isolation. Instead, you're 
+interested in how changing bits of the environment changes how agents train on that environment. Two of the most 
+common ways to change the environment are changing the observations and changing the actions.
+
+Something you'll find frequently frustrating if you do this regularly is that every time you change the observations
+or actions, you have to change the architecture of your agent. Thing is, how you change the agent is pretty mechanical:
+when you change the observations, you change the input layers, and when you change the actions, you change the output 
+layers.
+
+As such, the demo envs declare their observations and actions using dicts of :mod:`~megastep.spaces`. The spaces are 
+little more than containers for the expected shape of the observations or actions. Most of their actual value comes 
+from :mod:`~megastep.demo.heads`. 
+
+*Intake heads* like :class:`~megastep.demo.heads.MultiImage` take some sort of input described by an input space and
+output a vector of a fixed *width*. In particular, there is a :class:`~megastep.demo.heads.ConcatIntake` that
+concatenates the vectors of multiple other heads and outputs a vector of a fixed width. Together these mean you can
+offer up a :ref:`dotdict <dotdicts>` of spaces as your observation space on your environment, and by writing your
+input layer in your agent as ::
+
+    intake = spaces.intake(env.observation_space) 
+
+you get a ``intake`` module that will take observations from the environment - whatever those observations turn out
+to be - and outputs a vector of fixed width that's suitable for passing into some fully-connected or LSTM or
+transformer core.
+
+*Output heads* like :class:`~megastep.demo.heads.MultiDiscrete` do the converse: they take a vector of a fixed width
+and output something that conforms to what the action space describes. Again, there's a
+:class:`~megastep.demo.heads.DictOutput` that takes a vector of fixed width and outputs a vector of fixed width for 
+each subsidiary action space. Writing your output layer as ::
+
+    output = spaces.output(env.action_space)
+
+you get a ``output`` module that will take a vector from your fully-connected/LSTM/transformer core and outputs 
+things suitable for your environment to consume.
+
+Exactly how you convert spaces into network layers is up to you. The setup in :mod:`~megastep.demo.heads`  suggests
+one layout, but it's entirely personal taste.
 
 .. _patterns:
 
