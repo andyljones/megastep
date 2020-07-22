@@ -179,7 +179,7 @@ class Depth:
         :return: A (n_env, n_agent, 1, res)-tensor of values between 0 and 1.
         """
         r = render(self.core) if r is None else r
-        depth = ((r.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
+        depth = 1 - ((r.distances - self.core.agent_radius)/self.max_depth).clamp(0, 1)
         self._last_obs = downsample(depth, self.subsample).mean(-1).unsqueeze(3)
         return self._last_obs
     
