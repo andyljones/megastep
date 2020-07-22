@@ -275,7 +275,7 @@ def random_empty_positions(geometries, n_agents, n_points):
     The returned tensor is a (n_geometries, n_agents, n_points, 2)-float tensor, with the coordinates given in meters.
 
     This is typcially used when you want to randomly move an agent to a new place, but *finding* an empty point at 
-    each timestep is too expensive. So instead this is used to generate ``n_points` empty points in advance, and then
+    each timestep is too expensive. So instead this is used to generate ``n_points`` empty points in advance, and then
     when you need one you can choose from the pre-generated options.
     """ 
     points = []
