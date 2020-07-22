@@ -1,5 +1,4 @@
-"""
-:mod:`megastep.modules` are chunks of functionality that often turn up in megastep environments. 
+""":mod:`megastep.modules` are chunks of functionality that often turn up in megastep environments. 
 """ 
 
 import numpy as np
@@ -247,9 +246,14 @@ class IMU:
         :param core: The :class:`~megastep.core.Core` used by the environment.
         :param n_agents: The number of agents to generate observations for. This is usually taken from the core; it can be usefully
             overridden in :ref:`multiagent environments <deathmatch-env>`.
-        :param speed_scale: The scale of speeds to use, with this value corresponding to an observation of 1. Given in meters per second.
-        :param ang_scale: The scale of angular speeds to use, with this value corresponding to an observation of 1. Given in degrees.
+        :param speed_scale: The scale of speeds to use, with this value corresponding to an observation of 1. Given
+            in meters per second.
+        :param ang_scale: The scale of angular speeds to use, with this value corresponding to an observation of 1.
+            Given in degrees per second.
 
+        :var space: The :ref:`observation space <spaces>` to present to the controlling network.
+        :var speed_scale: The value of the ``speed_scale`` parameter.
+        :var ang_scale: The value of the ``ang_scale`` parameter.
         """
         self.core = core
         self.space = spaces.MultiVector(n_agents or core.n_agents, 3)
@@ -257,11 +261,23 @@ class IMU:
         self.ang_scale = ang_scale
 
     def __call__(self):
+        """Returns an IMU observation, which is to say a (n_env, n_agent, 3)-float tensor. The values along the final
+        dimension are (angular_velocity, medial_velocity, lateral_velocity), with the ``angular_velocity`` scaled by 
+        ``ang_scale`` and the linear velocities scaled by ``speed_scale``. 
+        """ 
         return torch.cat([
             self.core.agents.angvelocity[..., None]/self.ang_scale,
             to_local_frame(self.core.agents.angles, self.core.agents.velocity)/self.speed_scale], -1)
 
 def random_empty_positions(geometries, n_agents, n_points):
+    """Returns a tensor of randomly-selected empty points in each :ref:`geometry <geometry>`.
+    
+    The returned tensor is a (n_geometries, n_agents, n_points, 2)-float tensor, with the coordinates given in meters.
+
+    This is typcially used when you want to randomly move an agent to a new place, but *finding* an empty point at 
+    each timestep is too expensive. So instead this is used to generate ``n_points` empty points in advance, and then
+    when you need one you can choose from the pre-generated options.
+    """ 
     points = []
     for g in geometries:
         sample = np.stack((g.masks > 0).nonzero(), -1)
@@ -278,7 +294,15 @@ def random_empty_positions(geometries, n_agents, n_points):
         
 class RandomSpawns:
 
-    def __init__(self, geometries, core, *args, n_spawns=100, **kwargs):
+    def __init__(self, geometries, core, n_spawns=100):
+        """Respawns agents to random empty locations in the geometry.
+
+        :param geometries: The :ref:`geometry <geometry>` to use when calculating the spawn locations. Should be a list
+            with one for each environment.
+        :param core: The :class:`~megastep.core.Core` used by the environment.
+        :param n_spawns: The number of spawns to choose between for each agent. This is precomputed when the class 
+            is created, so that the respawns themselves are fast.
+        """
         self.core = core
 
         positions = random_empty_positions(geometries, core.n_agents, n_spawns)
@@ -286,6 +310,13 @@ class RandomSpawns:
         self._spawns = arrdict.torchify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):
+        """Respawns the specified agents at random empty points.
+
+        Respawned agents have their velocities zeroed.
+
+        :param reset: A (n_env, n_agent) mask indicating which agents to reset. Trues will be reset; Falses will be
+            left as is.
+        """
         core = self.core
         required = reset.nonzero(as_tuple=True)
         choices = torch.randint_like(required[0], 0, self._spawns.angles.shape[1])
@@ -294,19 +325,57 @@ class RandomSpawns:
         core.agents.velocity[required] = 0.
         core.agents.angvelocity[required] = 0.
 
-class RandomLengths:
+class RandomLifespans:
 
-    def __init__(self, core, max_length=512, min_length=None):
-        min_length = max_length//2 if min_length is None else min_length
-        self._max_lengths = torch.randint(min_length, max_length, (core.n_envs,), dtype=torch.int, device=core.device)
-        self._lengths = torch.zeros_like(self._max_lengths)
-    
+    def __init__(self, core, max_lifespan, min_lifespan=None):
+        """Tracks how many steps each agent has been alive for, and indicates when they exceed a randomly-chosen
+        lifespan.
+
+        Lifespans are chosen randomly between ``min_lifespan`` and ``max_lifespan`` and re-rolled after each reset.
+        This is useful when you want otherwise 'synchronous' environments to 'mix' so that you get a random
+        distribution of behaviour in each batch, rather than one batch full of 'early life experience' and another of
+        'late life experience'.
+        
+        :param core: The :class:`~megastep.core.Core` used by the environment.
+        :param max_lifespan: The maximum lifespan.
+        :type max_lifespan: int
+        :param min_lifespan: The minimum lifespan; defaults to half of ``max_lifespan``.
+        :type min_lifespan: int
+
+        :var max_lifespan: Value of the ``max_lifespan`` parameter.
+        :var min_lifespan: Value of the ``min_lifespan`` parameter.
+
+        TODO: Test this now you've rewritten it.
+        """
+        min_lifespan = max_lifespan//2 if min_lifespan is None else min_lifespan
+        self.min_lifespan = min_lifespan
+        self.max_lifespan = max_lifespan
+        self._max_lifespans = torch.zeros((core.n_envs, core.n_agents), dtype=torch.int, device=core.device)
+        self._lifespans = torch.zeros_like(self._max_lifespans)
+        self._reset(core.agent_full(True))
+
+    def _reset(self, reset):
+        self._lifespans[reset] = 0
+        self._max_lifespans[reset] = torch.randint_like(self._max_lifespans, self.min_lifespan, self.max_lifespan)
+
     def __call__(self, reset=None):
-        self._lengths += 1
-        reset = torch.zeros_like(self._lengths, dtype=torch.bool) if reset is None else reset
-        reset = (self._lengths >= self._max_lengths) | reset
-        self._lengths[reset] = 0
+        """Returns a tensor indicating which agents have outlived their randomly-generated lifespans.
+
+        Every time this is called, an agent's time-lived is incremented by one. When it exceeds its max lifespan, 
+        the returned mask will indicate this has happened, the time lived will be reset to zero, and the max 
+        lifespan for that agent will be re-rolled.
+
+        :param reset: An optional (n_env, n_agent)-bool tensor indicating which agents have been reset for other reasons.
+            These agents will have their lifespans reset and max lifespans regenerated.
+        :returns: An (n_env, n_agent)-bool tensor of which agents have exceeded their lifespan and should be reset.
+        """
+        self._lifespans += 1
+        reset = torch.zeros_like(self._lifespans, dtype=torch.bool) if reset is None else reset
+        reset = (self._lifespans >= self._max_lifespans) | reset
+        self._reset(reset)
         return reset
 
-    def state(self, d):
-        return arrdict.arrdict(length=self._lengths[d], max_length=self._max_lengths[d]).clone()
+    def state(self, e):
+        """Returns the state of this module on sub-env ``e``. The state is a :ref:`arrdict <dotdicts>` of 
+        the agents' lifespans and max lifespans as (n_agent,)-tensors."""
+        return arrdict.arrdict(lifespan=self._lifespans[e], max_lifespans=self._max_lifespans[e]).clone()
