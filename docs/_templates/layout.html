@@ -1,13 +1,23 @@
 {% extends "!layout.html" %}
 
 {% block extrahead %}
-    <!-- Tracking pageviews is really useful to me to see what kind of stuff
-    I've done is useful to people. But I'm keen to not to track any more than
-    that, and so this is a minimal solution. It's a self-hosted matomo tracking
-    pixel with IP anonymization and no-tracking-preference compliance. It gives
-    me no more information than the server logs would, if I could actually
-    access github-pages' server logs. Your data will not be shared with anyone,
-    and I will be the only person to ever look at the stats. -->
-	<img src="live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
 {{ super() }}
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
 {% endblock %}
