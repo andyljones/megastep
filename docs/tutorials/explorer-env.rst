@@ -1,8 +1,12 @@
+.. raw:: html
+
+    <bold><span style="color: red">This tutorial is incomplete</span></bold>
+
 .. _explorer-env:
 
-===============
-An Explorer Env
-===============
+============================
+An Explorer Env (Incomplete)
+============================
 
 In this tutorial we're going to take :ref:`the minimal environment we studied earlier <minimal-env>` and build it into
 the :class:`~megastep.demo.envs.explorer.Explorer` environment. 

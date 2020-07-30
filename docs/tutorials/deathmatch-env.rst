@@ -1,8 +1,12 @@
+.. raw:: html
+
+    <bold><span style="color: red">This tutorial is incomplete</span></bold>
+
 .. _deathmatch-env:
 
-================
-A Deathmatch Env
-================
+=============================
+A Deathmatch Env (Incomplete)
+=============================
 
 In this tutorial we're going to take what we learned in the :ref:`explorer env tutorial <explorer-env>` and build a
 the :class:`~megastep.demo.envs.deathmatch.Deathmatch` environment. 

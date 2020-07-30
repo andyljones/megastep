@@ -1,8 +1,16 @@
+.. raw:: html
+
+    <bold><span style="color: red">This tutorial is incomplete</span></bold>
+
 .. _tutorial-kernels:
 
-==============
-Custom Kernels
-==============
+===========================
+Custom Kernels (Incomplete)
+===========================
+
+This tutorial is first going to discuss compiling C++ into a Python module. Then we're going to talk about using C++
+to do PyTorch computations, and then we're going to discuss using CUDA to do PyTorch computations.
+
 In most any program you care to write, a small part of the code will make up the overwhelming majority of the runtime.
 The idea behind megastep is that you can write *almost* all of your environment in PyTorch, and then write the small,
 majority-of-the-runtime bit in CUDA. 
@@ -16,9 +24,6 @@ There is not much in this tutorial that isn't in `the official PyTorch extension
 <https://pytorch.org/tutorials/advanced/cpp_extension.html#writing-the-c-op>`_. If you find yourself confused about 
 something written here, you can get another perspective on it there. However that tutorial spends a lot of time 
 discussing things like gradients that aren't as interesting to us.
-
-At a high level, this tutorial is first going to discuss compiling C++ into a Python module. Then we're going to
-talk about using C++ to do pytorch computations, and then we're going to discuss using CUDA to do pytorch computations. 
 
 Prerequesites
 *************
