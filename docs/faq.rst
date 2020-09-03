@@ -62,7 +62,7 @@ Where might this go in future?
 There are many directions that I could plausibly take this project in, but the combination of `The Bitter
 Lesson <http://incompleteideas.net/IncIdeas/BitterLesson.html>`_, `Scaling Laws for Natural Language
 Models <https://arxiv.org/pdf/2001.08361.pdf>`_ and `GPT-3 <https://arxiv.org/abs/2005.14165>`_ have convinced me that I
-should aim my efforts at the compute side of things rather than the simulation side of things.
+should aim my efforts elsewhere.
 
 That's me though! If you're interested in taking megastep forward, here are some research directions I had queued up:
  * Add better physics. Right now the physics is that there are dynamic circles and static lines, and if two objects
