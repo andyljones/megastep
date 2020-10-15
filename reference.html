@@ -1,0 +1,1675 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="FAQ" href="faq.html" />
+
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#megastep">megastep</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.core">core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.cuda">cuda</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.cubicasa">cubicasa</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.geometry">geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.modules">modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.plotting">plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.ragged">ragged</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.scene">scene</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.spaces">spaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.toys">toys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-megastep.demo">demo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.heads">heads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.learning">learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.lstm">lstm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#demo-envs">demo.envs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.envs.minimal">minimal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.envs.deathmatch">deathmatch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-megastep.demo.envs.explorer">explorer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-rebar">rebar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-rebar.arrdict">arrdict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-rebar.dotdict">dotdict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-rebar.recording">recording</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="faq.html" title="previous chapter">FAQ</a></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="api-reference">
+<span id="api"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="megastep">
+<h2>megastep<a class="headerlink" href="#megastep" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-megastep.core">
+<span id="core"></span><h3>core<a class="headerlink" href="#module-megastep.core" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="megastep.core.gamma_encode">
+<code class="sig-prename descclassname">megastep.core.</code><code class="sig-name descname">gamma_encode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.gamma_encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts RGB data to <a class="reference external" href="https://en.wikipedia.org/wiki/Gamma_correction">viewable values</a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.core.gamma_decode">
+<code class="sig-prename descclassname">megastep.core.</code><code class="sig-name descname">gamma_decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.gamma_decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts RGB data to <a class="reference external" href="https://en.wikipedia.org/wiki/Gamma_correction">interpolatable values</a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.core.Core">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.core.</code><code class="sig-name descname">Core</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span></em>, <em class="sig-param"><span class="n">res</span><span class="o">=</span><span class="default_value">64</span></em>, <em class="sig-param"><span class="n">fov</span><span class="o">=</span><span class="default_value">130</span></em>, <em class="sig-param"><span class="n">fps</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.Core" title="Permalink to this definition">¶</a></dt>
+<dd><p>The core rendering and physics interface.</p>
+<p>To create the Core, you pass a <a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a> that describes the environment. Once created, 
+the tensors hanging off of the Core give the state of the world, and that state can be advanced with the 
+functions in <a class="reference internal" href="#module-megastep.cuda" title="megastep.cuda"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cuda</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>agents</strong> – A <a class="reference internal" href="#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a> object describing the agents.</p></li>
+<li><p><a class="reference internal" href="#megastep.scene.scenery" title="megastep.scene.scenery"><strong>scenery</strong></a> – A <a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a> object describing the scene.</p></li>
+<li><p><strong>progress</strong> – A (n_env, n_agent)-tensor giving how far the agent was able to move in the previous timestep as a 
+fraction of its intended movement, before running into an obstable. A value less than 1 means the agent collided
+with something. Useful for detecting collisions.</p></li>
+<li><p><strong>n_envs</strong> – Number of environments. Same as the number of geometries passed in.</p></li>
+<li><p><a class="reference internal" href="#megastep.cuda.Scenery.n_agents" title="megastep.cuda.Scenery.n_agents"><strong>n_agents</strong></a> – Number of agents.</p></li>
+<li><p><strong>res</strong> – The horizontal resolution of observations.</p></li>
+<li><p><strong>fov</strong> – The field of view in degrees.</p></li>
+<li><p><strong>agent_radius</strong> – The radius of a disc containing the agent, in meters.</p></li>
+<li><p><strong>fps</strong> – The framerate.</p></li>
+<li><p><strong>random</strong> – The seeded <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.random.RandomState</span></code> used to initialize the environment. By reusing this
+in any extra random decisions made when generating the environments, it can be guaranteed you’ll get the same
+environments every time.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>scenery</strong> (<a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a>.) – Describes the static parts of the environment.</p></li>
+<li><p><strong>n_agents</strong> (<em>int</em>) – the number of agents to put in each environment. Defaults to 1.</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – The horizontal resolution of the observations. The resolution must be less than 1024, as
+that’s the <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities">maximum number of CUDA threads in a block</a>. Defaults to 64
+pixels.</p></li>
+<li><p><strong>fov</strong> – The field of view in degrees. Must be less than 180° due to how frames are rendered. Defaults to 130°.</p></li>
+<li><p><strong>fps</strong> (<em>int</em>) – The simulation frame rate/step rate. Defaults to 10.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="megastep.core.Core.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.Core.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a <a class="reference internal" href="#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a> tree representing the state of environment <code class="docutils literal notranslate"><span class="pre">e</span></code>.</p>
+<p>A typical state looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">arrdict</span><span class="p">:</span>
+<span class="n">n_envs</span>          <span class="mi">1</span>
+<span class="n">n_agents</span>        <span class="mi">4</span>
+<span class="n">res</span>             <span class="mi">512</span>
+<span class="n">fov</span>             <span class="mi">60</span>
+<span class="n">agent_radius</span>    <span class="mf">0.10606601717798211</span>
+<span class="n">fps</span>             <span class="mi">10</span>
+<span class="n">scenery</span>           <span class="n">arrdict</span><span class="p">:</span>
+                <span class="n">model</span>       <span class="n">Tensor</span><span class="p">((</span><span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">lines</span>       <span class="n">Tensor</span><span class="p">((</span><span class="mi">307</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">lights</span>      <span class="n">Tensor</span><span class="p">((</span><span class="mi">21</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">textures</span>    <span class="o">&lt;</span><span class="n">megastepcuda</span><span class="o">.</span><span class="n">Ragged2D</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fba34112eb0</span><span class="o">&gt;</span>
+                <span class="n">baked</span>       <span class="o">&lt;</span><span class="n">megastepcuda</span><span class="o">.</span><span class="n">Ragged1D</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fba34112670</span><span class="o">&gt;</span>
+<span class="n">agents</span>          <span class="n">arrdict</span><span class="p">:</span>
+                <span class="n">angles</span>       <span class="n">Tensor</span><span class="p">((</span><span class="mi">4</span><span class="p">,),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                <span class="n">positions</span>    <span class="n">Tensor</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">progress</span>        <span class="n">Tensor</span><span class="p">((</span><span class="mi">4</span><span class="p">,),</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This state tree is usually passed onto a <a class="reference internal" href="concepts.html#plotting"><span class="std std-ref">Plotting</span></a> function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.core.Core.plot_state">
+<em class="property">classmethod </em><code class="sig-name descname">plot_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">zoom</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.Core.plot_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.core.Core.env_full">
+<code class="sig-name descname">env_full</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.Core.env_full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (n_envs,)-tensor on the environment’s device full of <cite>x</cite>.</p>
+<p>This isn’t strictly required by the Core, but you find yourself making these vectors so often it’s useful sugar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.core.Core.agent_full">
+<code class="sig-name descname">agent_full</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/core.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.core.Core.agent_full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (n_envs, n_agents)-tensor on the environment’s device full of <cite>x</cite>.</p>
+<p>This isn’t strictly required by the Core, but you find yourself making these vectors so often it’s useful sugar.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.cuda">
+<span id="cuda"></span><h3>cuda<a class="headerlink" href="#module-megastep.cuda" title="Permalink to this headline">¶</a></h3>
+<p>This module contains all the rendering and physics CUDA kernels, and intended to operate on the state tensors held
+by <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a>.</p>
+<p><strong>Internals</strong></p>
+<p>This module is dynamically compiled upon import of <code class="xref py py-mod docutils literal notranslate"><span class="pre">megastep</span></code> by <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/__init__.py">_cuda()</a>.</p>
+<p>The best explanation of how the bridge between CUDA and Python works is the <a class="reference external" href="https://pytorch.org/tutorials/advanced/cpp_extension.html">PyTorch
+C++ extension tutorial</a> .</p>
+<p>In short though, this is a <a class="reference external" href="https://pybind11.readthedocs.io/">PyBind</a> module. You can find the PyBind
+wrappers in <code class="docutils literal notranslate"><span class="pre">wrappers.cpp</span></code>, and the actual code they call into in <code class="docutils literal notranslate"><span class="pre">common.h</span></code> and <code class="docutils literal notranslate"><span class="pre">kernels.cu</span></code>.</p>
+<p>I have very limited experience with distributing binaries, so while I’ve _tried_ to reference the library
+paths in a platform-independent way, there is a good chance they’ll turn out to be dependent after all.
+Submit an issue and explain a better way to me!</p>
+<p>The libraries listed are - I believe - the minimal possible to allow megastep’s compilation. The default
+library set for PyTorch extensions is much larger and slower to compile.</p>
+<dl class="py function">
+<dt id="megastep.cuda.initialize">
+<code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">initialize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">agent_radius</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">res</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">fov</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">fps</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the CUDA kernels by setting some global constants. The constants are then used by 
+<a class="reference internal" href="#megastep.cuda.bake" title="megastep.cuda.bake"><code class="xref py py-func docutils literal notranslate"><span class="pre">bake()</span></code></a>, <a class="reference internal" href="#megastep.cuda.physics" title="megastep.cuda.physics"><code class="xref py py-func docutils literal notranslate"><span class="pre">physics()</span></code></a> and <a class="reference internal" href="#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a>.</p>
+<p>Really, the existance of these constants is an indicator the whole CUDA side of things should be wrapped up
+in a class. But that’d make things a bit messier, and it’s a rare use-case that’ll have them set to different
+values in the same process.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.cuda.bake">
+<code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">bake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span><span class="p">:</span> <span class="n">Scenery</span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.bake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-computes the lighting for the static geometry, updating the <a class="reference internal" href="#megastep.cuda.Scenery.baked" title="megastep.cuda.Scenery.baked"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Scenery.baked</span></code></a> tensor.</p>
+<p>For more details on how this works, see the <a class="reference internal" href="concepts.html#rendering"><span class="std std-ref">rendering</span></a> section.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scenery</strong> (<a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a>) – The scenery to compute the lighting for</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.cuda.physics">
+<code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">physics</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span><span class="p">:</span> <span class="n">Scenery</span></em>, <em class="sig-param"><span class="n">agents</span><span class="p">:</span> <span class="n">Agents</span></em><span class="sig-paren">)</span> &#x2192; Physics<a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.physics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Advances the physics simulation, updating the <a class="reference internal" href="#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Agents</span></code></a>’s movement tensors based on their velocity 
+and possible collisions. It also returns the <code class="docutils literal notranslate"><span class="pre">progress</span></code> tensor with how far the agents moved before
+colliding with something.</p>
+<p>For more details on how this works, see the <a class="reference internal" href="concepts.html#physics"><span class="std std-ref">physics</span></a> section.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scenery</strong> (<a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a>) – The scenery to reference when updating the agents</p></li>
+<li><p><strong>agents</strong> (<a class="reference internal" href="#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a>) – The agents to update the movement of</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.cuda.render">
+<code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span><span class="p">:</span> <span class="n">Scenery</span></em>, <em class="sig-param"><span class="n">agents</span><span class="p">:</span> <span class="n">Agents</span></em><span class="sig-paren">)</span> &#x2192; Render<a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a rendering of the scenery onto the agents’ cameras.</p>
+<p>For more details on how this works, see the <a class="reference internal" href="concepts.html#rendering"><span class="std std-ref">rendering</span></a> section.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scenery</strong> (<a class="reference internal" href="#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a>) – The scenery to reference when updating the agents</p></li>
+<li><p><strong>agents</strong> (<a class="reference internal" href="#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a>) – The agents to update the movement of</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#megastep.cuda.Render" title="megastep.cuda.Render"><code class="xref py py-class docutils literal notranslate"><span class="pre">Render</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.cuda.Render">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">Render</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render" title="Permalink to this definition">¶</a></dt>
+<dd><p>The result of a <a class="reference internal" href="#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a> call, showing the scenery from the agents’ points of view.</p>
+<p>See the <a class="reference internal" href="concepts.html#rendering"><span class="std std-ref">rendering</span></a> section for a discussion of this class’s place in megastep.</p>
+<p>Rendering is done by casting ‘rays’ from the camera, through each pixel and out into the world. When a ray
+intersects a line from <a class="reference internal" href="#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Scenery.lines</span></code></a>, that’s called a ‘hit’.</p>
+<dl class="py method">
+<dt id="megastep.cuda.Render.distances">
+<em class="property">property </em><code class="sig-name descname">distances</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render.distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (n_envs, n_agents, res)-tensor giving the distance from the camera to the hit in meters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Render.dots">
+<em class="property">property </em><code class="sig-name descname">dots</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render.dots" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (n_envs, n_agents, res)-tensor giving the dot product between the ray and the line it hit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Render.indices">
+<em class="property">property </em><code class="sig-name descname">indices</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render.indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (n_envs, n_agents, res)-tensor giving the index into <a class="reference internal" href="#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Scenery.lines</span></code></a> of the hit. Rays which don’t hit anything get a -1.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Render.locations">
+<em class="property">property </em><code class="sig-name descname">locations</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render.locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (n_envs, n_agents, res)-tensor giving the location along each line that the hit occurs. A zero means it
+happened at the first endpoint; a one means it happened at the second.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Render.screen">
+<em class="property">property </em><code class="sig-name descname">screen</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Render.screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>A (n_envs, n_agents, res, 3)-tensor giving the views of each agent. Colours are RGB with values between 0 and 1. Infinity is coloured black.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.cuda.Agents">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">Agents</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds the state of the agents. Typically accessed through <code class="xref py py-attr docutils literal notranslate"><span class="pre">agents</span></code>.</p>
+<p>See the <a class="reference internal" href="concepts.html#agents"><span class="std std-ref">agents</span></a> section for a discussion of this class’s place in megastep.</p>
+<dl class="py method">
+<dt id="megastep.cuda.Agents.angles">
+<em class="property">property </em><code class="sig-name descname">angles</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents.angles" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_env, n_agent)-tensor of agents’ angles relative to the positive x axis, given in degrees.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Agents.angvelocity">
+<em class="property">property </em><code class="sig-name descname">angvelocity</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents.angvelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_env, n_agent)-tensor of agents’ angular velocity, in degrees per second.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Agents.positions">
+<em class="property">property </em><code class="sig-name descname">positions</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents.positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_env, n_agent, 2)-tensor of agents’ positions, in meters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Agents.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the state for the <code class="docutils literal notranslate"><span class="pre">e</span></code> th scene, returning it as a <a class="reference internal" href="#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Agents.velocity">
+<em class="property">property </em><code class="sig-name descname">velocity</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Agents.velocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_env, n_agent, 2)-tensor of agents’ velocity, in meters per second.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.cuda.Scenery">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.cuda.</code><code class="sig-name descname">Scenery</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Holds the state of the scenery. Typically accessed through <code class="xref py py-attr docutils literal notranslate"><span class="pre">scenery</span></code>.</p>
+<p>See the <a class="reference internal" href="concepts.html#scenery"><span class="std std-ref">scenery</span></a> section for a discussion of this class’s place in megastep.</p>
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.baked">
+<em class="property">property </em><code class="sig-name descname">baked</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.baked" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_texels,)-<a class="reference internal" href="#megastep.ragged.Ragged" title="megastep.ragged.Ragged"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ragged</span></code></a> tensor giving the <a class="reference internal" href="#megastep.cuda.bake" title="megastep.cuda.bake"><code class="xref py py-func docutils literal notranslate"><span class="pre">bake()</span></code></a>-d illumination of each texel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.lights">
+<em class="property">property </em><code class="sig-name descname">lights</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.lights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>An (n_lights, 3)-tensor giving the locations of the lights in the first two columns, and their intensities </dt><dd><p>in the third.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.lines">
+<em class="property">property </em><code class="sig-name descname">lines</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_lines, 2, 2)-<a class="reference internal" href="#megastep.ragged.Ragged" title="megastep.ragged.Ragged"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ragged</span></code></a> tensor giving the lines in each scenery.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.model">
+<em class="property">property </em><code class="sig-name descname">model</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_model_line, 2, 2)-tensor giving the model - the set of lines - that make up the agent. This will be 
+shifted and rotated according to the <a class="reference internal" href="#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a> angles and positions, then rendered into the scenery.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.n_agents">
+<em class="property">property </em><code class="sig-name descname">n_agents</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.n_agents" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of agents in each environment</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the state for the <code class="docutils literal notranslate"><span class="pre">e</span></code> th scene, returning it as a <a class="reference internal" href="#rebar.arrdict.arrdict" title="rebar.arrdict.arrdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">arrdict</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.cuda.Scenery.textures">
+<em class="property">property </em><code class="sig-name descname">textures</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/wrappers.cpp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cuda.Scenery.textures" title="Permalink to this definition">¶</a></dt>
+<dd><p>An (n_texels, 3)-<a class="reference internal" href="#megastep.ragged.Ragged" title="megastep.ragged.Ragged"><code class="xref py py-class docutils literal notranslate"><span class="pre">Ragged</span></code></a> tensor giving the texels in each line.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.cubicasa">
+<span id="cubicasa"></span><h3>cubicasa<a class="headerlink" href="#module-megastep.cubicasa" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="megastep.cubicasa.sample">
+<code class="sig-prename descclassname">megastep.cubicasa.</code><code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_geometries</span></em>, <em class="sig-param"><span class="n">split</span><span class="o">=</span><span class="default_value">'training'</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/cubicasa.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.cubicasa.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a random sample of cubicasa <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">geometries</span></a>.</p>
+<p>If you pass the same arguments, you’ll get the same sample every time.</p>
+<p>There are 4,992 unique geometries, split into a 4,492-geometry training set and a 500-geometry test set.</p>
+<p><strong>Caching</strong></p>
+<p>The geometries are derived from the <a class="reference external" href="https://github.com/CubiCasa/CubiCasa5k">Cubicasa5k</a> dataset.</p>
+<p>The first time you call this function, it’ll fetch and cache a ~10MB precomputed geometries file. This is far
+easier to work with than the full 5GB Cuibcasa5k dataset. If you want to recompute the geometries from scratch
+however, import this module and try calling</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">svg_data</span><span class="p">(</span><span class="n">regenerate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> 
+<span class="n">geometry_data</span><span class="p">(</span><span class="n">regenerate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Parameters</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_designs</strong> (<em>int</em>) – The number of geometries to return</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Whether to return a sample from the <code class="docutils literal notranslate"><span class="pre">training</span></code> set, the <code class="docutils literal notranslate"><span class="pre">test</span></code> set, or <code class="docutils literal notranslate"><span class="pre">all</span></code> . The split is
+90/10 in favour of the training set. Defaults to <code class="docutils literal notranslate"><span class="pre">training</span></code> .</p></li>
+<li><p><strong>seed</strong> – The seed to use when allocating the training and test sets.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of geometries.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.geometry">
+<span id="geometry"></span><h3>geometry<a class="headerlink" href="#module-megastep.geometry" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="megastep.geometry.cyclic_pairs">
+<code class="sig-prename descclassname">megastep.geometry.</code><code class="sig-name descname">cyclic_pairs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/geometry.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.geometry.cyclic_pairs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns pairs <code class="docutils literal notranslate"><span class="pre">(xs[i],</span> <span class="pre">xs[i+1])</span></code>, wrapping the last pair round to the start.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.geometry.masks">
+<code class="sig-prename descclassname">megastep.geometry.</code><code class="sig-name descname">masks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">walls</span></em>, <em class="sig-param"><span class="n">spaces</span></em>, <em class="sig-param"><span class="n">res</span><span class="o">=</span><span class="default_value">0.2</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/geometry.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.geometry.masks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a masking array from an array of walls and a list of spaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>walls</strong> – A (n_walls, 2, 2)-array giving the coordinates of the walls’ endpoints.</p></li>
+<li><p><strong>spaces</strong> – A list of spaces, each given as a coordinate array of the space’s vertices.</p></li>
+<li><p><strong>res</strong> – The resolution of the the masking array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A masking array, with indices 1, 2, … for the spaces, 0 for free space, and -1 for walls.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.geometry.centers">
+<code class="sig-prename descclassname">megastep.geometry.</code><code class="sig-name descname">centers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">shape</span></em>, <em class="sig-param"><span class="n">res</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/geometry.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.geometry.centers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts mask (i, j) indices to the (x, y) coordinates of the <code class="docutils literal notranslate"><span class="pre">ij</span></code> th cell’s center.</p>
+<p>Usually the <code class="docutils literal notranslate"><span class="pre">shape</span></code> and <code class="docutils literal notranslate"><span class="pre">res</span></code> arguments for this come directly from a geoemtry dotdict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> – A (…, 2) array of indices into a masking array.</p></li>
+<li><p><strong>shape</strong> – A tuple-like giving the height and width of the masking array.</p></li>
+<li><p><strong>res</strong> – The resolution of the masking array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A (…, 2) array of (x, y) coordinates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.geometry.indices">
+<code class="sig-prename descclassname">megastep.geometry.</code><code class="sig-name descname">indices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">coords</span></em>, <em class="sig-param"><span class="n">shape</span></em>, <em class="sig-param"><span class="n">res</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/geometry.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.geometry.indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts (x, y) coordinates to the (i, j) indices of the containing cell.</p>
+<p>Usually the <code class="docutils literal notranslate"><span class="pre">shape</span></code> and <code class="docutils literal notranslate"><span class="pre">res</span></code> arguments for this come directly from a geoemtry dotdict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> – A (…, 2) array of (x, y) coordinates.</p></li>
+<li><p><strong>shape</strong> – A tuple-like giving the height and width of the masking array.</p></li>
+<li><p><strong>res</strong> – The resolution of the masking array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A (…, 2) array of integer (i, j) indices.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.geometry.display">
+<code class="sig-prename descclassname">megastep.geometry.</code><code class="sig-name descname">display</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">g</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/geometry.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.geometry.display" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visualize a geometry using matplotlib.</p>
+<p>Supports visualizing partial geometries, that only have a subset of id/masks/walls/lights</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.modules">
+<span id="modules"></span><h3>modules<a class="headerlink" href="#module-megastep.modules" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#module-megastep.modules" title="megastep.modules"><code class="xref py py-mod docutils literal notranslate"><span class="pre">megastep.modules</span></code></a> are chunks of functionality that often turn up in megastep environments.</p>
+<dl class="py function">
+<dt id="megastep.modules.to_local_frame">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">to_local_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angles</span></em>, <em class="sig-param"><span class="n">p</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.to_local_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a velocity vector in the global coordinate frame to one in the frame local to the agent</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.modules.to_global_frame">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">to_global_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">angles</span></em>, <em class="sig-param"><span class="n">p</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.to_global_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a velocity vector in the local coordinate frame of the agent to one in the global frame.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.SimpleMovement">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">SimpleMovement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">speed</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">ang_speed</span><span class="o">=</span><span class="default_value">180</span></em>, <em class="sig-param"><span class="n">n_agents</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.SimpleMovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple movement system with no momentum.</p>
+<dl class="simple">
+<dt>There are seven actions in total: </dt><dd><ul class="simple">
+<li><p>do nothing</p></li>
+<li><p>forward/backward a fixed distance</p></li>
+<li><p>strafe left/right a fixed distance</p></li>
+<li><p>turn left/right a fixed angle</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>speed</strong> – The speed of the agent in its linear movements, in meters per second.</p></li>
+<li><p><strong>ang_speed</strong> – The speed of the agent in its rotational movements, in degrees per second.</p></li>
+</ul>
+</dd>
+<dt class="field-even">N_agents</dt>
+<dd class="field-even"><p>The number of agents to output actions for. This is usually taken from the core; it can be usefully
+overridden in <a class="reference internal" href="tutorials/deathmatch-env.html#deathmatch-env"><span class="std std-ref">multiagent environments</span></a>.</p>
+</dd>
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>space</strong> – The <a class="reference internal" href="concepts.html#spaces"><span class="std std-ref">action space</span></a> to present to the controlling network.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.MomentumMovement">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">MomentumMovement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">accel</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">ang_accel</span><span class="o">=</span><span class="default_value">180</span></em>, <em class="sig-param"><span class="n">decay</span><span class="o">=</span><span class="default_value">0.125</span></em>, <em class="sig-param"><span class="n">n_agents</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.MomentumMovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple movement system <em>with</em> momentum.</p>
+<dl class="simple">
+<dt>There are seven actions in total: </dt><dd><ul class="simple">
+<li><p>do nothing</p></li>
+<li><p>accelerate forward/backward</p></li>
+<li><p>accelerate left/right</p></li>
+<li><p>torque left/right</p></li>
+</ul>
+</dd>
+</dl>
+<p>TODO: Make the decay per second rather than per timestep.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>accel</strong> – The acceleration of the agent in its linear movements, in meters per second squared.</p></li>
+<li><p><strong>ang_accel</strong> – The acceleration of the agent in its rotational movements, in degrees per second squared.</p></li>
+<li><p><strong>decay</strong> – The multiplicative decay of the agent’s velocity per timestep. 1 means Newtonian motion; 0 means
+the only velocity is that generated by this timestep’s acceleration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">N_agents</dt>
+<dd class="field-even"><p>The number of agents to output actions for. This is usually taken from the core; it can be usefully
+overridden in <a class="reference internal" href="tutorials/deathmatch-env.html#deathmatch-env"><span class="std std-ref">multiagent environments</span></a>.</p>
+</dd>
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>space</strong> – The <a class="reference internal" href="concepts.html#spaces"><span class="std std-ref">action space</span></a> to present to the controlling network.</p></li>
+<li><p><strong>decay</strong> – The value of the decay parameter.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.modules.unpack">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">unpack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.unpack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpacks <a class="reference internal" href="#module-megastep.cuda" title="megastep.cuda"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cuda</span></code></a> datastructures into <a class="reference internal" href="concepts.html#dotdicts"><span class="std std-ref">arrdicts</span></a> with the same attributes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.modules.render">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <a class="reference internal" href="#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a>, turns the output into an <a class="reference internal" href="concepts.html#dotdicts"><span class="std std-ref">attrdict</span></a>, 
+then converts the <a class="reference internal" href="#megastep.cuda.Render.screen" title="megastep.cuda.Render.screen"><code class="xref py py-attr docutils literal notranslate"><span class="pre">screen</span></code></a> attribute into the kind of (batch, channel, height, width)
+tensor expected by PyTorch convolution modules.</p>
+<p>This is almost always what you want when rendering RGB observations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.modules.downsample">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">downsample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">screen</span></em>, <em class="sig-param"><span class="n">subsample</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.downsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Factors a <a class="reference internal" href="#megastep.modules.render" title="megastep.modules.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a>’d screen tensor along its final width dimension, returning something with shape
+(…, width/subsample, subsample).</p>
+<p>Typically you chase this call by aggregating over the trailing dimension in some way; either mean or min or max
+or <code class="docutils literal notranslate"><span class="pre">[...,</span> <span class="pre">0]</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.Depth">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">Depth</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">n_agents</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">subsample</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_depth</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.Depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates depth observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>n_agents</strong> – The number of agents to generate observations for. This is usually taken from the core; it can be usefully
+overridden in <a class="reference internal" href="tutorials/deathmatch-env.html#deathmatch-env"><span class="std std-ref">multiagent environments</span></a>.</p></li>
+<li><p><strong>subsample</strong> – How many horizontal pixels to average when generating the observations. For example, if the 
+core is rendering at 256 pixels and <code class="docutils literal notranslate"><span class="pre">subsample</span></code> is 4, then 64-pixel observations will be returned. 
+A higher subsampling rate makes for slower rendering, but smoother observations.</p></li>
+<li><p><strong>max_depth</strong> – The maximum depth, corresponding to a zero in the observation. Given in meters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>space</strong> – The <a class="reference internal" href="concepts.html#spaces"><span class="std std-ref">observation space</span></a> to present to the controlling network.</p></li>
+<li><p><strong>max_depth</strong> – The value of the <code class="docutils literal notranslate"><span class="pre">max_depth</span></code> parameter.</p></li>
+<li><p><strong>subsample</strong> – The value of the <code class="docutils literal notranslate"><span class="pre">subsample</span></code> parameter.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="megastep.modules.Depth.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.Depth.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>The state of the module in sub-env <code class="docutils literal notranslate"><span class="pre">e</span></code>, which is to say its last observation for <code class="docutils literal notranslate"><span class="pre">e</span></code>. Useful in
+<a class="reference internal" href="concepts.html#plotting"><span class="std std-ref">plotting</span></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.RGB">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">RGB</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">n_agents</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">subsample</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RGB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates RGB observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>n_agents</strong> – The number of agents to generate observations for. This is usually taken from the core; it can be usefully
+overridden in <a class="reference internal" href="tutorials/deathmatch-env.html#deathmatch-env"><span class="std std-ref">multiagent environments</span></a>.</p></li>
+<li><p><strong>subsample</strong> – How many horizontal pixels to average when generating the observations. For example, if the 
+core is rendering at 256 pixels and <code class="docutils literal notranslate"><span class="pre">subsample</span></code> is 4, then 64-pixel observations will be returned. 
+A higher subsampling rate makes for slower rendering, but smoother observations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>space</strong> – The <a class="reference internal" href="concepts.html#spaces"><span class="std std-ref">observation space</span></a> to present to the controlling network.</p></li>
+<li><p><strong>subsample</strong> – The value of the <code class="docutils literal notranslate"><span class="pre">subsample</span></code> parameter.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="megastep.modules.RGB.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RGB.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>The state of the module in sub-env <code class="docutils literal notranslate"><span class="pre">e</span></code>, which is to say its last observation for <code class="docutils literal notranslate"><span class="pre">e</span></code>. Useful in
+<a class="reference internal" href="concepts.html#plotting"><span class="std std-ref">plotting</span></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.modules.RGB.plot_state">
+<em class="property">classmethod </em><code class="sig-name descname">plot_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">axes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RGB.plot_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the state of this module using imshow. Make sure to <a class="reference internal" href="#rebar.arrdict.numpyify" title="rebar.arrdict.numpyify"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpyify()</span></code></a> the state 
+before passing it here. Useful in <a class="reference internal" href="concepts.html#plotting"><span class="std std-ref">plotting</span></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.IMU">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">IMU</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">speed_scale</span><span class="o">=</span><span class="default_value">10.0</span></em>, <em class="sig-param"><span class="n">ang_scale</span><span class="o">=</span><span class="default_value">360.0</span></em>, <em class="sig-param"><span class="n">n_agents</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.IMU" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a linear-and-angular-velocity measurement. Kinda like a <a class="reference external" href="https://en.wikipedia.org/wiki/Inertial_measurement_unit">inertial measurement unit</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>n_agents</strong> – The number of agents to generate observations for. This is usually taken from the core; it can be usefully
+overridden in <a class="reference internal" href="tutorials/deathmatch-env.html#deathmatch-env"><span class="std std-ref">multiagent environments</span></a>.</p></li>
+<li><p><strong>speed_scale</strong> – The scale of speeds to use, with this value corresponding to an observation of 1. Given
+in meters per second.</p></li>
+<li><p><strong>ang_scale</strong> – The scale of angular speeds to use, with this value corresponding to an observation of 1.
+Given in degrees per second.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>space</strong> – The <a class="reference internal" href="concepts.html#spaces"><span class="std std-ref">observation space</span></a> to present to the controlling network.</p></li>
+<li><p><strong>speed_scale</strong> – The value of the <code class="docutils literal notranslate"><span class="pre">speed_scale</span></code> parameter.</p></li>
+<li><p><strong>ang_scale</strong> – The value of the <code class="docutils literal notranslate"><span class="pre">ang_scale</span></code> parameter.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.modules.random_empty_positions">
+<code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">random_empty_positions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">geometries</span></em>, <em class="sig-param"><span class="n">n_agents</span></em>, <em class="sig-param"><span class="n">n_points</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.random_empty_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tensor of randomly-selected empty points in each <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">geometry</span></a>.</p>
+<p>The returned tensor is a (n_geometries, n_agents, n_points, 2)-float tensor, with the coordinates given in meters.</p>
+<p>This is typcially used when you want to randomly move an agent to a new place, but <em>finding</em> an empty point at 
+each timestep is too expensive. So instead this is used to generate <code class="docutils literal notranslate"><span class="pre">n_points</span></code> empty points in advance, and then
+when you need one you can choose from the pre-generated options.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.RandomSpawns">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">RandomSpawns</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">geometries</span></em>, <em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">n_spawns</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RandomSpawns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Respawns agents to random empty locations in the geometry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>geometries</strong> – The <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">geometry</span></a> to use when calculating the spawn locations. Should be a list
+with one for each environment.</p></li>
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>n_spawns</strong> – The number of spawns to choose between for each agent. This is precomputed when the class 
+is created, so that the respawns themselves are fast.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.modules.RandomLifespans">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.modules.</code><code class="sig-name descname">RandomLifespans</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">core</span></em>, <em class="sig-param"><span class="n">max_lifespan</span></em>, <em class="sig-param"><span class="n">min_lifespan</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RandomLifespans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tracks how many steps each agent has been alive for, and indicates when they exceed a randomly-chosen
+lifespan.</p>
+<p>Lifespans are chosen randomly between <code class="docutils literal notranslate"><span class="pre">min_lifespan</span></code> and <code class="docutils literal notranslate"><span class="pre">max_lifespan</span></code> and re-rolled after each reset.
+This is useful when you want otherwise ‘synchronous’ environments to ‘mix’ so that you get a random
+distribution of behaviour in each batch, rather than one batch full of ‘early life experience’ and another of
+‘late life experience’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>core</strong> – The <a class="reference internal" href="#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> used by the environment.</p></li>
+<li><p><strong>max_lifespan</strong> (<em>int</em>) – The maximum lifespan.</p></li>
+<li><p><strong>min_lifespan</strong> (<em>int</em>) – The minimum lifespan; defaults to half of <code class="docutils literal notranslate"><span class="pre">max_lifespan</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>max_lifespan</strong> – Value of the <code class="docutils literal notranslate"><span class="pre">max_lifespan</span></code> parameter.</p></li>
+<li><p><strong>min_lifespan</strong> – Value of the <code class="docutils literal notranslate"><span class="pre">min_lifespan</span></code> parameter.</p></li>
+</ul>
+</dd>
+</dl>
+<p>TODO: Test this now you’ve rewritten it.</p>
+<dl class="py method">
+<dt id="megastep.modules.RandomLifespans.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/modules.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.modules.RandomLifespans.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the state of this module on sub-env <code class="docutils literal notranslate"><span class="pre">e</span></code>. The state is a <a class="reference internal" href="concepts.html#dotdicts"><span class="std std-ref">arrdict</span></a> of 
+the agents’ lifespans and max lifespans as (n_agent,)-tensors.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.plotting">
+<span id="plotting"></span><h3>plotting<a class="headerlink" href="#module-megastep.plotting" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Plotting docs</p>
+<dl class="py function">
+<dt id="megastep.plotting.imshow_arrays">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">imshow_arrays</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arrs</span></em>, <em class="sig-param"><span class="n">transpose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.imshow_arrays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Args:
+arrs: <cite>{name: A x C x H x W}</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_images">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_images</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arrs</span></em>, <em class="sig-param"><span class="n">axes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">aspect</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.n_agent_texels">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">n_agent_texels</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.n_agent_texels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.line_arrays">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">line_arrays</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.line_arrays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_lights">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_lights</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ax</span></em>, <em class="sig-param"><span class="n">state</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_lights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.extent">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">extent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">zoom</span></em>, <em class="sig-param"><span class="n">radius</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.extent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_lines">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_lines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ax</span></em>, <em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">zoom</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_lines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.adjust_view">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">adjust_view</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ax</span></em>, <em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">zoom</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.adjust_view" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_wedge">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_wedge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ax</span></em>, <em class="sig-param"><span class="n">pose</span></em>, <em class="sig-param"><span class="n">distance</span></em>, <em class="sig-param"><span class="n">fov</span></em>, <em class="sig-param"><span class="n">radians</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_wedge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_fov">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_fov</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ax</span></em>, <em class="sig-param"><span class="n">state</span></em>, <em class="sig-param"><span class="n">distance</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">field</span><span class="o">=</span><span class="default_value">'agents'</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_fov" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.plotting.plot_poses">
+<code class="sig-prename descclassname">megastep.plotting.</code><code class="sig-name descname">plot_poses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">poses</span></em>, <em class="sig-param"><span class="n">ax</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">radians</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">color</span><span class="o">=</span><span class="default_value">'C9'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/plotting.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.plotting.plot_poses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not used directly here, but often useful for code using this module</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.ragged">
+<span id="ragged"></span><h3>ragged<a class="headerlink" href="#module-megastep.ragged" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="megastep.ragged.RaggedNumpy">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.ragged.</code><code class="sig-name descname">RaggedNumpy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vals</span></em>, <em class="sig-param"><span class="n">widths</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/ragged.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.ragged.RaggedNumpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="concepts.html#raggeds"><span class="std std-ref">Ragged</span></a> backed by numpy arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vals</strong> – a (V, …)-array of backing values.</p></li>
+<li><p><strong>widths</strong> – a (W,)-array of widths of each subarray in the ragged. The sum of the widths must equal <code class="docutils literal notranslate"><span class="pre">V</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>vals</strong> – a (V, …)-array of backing values.</p></li>
+<li><p><strong>widths</strong> – a (W,)-array of widths of each subarray in the ragged array.</p></li>
+<li><p><strong>starts</strong> – a (W,)-array of indices giving where each subarray starts in <code class="docutils literal notranslate"><span class="pre">vals</span></code>.</p></li>
+<li><p><strong>ends</strong> – an (W,)-array of indices giving where each subarray ends in <code class="docutils literal notranslate"><span class="pre">vals</span></code>.</p></li>
+<li><p><strong>inverse</strong> – an (V,)-array of indices giving the index of the subarray the corresponding element of <code class="docutils literal notranslate"><span class="pre">vals</span></code> is a part of.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="megastep.ragged.RaggedNumpy.torchify">
+<code class="sig-name descname">torchify</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/ragged.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.ragged.RaggedNumpy.torchify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies <code class="xref py py-func docutils literal notranslate"><span class="pre">arrdict.torchify()</span></code> to the backing arrays and returns a new <code class="xref py py-class docutils literal notranslate"><span class="pre">cuda.Ragged$ND</span></code> for them</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.ragged.Ragged">
+<code class="sig-prename descclassname">megastep.ragged.</code><code class="sig-name descname">Ragged</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vals</span></em>, <em class="sig-param"><span class="n">widths</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/ragged.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.ragged.Ragged" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a <a class="reference internal" href="concepts.html#raggeds"><span class="std std-ref">Ragged</span></a> array or tensor.</p>
+<p>If you pass numpy arrays as arguments, you’ll get back a <a class="reference internal" href="#megastep.ragged.RaggedNumpy" title="megastep.ragged.RaggedNumpy"><code class="xref py py-class docutils literal notranslate"><span class="pre">RaggedNumpy</span></code></a> object; if you pass Torch tensors,
+you’ll get back a <code class="xref py py-class docutils literal notranslate"><span class="pre">cuda.Ragged$ND</span></code> that’s backed by a C++
+implementation and is OK to pass to the <code class="xref py py-class docutils literal notranslate"><span class="pre">core.Core</span></code> machinery.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vals</strong> – a (V, …)-array/tensor of backing values.</p></li>
+<li><p><strong>widths</strong> – a (W,)-array/tensor of widths of each subarray in the ragged. The sum of the widths must equal <code class="docutils literal notranslate"><span class="pre">V</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>vals</strong> – a (V, …)-array/tensor of backing values.</p></li>
+<li><p><strong>widths</strong> – a (W,)-array/tensor of widths of each subarray in the ragged.</p></li>
+<li><p><strong>starts</strong> – a (W,)-array/tensor of indices giving where each subarray starts in <code class="docutils literal notranslate"><span class="pre">vals</span></code>.</p></li>
+<li><p><strong>ends</strong> – an (W,)-array/tensor of indices giving where each subarray ends in <code class="docutils literal notranslate"><span class="pre">vals</span></code>.</p></li>
+<li><p><strong>inverse</strong> – an (V,)-array/tensor of indices giving the index of the subarray the corresponding element of <code class="docutils literal notranslate"><span class="pre">vals</span></code> is a part of.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.scene">
+<span id="scene"></span><h3>scene<a class="headerlink" href="#module-megastep.scene" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Scene docs</p>
+<dl class="py function">
+<dt id="megastep.scene.lengths">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">lengths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.lengths" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.agent_model">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">agent_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.agent_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.agent_colors">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">agent_colors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.agent_colors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.resolutions">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">resolutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.resolutions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.wall_pattern">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">wall_pattern</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">l=0.5</em>, <em class="sig-param">random=&lt;module 'numpy.random' from '/opt/conda/lib/python3.7/site-packages/numpy/random/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.wall_pattern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.init_textures">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">init_textures</code><span class="sig-paren">(</span><em class="sig-param">agentlines</em>, <em class="sig-param">agentcolors</em>, <em class="sig-param">walls</em>, <em class="sig-param">random=&lt;module 'numpy.random' from '/opt/conda/lib/python3.7/site-packages/numpy/random/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.init_textures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.random_lights">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">random_lights</code><span class="sig-paren">(</span><em class="sig-param">lights</em>, <em class="sig-param">random=&lt;module 'numpy.random' from '/opt/conda/lib/python3.7/site-packages/numpy/random/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.random_lights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.scenery">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">scenery</code><span class="sig-paren">(</span><em class="sig-param">geometries</em>, <em class="sig-param">n_agents=1</em>, <em class="sig-param">device='cuda'</em>, <em class="sig-param">random=&lt;module 'numpy.random' from '/opt/conda/lib/python3.7/site-packages/numpy/random/__init__.py'&gt;</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.scenery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.scene.display">
+<code class="sig-prename descclassname">megastep.scene.</code><code class="sig-name descname">display</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scenery</span></em>, <em class="sig-param"><span class="n">e</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/scene.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.scene.display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-megastep.spaces">
+<span id="spaces"></span><h3>spaces<a class="headerlink" href="#module-megastep.spaces" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Spaces docs</p>
+<dl class="py class">
+<dt id="megastep.spaces.MultiEmpty">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.spaces.</code><code class="sig-name descname">MultiEmpty</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/spaces.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.spaces.MultiEmpty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="megastep.spaces.MultiVector">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.spaces.</code><code class="sig-name descname">MultiVector</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_agents</span></em>, <em class="sig-param"><span class="n">dim</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/spaces.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.spaces.MultiVector" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="megastep.spaces.MultiImage">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.spaces.</code><code class="sig-name descname">MultiImage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_agents</span></em>, <em class="sig-param"><span class="n">C</span></em>, <em class="sig-param"><span class="n">H</span></em>, <em class="sig-param"><span class="n">W</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/spaces.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.spaces.MultiImage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="megastep.spaces.MultiConstant">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.spaces.</code><code class="sig-name descname">MultiConstant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_agents</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/spaces.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.spaces.MultiConstant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="megastep.spaces.MultiDiscrete">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.spaces.</code><code class="sig-name descname">MultiDiscrete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_agents</span></em>, <em class="sig-param"><span class="n">n_actions</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/spaces.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.spaces.MultiDiscrete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-megastep.toys">
+<span id="toys"></span><h3>toys<a class="headerlink" href="#module-megastep.toys" title="Permalink to this headline">¶</a></h3>
+<dl class="py function">
+<dt id="megastep.toys.box">
+<code class="sig-prename descclassname">megastep.toys.</code><code class="sig-name descname">box</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">5</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/toys.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.toys.box" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">geometry</span></a> which is just a simple box, with one room and one light inside it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.toys.column">
+<code class="sig-prename descclassname">megastep.toys.</code><code class="sig-name descname">column</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">column_width</span><span class="o">=</span><span class="default_value">0.1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/toys.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.toys.column" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">geometry</span></a> which is just a simple ‘column’ (aka small box), with one room around it</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-megastep.demo">
+<span id="demo"></span><h2>demo<a class="headerlink" href="#module-megastep.demo" title="Permalink to this headline">¶</a></h2>
+<p>TODO-DOCS Demo docs</p>
+<dl class="py class">
+<dt id="megastep.demo.Agent">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.</code><code class="sig-name descname">Agent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">256</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.Agent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.Agent.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">world</span></em>, <em class="sig-param"><span class="n">sample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">value</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">test</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.Agent.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.train">
+<code class="sig-prename descclassname">megastep.demo.</code><code class="sig-name descname">train</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.train" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.demo">
+<code class="sig-prename descclassname">megastep.demo.</code><code class="sig-name descname">demo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">run</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">length</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">test</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">N</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">agent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">d</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.demo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="section" id="module-megastep.demo.heads">
+<span id="heads"></span><h3>heads<a class="headerlink" href="#module-megastep.demo.heads" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Heads docs</p>
+<dl class="py class">
+<dt id="megastep.demo.heads.MultiVectorIntake">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">MultiVectorIntake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiVectorIntake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.MultiVectorIntake.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiVectorIntake.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.heads.MultiImageIntake">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">MultiImageIntake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiImageIntake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.MultiImageIntake.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiImageIntake.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.heads.ConcatIntake">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">ConcatIntake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.ConcatIntake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.ConcatIntake.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.ConcatIntake.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.heads.intake">
+<code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">intake</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.intake" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.heads.MultiDiscreteOutput">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">MultiDiscreteOutput</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiDiscreteOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.MultiDiscreteOutput.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiDiscreteOutput.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.heads.MultiDiscreteOutput.sample">
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logits</span></em>, <em class="sig-param"><span class="n">test</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.MultiDiscreteOutput.sample" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.heads.DictOutput">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">DictOutput</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.DictOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.DictOutput.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.DictOutput.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.heads.DictOutput.sample">
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">l</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.DictOutput.sample" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.heads.ValueOutput">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">ValueOutput</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.ValueOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.heads.ValueOutput.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.ValueOutput.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.heads.output">
+<code class="sig-prename descclassname">megastep.demo.heads.</code><code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">space</span></em>, <em class="sig-param"><span class="n">width</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/heads.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.heads.output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-megastep.demo.learning">
+<span id="learning"></span><h3>learning<a class="headerlink" href="#module-megastep.demo.learning" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS learning docs</p>
+<dl class="py function">
+<dt id="megastep.demo.learning.batch_indices">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">batch_indices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunk</span></em>, <em class="sig-param"><span class="n">batch_size</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.batch_indices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.gather">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">gather</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arr</span></em>, <em class="sig-param"><span class="n">indices</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.gather" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.flatten">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">flatten</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arr</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.flatten" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.assert_same_shape">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">assert_same_shape</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">arrs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.assert_same_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.deltas">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">deltas</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">reward</span></em>, <em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">0.99</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.deltas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.present_value">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">present_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dv</span></em>, <em class="sig-param"><span class="n">finals</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">alpha</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.present_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.generalized_advantages">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">generalized_advantages</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">reward</span></em>, <em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">lambd</span><span class="o">=</span><span class="default_value">0.97</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.generalized_advantages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.reward_to_go">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">reward_to_go</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reward</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">gamma</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.reward_to_go" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.v_trace">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">v_trace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ratios</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">reward</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">max_rho</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_c</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.v_trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.v_trace_ref">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">v_trace_ref</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ratios</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">reward</span></em>, <em class="sig-param"><span class="n">reset</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">0.99</span></em>, <em class="sig-param"><span class="n">max_rho</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">max_c</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.v_trace_ref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.test_v_trace">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">test_v_trace</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.test_v_trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.test_v_trace_ref">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">test_v_trace_ref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.test_v_trace_ref" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.test_v_trace_equivalent">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">test_v_trace_equivalent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">R</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">T</span><span class="o">=</span><span class="default_value">10</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.test_v_trace_equivalent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.test_reward_to_go">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">test_reward_to_go</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.test_reward_to_go" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.learning.test_generalized_advantages">
+<code class="sig-prename descclassname">megastep.demo.learning.</code><code class="sig-name descname">test_generalized_advantages</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/learning.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.learning.test_generalized_advantages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-megastep.demo.lstm">
+<span id="lstm"></span><h3>lstm<a class="headerlink" href="#module-megastep.demo.lstm" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS LSTM docs</p>
+<dl class="py class">
+<dt id="megastep.demo.lstm.Packer">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.lstm.</code><code class="sig-name descname">Packer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reset</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="megastep.demo.lstm.Packer.pack_data">
+<code class="sig-name descname">pack_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.pack_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.lstm.Packer.pack_state">
+<code class="sig-name descname">pack_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">h</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.pack_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.lstm.Packer.pack">
+<code class="sig-name descname">pack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">c</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.pack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.lstm.Packer.unpack_data">
+<code class="sig-name descname">unpack_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xp</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.unpack_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.lstm.Packer.unpack_state">
+<code class="sig-name descname">unpack_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">hp</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.unpack_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.lstm.Packer.unpack">
+<code class="sig-name descname">unpack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">xp</span></em>, <em class="sig-param"><span class="n">hcp</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.Packer.unpack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.lstm.LSTM">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.lstm.</code><code class="sig-name descname">LSTM</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d_model</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.LSTM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.lstm.LSTM.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">reset</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.LSTM.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="megastep.demo.lstm.test_packer">
+<code class="sig-prename descclassname">megastep.demo.lstm.</code><code class="sig-name descname">test_packer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/lstm.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.lstm.test_packer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="demo-envs">
+<h2>demo.envs<a class="headerlink" href="#demo-envs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-megastep.demo.envs.minimal">
+<span id="minimal"></span><h3>minimal<a class="headerlink" href="#module-megastep.demo.envs.minimal" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="megastep.demo.envs.minimal.Minimal">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.envs.minimal.</code><code class="sig-name descname">Minimal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_envs</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal" title="Permalink to this definition">¶</a></dt>
+<dd><p>A minimal environment, with a box env, depth observations and simple movement. A good foundation for
+building your own environments.</p>
+<p>See <a class="reference internal" href="tutorials/minimal-env/index.html#minimal-env"><span class="std std-ref">the simple environment tutorial for details</span></a>.</p>
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Minimal.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Minimal.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">decision</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Minimal.state">
+<code class="sig-name descname">state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Minimal.plot_state">
+<em class="property">classmethod </em><code class="sig-name descname">plot_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal.plot_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Minimal.display">
+<code class="sig-name descname">display</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">e</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Minimal.display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="megastep.demo.envs.minimal.Agent">
+<em class="property">class </em><code class="sig-prename descclassname">megastep.demo.envs.minimal.</code><code class="sig-name descname">Agent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">width</span><span class="o">=</span><span class="default_value">32</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Agent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A minimal agent to go with the minimal environment.</p>
+<p>See <a class="reference internal" href="tutorials/minimal-env/index.html#minimal-env"><span class="std std-ref">the simple environment tutorial for details</span></a>.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="megastep.demo.envs.minimal.Agent.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">world</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#megastep.demo.envs.minimal.Agent.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-megastep.demo.envs.deathmatch">
+<span id="deathmatch"></span><h3>deathmatch<a class="headerlink" href="#module-megastep.demo.envs.deathmatch" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Deathmatch docs</p>
+</div>
+<div class="section" id="module-megastep.demo.envs.explorer">
+<span id="explorer"></span><h3>explorer<a class="headerlink" href="#module-megastep.demo.envs.explorer" title="Permalink to this headline">¶</a></h3>
+<p>TODO-DOCS Explorer docs</p>
+</div>
+</div>
+<div class="section" id="module-rebar">
+<span id="rebar"></span><h2>rebar<a class="headerlink" href="#module-rebar" title="Permalink to this headline">¶</a></h2>
+<p><strong>rebar</strong> helps with reinforcement. That’s why it’s called rebar! It’s a toolkit that has evolved
+as I’ve worked on RL projects.</p>
+<p>Unlike the <code class="xref py py-mod docutils literal notranslate"><span class="pre">megastep</span></code> module which is stable, documented and feature-complete, rebar is an unstable,
+undocumented work-in-progress. It’s in the megastep repo because megastep itself uses two of rebar’s most useful components:
+<a class="reference internal" href="#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a> and <a class="reference internal" href="#rebar.arrdict.arrdict" title="rebar.arrdict.arrdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">arrdict</span></code></a>, while the demo uses a whole lot more.</p>
+<div class="section" id="module-rebar.arrdict">
+<span id="arrdict"></span><h3>arrdict<a class="headerlink" href="#module-rebar.arrdict" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="rebar.arrdict.arrdict">
+<em class="property">class </em><code class="sig-prename descclassname">rebar.arrdict.</code><code class="sig-name descname">arrdict</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/arrdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.arrdict.arrdict" title="Permalink to this definition">¶</a></dt>
+<dd><p>An arrdict is an <a class="reference internal" href="#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a> with extra support for array and tensor values.</p>
+<p>arrdicts have a lot of unusual but extremely useful behaviours, which are documented in <a class="reference internal" href="concepts.html#dotdicts"><span class="std std-ref">the dotdicts
+and arrdicts concept section</span></a> .</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.arrdict.torchify">
+<code class="sig-prename descclassname">rebar.arrdict.</code><code class="sig-name descname">torchify</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/arrdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.arrdict.torchify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an array or a dict of numpy arrays to CPU tensors.</p>
+<p>If you’d like CUDA tensors, follow the tensor-ification <code class="docutils literal notranslate"><span class="pre">.cuda()</span></code> ; the attribute delegation
+built into <a class="reference internal" href="#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a> s will do the rest.</p>
+<p>Floats get mapped to 32-bit PyTorch floats; ints get mapped to 32-bit PyTorch ints. This is usually what you want in 
+machine learning work.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.arrdict.numpyify">
+<code class="sig-prename descclassname">rebar.arrdict.</code><code class="sig-name descname">numpyify</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tensors</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/arrdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.arrdict.numpyify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an array or a dict of tensors to numpy arrays.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.arrdict.stack">
+<code class="sig-prename descclassname">rebar.arrdict.</code><code class="sig-name descname">stack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/arrdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.arrdict.stack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stacks a sequence of arrays, tensors or dicts thereof.</p>
+<p>For example,</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">arrdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stack</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">])</span>
+<span class="go">arrdict:</span>
+<span class="go">a    ndarray((3,), int64)</span>
+<span class="go">b    ndarray((3, 2), int64)</span>
+</pre></div>
+</div>
+<p>Any <code class="docutils literal notranslate"><span class="pre">*args</span></code> or <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> will be forwarded to the <code class="docutils literal notranslate"><span class="pre">np.stack</span></code> or <code class="docutils literal notranslate"><span class="pre">torch.stack</span></code> call.</p>
+<p>Python scalars are converted to numpy scalars, so - as in the example above - stacking floats will
+get you a 1D array.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.arrdict.cat">
+<code class="sig-prename descclassname">rebar.arrdict.</code><code class="sig-name descname">cat</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/arrdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.arrdict.cat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenates a sequence of arrays, tensors or dicts thereof.</p>
+<p>For example,</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">arrdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cat</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">])</span>
+<span class="go">arrdict:</span>
+<span class="go">a    ndarray((3,), int64)</span>
+<span class="go">b    ndarray((6,), int64)</span>
+</pre></div>
+</div>
+<p>Any <code class="docutils literal notranslate"><span class="pre">*args</span></code> or <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> will be forwarded to the <code class="docutils literal notranslate"><span class="pre">np.concatenate</span></code> or <code class="docutils literal notranslate"><span class="pre">torch.cat</span></code> call.</p>
+<p>Python scalars are converted to numpy scalars, so - as in the example above - concatenating floats will
+get you a 1D array.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-rebar.dotdict">
+<span id="dotdict"></span><h3>dotdict<a class="headerlink" href="#module-rebar.dotdict" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="rebar.dotdict.dotdict">
+<em class="property">class </em><code class="sig-prename descclassname">rebar.dotdict.</code><code class="sig-name descname">dotdict</code><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.dotdict" title="Permalink to this definition">¶</a></dt>
+<dd><p>dotdicts are dictionaries with additional support for attribute (dot) access of their elements.
+dotdicts have a lot of unusual but extremely useful behaviours, which are documented in <a class="reference internal" href="concepts.html#dotdicts"><span class="std std-ref">the dotdicts
+and arrdicts concept section</span></a> .</p>
+<dl class="py method">
+<dt id="rebar.dotdict.dotdict.copy">
+<code class="sig-name descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.dotdict.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shallow-copy the dotdict</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rebar.dotdict.dotdict.pipe">
+<code class="sig-name descname">pipe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.dotdict.pipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <code class="docutils literal notranslate"><span class="pre">f(self,</span> <span class="pre">*args,</span> <span class="pre">**kwargs)</span></code> .</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="go">[&#39;a&#39;, &#39;b&#39;]</span>
+</pre></div>
+</div>
+<p>Useful for method-chaining.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rebar.dotdict.dotdict.map">
+<code class="sig-name descname">map</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.dotdict.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies <code class="docutils literal notranslate"><span class="pre">f</span></code> to the values of the dotdict, returning a matching dotdict of the results.
+<code class="docutils literal notranslate"><span class="pre">*args</span></code> and  <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> are passed as extra arguments to each call.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="fm">__add__</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    11</span>
+<span class="go">b    12</span>
+</pre></div>
+</div>
+<p>Useful for method-chaining. Works equally well on trees of dotdicts.</p>
+<p>See <a class="reference internal" href="#rebar.dotdict.mapping" title="rebar.dotdict.mapping"><code class="xref py py-func docutils literal notranslate"><span class="pre">mapping()</span></code></a> for a functional version of this method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rebar.dotdict.dotdict.starmap">
+<code class="sig-name descname">starmap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.dotdict.starmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies <code class="docutils literal notranslate"><span class="pre">f</span></code> to the values of the dotdicts one key at a time, returning a matching dotdict of the results.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="fm">__add__</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    2</span>
+<span class="go">b    4</span>
+</pre></div>
+</div>
+<p>Useful for method-chaining. Works equally well on trees of dotdicts.</p>
+<p>See <a class="reference internal" href="#rebar.dotdict.starmapping" title="rebar.dotdict.starmapping"><code class="xref py py-func docutils literal notranslate"><span class="pre">starmapping()</span></code></a> for a functional version of this method.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.dotdict.mapping">
+<code class="sig-prename descclassname">rebar.dotdict.</code><code class="sig-name descname">mapping</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.mapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps <code class="docutils literal notranslate"><span class="pre">f</span></code> so that when called on a dotdict, <code class="docutils literal notranslate"><span class="pre">f</span></code> instead gets called on the dotdict’s values
+and a dotdict of the results is returned. Extra <code class="docutils literal notranslate"><span class="pre">*args</span></code> and <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> passed to the wrapper are
+passed as extra arguments to <code class="docutils literal notranslate"><span class="pre">f</span></code> .</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mapping</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="fm">__add__</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    11</span>
+<span class="go">b    12</span>
+</pre></div>
+</div>
+<p>Works equally well on trees of dotdicts, where <code class="docutils literal notranslate"><span class="pre">f</span></code> will be applied to the leaves of the tree.</p>
+<p>Can be used as a decorator.</p>
+<p>See <a class="reference internal" href="#rebar.dotdict.dotdict.map" title="rebar.dotdict.dotdict.map"><code class="xref py py-func docutils literal notranslate"><span class="pre">dotdict.map()</span></code></a> for an object-oriented version of this function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.dotdict.starmapping">
+<code class="sig-prename descclassname">rebar.dotdict.</code><code class="sig-name descname">starmapping</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.starmapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps <code class="docutils literal notranslate"><span class="pre">f</span></code> so that when called on a sequence of dotdicts, <code class="docutils literal notranslate"><span class="pre">f</span></code> instead gets called on the dotdict’s values
+and a dotdict of the results is returned.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">starmapping</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="fm">__add__</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    2</span>
+<span class="go">b    4</span>
+</pre></div>
+</div>
+<p>Works equally well on trees of dotdicts, where <code class="docutils literal notranslate"><span class="pre">f</span></code> will be applied to the leaves of the trees.</p>
+<p>Can be used as a decorator.</p>
+<p>See <a class="reference internal" href="#rebar.dotdict.dotdict.starmap" title="rebar.dotdict.dotdict.starmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">dotdict.starmap()</span></code></a> for an object-oriented version of this function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rebar.dotdict.leaves">
+<code class="sig-prename descclassname">rebar.dotdict.</code><code class="sig-name descname">leaves</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/dotdict.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.dotdict.leaves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the leaves of a tree of dotdicts as a list</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-rebar.recording">
+<span id="recording"></span><h3>recording<a class="headerlink" href="#module-rebar.recording" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="rebar.recording.Encoder">
+<em class="property">class </em><code class="sig-prename descclassname">rebar.recording.</code><code class="sig-name descname">Encoder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fps</span><span class="o">=</span><span class="default_value">20</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/recording.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.recording.Encoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>A context manager for encoding frames of video. Usually you’ll want to use <a class="reference internal" href="#rebar.recording.ParallelEncoder" title="rebar.recording.ParallelEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelEncoder</span></code></a> instead.</p>
+<p>Typically used as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Encoder</span><span class="p">()</span> <span class="k">as</span> <span class="n">encoder</span><span class="p">:</span>
+    <span class="c1"># Call it with each frame in turn.</span>
+    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+        <span class="n">encoder</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+
+<span class="c1"># Now write it out.</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;test.mp4&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">encoder</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this example, <code class="docutils literal notranslate"><span class="pre">frame</span></code> is a (H, W, 1 or 3)-dim numpy array, or a matplotlib figure.</p>
+<p>This follows the <a class="reference external" href="http://docs.mikeboers.com/pyav/develop/cookbook/numpy.html#generating-video">PyAV cookbook</a>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="rebar.recording.ParallelEncoder">
+<em class="property">class </em><code class="sig-prename descclassname">rebar.recording.</code><code class="sig-name descname">ParallelEncoder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">fps</span><span class="o">=</span><span class="default_value">20</span></em>, <em class="sig-param"><span class="n">N</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/recording.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.recording.ParallelEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>A context manager for encoding frames of video in parallel. Typically used as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">ParallelEncoder</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">as</span> <span class="n">encoder</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">:</span>
+        <span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">encoder</span><span class="o">.</span><span class="n">notebook</span><span class="p">()</span>  <span class="c1"># to display the video in your notebook</span>
+<span class="n">encoder</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>  <span class="c1"># to save the video</span>
+</pre></div>
+</div>
+<p>In this example, <code class="docutils literal notranslate"><span class="pre">f</span></code> is a function that takes some arguments and returns a (H, W, 1 or 3)-dim numpy array, 
+or a matplotlib figure. Whatever you call <code class="docutils literal notranslate"><span class="pre">encoder</span></code> with will be forwarded to <code class="docutils literal notranslate"><span class="pre">f</span></code> in a separate process,
+and the resulting array will be brought back to this process for encoding.</p>
+<p>This aligns with the common scenario where generating each frame with matplotlib is much slower than actually
+getting the arguments needed to do the generation, or doing the encoding itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fps</strong> (<em>int</em>) – The framerate. Defaults to 20.</p></li>
+<li><p><strong>N</strong> (<em>int</em><em>, </em><em>float</em>) – The number of processes to use. Can be an integer or a float indicating the fraction of CPUs to
+use. Defaults to using 1/2 the CPUs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="rebar.recording.ParallelEncoder.result">
+<code class="sig-name descname">result</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/recording.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.recording.ParallelEncoder.result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rebar.recording.ParallelEncoder.notebook">
+<code class="sig-name descname">notebook</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/recording.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.recording.ParallelEncoder.notebook" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rebar.recording.ParallelEncoder.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/andyljones/megastep/tree/master/rebar/recording.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rebar.recording.ParallelEncoder.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/reference.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

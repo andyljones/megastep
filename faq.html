@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="reference.html" />
+    <link rel="prev" title="Concepts" href="concepts.html" />
+
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-is-megastep-so-fast">How is megastep so fast?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-is-megastep-so-flexible">How is megastep so flexible?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-about-other-oses">What about other OSes?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-if-i-don-t-have-cuda">What if I don’t have CUDA?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#i-have-a-question-for-the-developer">I have a question for the developer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-can-i-install-just-megastep">How can I install <em>just</em> megastep?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-did-you-write-megastep">Why did you write megastep?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#where-might-this-go-in-future">Where might this go in future?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-are-some-alternatives-to-megastep">What are some alternatives to megastep?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-s-with-the-cubicasa-license">What’s with the cubicasa license?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-should-i-cite-this">How should I cite this?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-doesn-t-megastep-use-inheritance">Why doesn’t megastep use inheritance?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-don-t-you-use-the-openai-gym-interface">Why don’t you use the OpenAI Gym interface?</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="concepts.html" title="previous chapter">Concepts</a></li>
+      <li>Next: <a href="reference.html" title="next chapter">API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="faq">
+<span id="id1"></span><h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="how-is-megastep-so-fast">
+<h2>How is megastep so fast?<a class="headerlink" href="#how-is-megastep-so-fast" title="Permalink to this headline">¶</a></h2>
+<p>It cheats. It uses an extremely stripped down physics and rendering engine (most notably 1D observations) and it
+simulates thousands of environments in parallel on the GPU.</p>
+</div>
+<div class="section" id="how-is-megastep-so-flexible">
+<h2>How is megastep so flexible?<a class="headerlink" href="#how-is-megastep-so-flexible" title="Permalink to this headline">¶</a></h2>
+<p>All the state is kept in <a class="reference external" href="https://pytorch.org/">pytorch</a> tensors, and only the compute-intensive physics and
+rendering kernels are written in CUDA. Game logic is pretty fast compared to physics and rendering, so that
+can be done in Python with the ops provided by pytorch. Thanks, pytorch.</p>
+</div>
+<div class="section" id="what-about-other-oses">
+<h2>What about other OSes?<a class="headerlink" href="#what-about-other-oses" title="Permalink to this headline">¶</a></h2>
+<p>If you’re on a different OS, then it’s possible megastep will work, but I can’t provide you any support. You’re welcome
+to ask for help on the GitHub issues page, but you’ll be relying on the community to come up with an answer.</p>
+</div>
+<div class="section" id="what-if-i-don-t-have-cuda">
+<h2>What if I don’t have CUDA?<a class="headerlink" href="#what-if-i-don-t-have-cuda" title="Permalink to this headline">¶</a></h2>
+<p>If you haven’t got CUDA, megastep will not work. There are some parts of megastep - like the cubicasa package -
+that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.</p>
+</div>
+<div class="section" id="i-have-a-question-for-the-developer">
+<h2>I have a question for the developer<a class="headerlink" href="#i-have-a-question-for-the-developer" title="Permalink to this headline">¶</a></h2>
+<p>Check the <a class="reference internal" href="index.html#support"><span class="std std-ref">support section</span></a>.</p>
+</div>
+<div class="section" id="how-can-i-install-just-megastep">
+<h2>How can I install <em>just</em> megastep?<a class="headerlink" href="#how-can-i-install-just-megastep" title="Permalink to this headline">¶</a></h2>
+<p>The default <a class="reference internal" href="index.html#install"><span class="std std-ref">install</span></a> pulls in everything needed to run the demos and tutorials. If you want something
+minimal:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pip install megastep
+</pre></div>
+</div>
+<p>ie, omit the bit in square brackets. You can read more about what’s missing in the <a class="reference internal" href="concepts.html#subpackages"><span class="std std-ref">subpackages</span></a>
+section.</p>
+</div>
+<div class="section" id="why-did-you-write-megastep">
+<h2>Why did you write megastep?<a class="headerlink" href="#why-did-you-write-megastep" title="Permalink to this headline">¶</a></h2>
+<p>Most reinforcement learning setups involve some small number of GPUs to do the learning, and a much larger number of
+CPUs to the do experience collection. As a researcher, your options are to either rent your hardware in the cloud and
+<a class="reference external" href="https://www.digitaltrends.com/computing/nvidia-bans-consumer-gpus-in-data-centers/">pay through the nose for NVIDIA’s cloud GPUs</a>,
+or spend a lot of cash building server boxes with all the CPUs you need for experience collection.</p>
+<p>The obvious solution is to get rid of either the GPUs or the CPUs. Getting rid of the GPUs isn’t really feasible
+since neural nets are deathly slow without them. Getting rid of the CPUs means writing environments in CUDA, which
+isn’t for the faint of heart.</p>
+<p>Thing is, most RL environments are much more complex than are needed to capture the basic behaviours you’re looking
+for in an agent. By simplifying things down to a 2D flatland, megastep keeps <em>just</em> enough complexity in its simulation
+to capture interesting behaviours, while keeping the engine code short enough that one fool can bolt it together in
+CUDA without breaking a sweat.</p>
+</div>
+<div class="section" id="where-might-this-go-in-future">
+<h2>Where might this go in future?<a class="headerlink" href="#where-might-this-go-in-future" title="Permalink to this headline">¶</a></h2>
+<p>There are many directions that I could plausibly take this project in, but the combination of <a class="reference external" href="http://incompleteideas.net/IncIdeas/BitterLesson.html">The Bitter
+Lesson</a>, <a class="reference external" href="https://arxiv.org/pdf/2001.08361.pdf">Scaling Laws for Natural Language
+Models</a> and <a class="reference external" href="https://arxiv.org/abs/2005.14165">GPT-3</a> have convinced me that I
+should aim my efforts elsewhere.</p>
+<dl class="simple">
+<dt>That’s me though! If you’re interested in taking megastep forward, here are some research directions I had queued up:</dt><dd><ul class="simple">
+<li><p>Add better physics. Right now the physics is that there are dynamic circles and static lines, and if two objects
+collide they stop moving. With better physics, you could plausibly recreate <a class="reference external" href="https://openai.com/blog/emergent-tool-use/">OpenAI’s Hide &amp; Seek</a>
+work.</p></li>
+<li><p>Demonstrate transfer learning across sims. Can behaviour learned in a fast, cheap simulation like this one
+be transferred to an expensive sim like <a class="reference external" href="https://microsoft.github.io/AirSim/">AirSim</a>?</p></li>
+<li><p>Generative geometric modelling. Deepmind have a cool paper on learning priors about the world <a class="reference external" href="https://deepmind.com/blog/article/neural-scene-representation-and-rendering">from egomotion alone</a>.
+Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator?</p></li>
+<li><p>megastep focuses on geometric simulations - but there’s no reason that finite state machine and gridworld envs
+shouldn’t be GPU accelerated too.</p></li>
+<li><p>1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color
+half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of
+off-policy algorithms?</p></li>
+</ul>
+</dd>
+</dl>
+<p>I consider megastep to be feature complete, but I’m happy to provide pointers and my own thoughts on these topics to
+anyone who’s interested in forking it to build something greater.</p>
+</div>
+<div class="section" id="what-are-some-alternatives-to-megastep">
+<h2>What are some alternatives to megastep?<a class="headerlink" href="#what-are-some-alternatives-to-megastep" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/alex-petrenko/sample-factory">Sample Factory</a></p></li>
+<li><p><a class="reference external" href="https://github.com/openai/multiagent-particle-envs">Multiagent Particle Env</a></p></li>
+<li><p><a class="reference external" href="https://github.com/mwydmuch/ViZDoom">VizDoom</a></p></li>
+<li><p><a class="reference external" href="https://github.com/deepmind/lab">dmlab30</a></p></li>
+<li><p><a class="reference external" href="https://github.com/NVlabs/cule">CuLE</a></p></li>
+<li><p><a class="reference external" href="https://microsoft.github.io/AirSim/">AirSim</a></p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="what-s-with-the-cubicasa-license">
+<span id="cubicasa-license"></span><h2>What’s with the cubicasa license?<a class="headerlink" href="#what-s-with-the-cubicasa-license" title="Permalink to this headline">¶</a></h2>
+<p>The cubicasa dataset - the dataset of 5000 home layouts - is derived from the <a class="reference external" href="https://github.com/CubiCasa/CubiCasa5k">Cubicasa5k</a>
+dataset. This dataset was released under a CreativeCommons Non-Commercial License, while megastep as a whole is under a
+MIT license. Since the cubicasa dataset in this project is a heavily-modified version of the original dataset, I think
+it could be plausibly considered <a class="reference external" href="https://www.copyright.gov/fair-use/more-info.html#:~:text=Transformative%20uses%20are%20those%20that,purpose%20of%20encouraging%20creative%20expression.">transformative use</a>
+and so be re-released under an MIT license. But as an independent researcher with no legal team, I can’t risk claiming
+that. Rather I’ve emailed Cubicasa and asked for their blessing on this interpretation.</p>
+<p>In the meantime though, downloading the cubicasa dataset is hidden behind a is-this-commercial-use prompt. Not ideal,
+but the best I could come up with.</p>
+<p>If you would like to use megastep for commercial purposes, you are absolutely welcome to - just use a different geometry
+sampler to the default one. There are the <a class="reference internal" href="reference.html#module-megastep.toys" title="megastep.toys"><code class="xref py py-mod docutils literal notranslate"><span class="pre">toys</span></code></a> geometries already available, and writing a maze
+generator should be fairly simple - just output a dict conforming <a class="reference internal" href="concepts.html#geometry"><span class="std std-ref">to the spec</span></a>.</p>
+</div>
+<div class="section" id="how-should-i-cite-this">
+<span id="why"></span><h2>How should I cite this?<a class="headerlink" href="#how-should-i-cite-this" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bib notranslate"><div class="highlight"><pre><span></span><span class="nc">@software</span><span class="p">{</span><span class="nl">megastep</span><span class="p">,</span>
+  <span class="na">author</span> <span class="p">=</span> <span class="s">{{Andy L Jones}}</span><span class="p">,</span>
+  <span class="na">title</span> <span class="p">=</span> <span class="s">{megastep}</span><span class="p">,</span>
+  <span class="na">url</span> <span class="p">=</span> <span class="s">{https://andyljones.com/megastep}</span><span class="p">,</span>
+  <span class="na">version</span> <span class="p">=</span> <span class="s">{0.1}</span><span class="p">,</span>
+  <span class="na">date</span> <span class="p">=</span> <span class="s">{2020-07-07}</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="why-doesn-t-megastep-use-inheritance">
+<span id="inheritance"></span><h2>Why doesn’t megastep use inheritance?<a class="headerlink" href="#why-doesn-t-megastep-use-inheritance" title="Permalink to this headline">¶</a></h2>
+<p>A general adage in software is to prefer <a class="reference external" href="https://stackoverflow.com/questions/49002/prefer-composition-over-inheritance">composition over inheritance</a>.
+It’s a good rule of thumb, but I feel that of the realities of research code make the preference even more extreme.</p>
+<p>Research code is a very unusual kind of code. It’s <a class="reference external" href="https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343">written many times and read once (if ever)</a>,
+it’s typically written by one person in a short period of time and it’s typically only a few thousand lines of code
+that are understood inside and out. Because of this, researchers can happily trade off a lot of otherwise-good
+development practices in favour of iteration velocity - the ability to adapt your codebase to a new idea quickly and
+easily.</p>
+<p>Since megastep is explicitly intended to be a foundation for research, flexibility and iteration velocity feel far more
+important than the robustness you get from inheritance.</p>
+</div>
+<div class="section" id="why-don-t-you-use-the-openai-gym-interface">
+<span id="openai-gym"></span><h2>Why don’t you use the OpenAI Gym interface?<a class="headerlink" href="#why-don-t-you-use-the-openai-gym-interface" title="Permalink to this headline">¶</a></h2>
+<p>There are a couple of ways in which megastep departs from the <a class="reference external" href="https://gym.openai.com/docs/#environments">Gym interface</a>.</p>
+<p>The first way is that all the observations, rewards, and resets are vectorized. This is necessary, as megastep is
+naturally vectorized in a way that the Gym envs aren’t.</p>
+<p>The second, more debatable way is that the Gym returns observations, rewards and resets as a tuple, and takes actions.
+megastep meanwhile <a class="reference internal" href="concepts.html#decision-world"><span class="std std-ref">passes dicts of these things in both directions</span></a>. The advantage of this is
+opacity: if you want to pass some extra information between env and agent - the most common kind being when a reset
+occurs so that the agent can clear its memory - it’s just an extra key in the dict. The experience collection loop
+that mediates between env and agent doesn’t need to know anything about it.</p>
+<p>Writing a shim that turns any megastep env into an Gym env should be easy enough if you’re so inclined.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/faq.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

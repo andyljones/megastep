@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Geometry &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Custom Scenery (Incomplete)" href="../scenery.html" />
+    <link rel="prev" title="A Deathmatch Env (Incomplete)" href="../deathmatch-env.html" />
+
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../playing.html">Playing With Megastep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../minimal-env/index.html">A Minimal Env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../explorer-env.html">An Explorer Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../deathmatch-env.html">A Deathmatch Env (Incomplete)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Custom Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scenery.html">Custom Scenery (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernels/index.html">Custom Kernels (Incomplete)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Tutorials</a><ul>
+      <li>Previous: <a href="../deathmatch-env.html" title="previous chapter">A Deathmatch Env (Incomplete)</a></li>
+      <li>Next: <a href="../scenery.html" title="next chapter">Custom Scenery (Incomplete)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="custom-geometry">
+<span id="id1"></span><h1>Custom Geometry<a class="headerlink" href="#custom-geometry" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial, we’re going to create the oh-so-simple <a class="reference internal" href="../../reference.html#megastep.toys.box" title="megastep.toys.box"><code class="xref py py-func docutils literal notranslate"><span class="pre">box()</span></code></a> geometry from scratch. It’s not
+particularly interesting on it’s own, but it does demonstrate a lot of useful tools.</p>
+<p>We start by listing the corners of a box in order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">corners</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>These corners give a 1m box, which is a bit too small for our purposes. We can scale it up by multiplying by the
+width we want. It’s also a good idea to shift it 1m up and to the right, as lots of machinery in megastep assumes
+that everything happens in the top-right quadrant (ie, above and to the right of the origin). There’s no fundamental
+reason for this, it just simplifes some stuff internally.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">corners</span> <span class="o">=</span> <span class="mi">5</span><span class="o">*</span><span class="n">corners</span> <span class="o">+</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>Then to get the walls, we take all sequential pairs of corners and stack them:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">geometry</span>
+<span class="n">walls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">cyclic_pairs</span><span class="p">(</span><span class="n">corners</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>You can check that these walls are what we think they are by putting them in a <a class="reference internal" href="../../concepts.html#dotdicts"><span class="std std-ref">dotdict</span></a> and using
+<a class="reference internal" href="../../reference.html#megastep.geometry.display" title="megastep.geometry.display"><code class="xref py py-func docutils literal notranslate"><span class="pre">display()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">geometry</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">dotdict</span><span class="o">.</span><span class="n">dotdict</span><span class="p">(</span>
+    <span class="n">walls</span><span class="o">=</span><span class="n">walls</span><span class="p">))</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/walls.png"><img alt="A visualization of the walls" src="../../_images/walls.png" style="width: 640px;" /></a>
+<p>With the walls in place, the other thing to deal with is rooms. There’s no strict definition of a room; they’re
+just small, generic regions. The usual use of them is to make it easy to spawn multiple agents near eachother.</p>
+<p>In this case, our room is going to just be the corners we had before. That’s a list of corners though, while our
+geometry wants a mask. Fortunately there’s already a function to turn one into the other:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">masks</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">masks</span><span class="p">(</span><span class="n">walls</span><span class="p">,</span> <span class="p">[</span><span class="n">corners</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Again, we can plot it to check how it looks:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">dotdict</span><span class="o">.</span><span class="n">dotdict</span><span class="p">(</span>
+    <span class="n">walls</span><span class="o">=</span><span class="n">walls</span><span class="p">,</span>
+    <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
+    <span class="n">res</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">RES</span><span class="p">)</span>
+<span class="n">geometry</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As well as adding the masks themselves to the dict, we’ve also added the resolution of the mask. In this case, it’s
+the resolution <a class="reference internal" href="../../reference.html#megastep.geometry.masks" title="megastep.geometry.masks"><code class="xref py py-func docutils literal notranslate"><span class="pre">masks()</span></code></a> uses by default. The result is this:</p>
+<a class="reference internal image-reference" href="../../_images/walls-masks.png"><img alt="A visualization of the walls and masks together" src="../../_images/walls-masks.png" style="width: 640px;" /></a>
+<p>This <code class="docutils literal notranslate"><span class="pre">masks</span></code> array has a -1 where there’s a wall, a 0 where there’s free space, and a 1 where our room is.</p>
+<p>Now that we’ve got both walls and masks, we just need to add the location of lights:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rebar</span> <span class="kn">import</span> <span class="n">dotdict</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">dotdict</span><span class="o">.</span><span class="n">dotdict</span><span class="p">(</span>
+    <span class="n">walls</span><span class="o">=</span><span class="n">walls</span><span class="p">,</span>
+    <span class="n">masks</span><span class="o">=</span><span class="n">masks</span><span class="p">,</span>
+    <span class="n">lights</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">3.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">]]),</span>
+    <span class="n">res</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">RES</span><span class="p">)</span>
+<span class="n">geometry</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/complete.png"><img alt="A visualization of the walls and masks together" src="../../_images/complete.png" style="width: 640px;" /></a>
+<p>And we’re done! This is all that’s needed to create <a class="reference internal" href="../../concepts.html#scenery"><span class="std std-ref">scenery</span></a> for your environments.</p>
+<p>It’s mentioned in the <a class="reference internal" href="../../concepts.html#geometry"><span class="std std-ref">geometry</span></a> section but worth re-mentioning here: geometries are dicts rather
+than classes because as you develop your own environments, scene and geometries you’ll likely find you have
+different ideas about what information a geometry needs to carry around. A dotdict is much easier to modify in that
+case than a class.</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/tutorials/geometry/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

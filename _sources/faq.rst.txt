@@ -1,0 +1,156 @@
+.. _faq:
+
+===
+FAQ
+===
+
+How is megastep so fast?
+------------------------
+It cheats. It uses an extremely stripped down physics and rendering engine (most notably 1D observations) and it 
+simulates thousands of environments in parallel on the GPU. 
+
+How is megastep so flexible?
+----------------------------
+All the state is kept in `pytorch <https://pytorch.org/>`_ tensors, and only the compute-intensive physics and 
+rendering kernels are written in CUDA. Game logic is pretty fast compared to physics and rendering, so that
+can be done in Python with the ops provided by pytorch. Thanks, pytorch. 
+
+What about other OSes?
+----------------------
+If you're on a different OS, then it's possible megastep will work, but I can't provide you any support. You're welcome
+to ask for help on the GitHub issues page, but you'll be relying on the community to come up with an answer.
+
+What if I don't have CUDA?
+--------------------------
+If you haven't got CUDA, megastep will not work. There are some parts of megastep - like the cubicasa package - 
+that you may still find useful, but in that case I recommend just copy-pasting the code you want from Github.
+
+I have a question for the developer
+-----------------------------------
+Check the :ref:`support section <support>`.
+
+How can I install *just* megastep?
+----------------------------------
+The default :ref:`install <install>` pulls in everything needed to run the demos and tutorials. If you want something
+minimal:
+ 
+.. code-block:: sh 
+
+    pip install megastep
+
+ie, omit the bit in square brackets. You can read more about what's missing in the :ref:`subpackages <subpackages>`
+section.
+
+Why did you write megastep?
+---------------------------
+Most reinforcement learning setups involve some small number of GPUs to do the learning, and a much larger number of
+CPUs to the do experience collection. As a researcher, your options are to either rent your hardware in the cloud and
+`pay through the nose for NVIDIA's cloud GPUs <https://www.digitaltrends.com/computing/nvidia-bans-consumer-gpus-in-data-centers/>`_, 
+or spend a lot of cash building server boxes with all the CPUs you need for experience collection.
+
+The obvious solution is to get rid of either the GPUs or the CPUs. Getting rid of the GPUs isn't really feasible
+since neural nets are deathly slow without them. Getting rid of the CPUs means writing environments in CUDA, which
+isn't for the faint of heart.
+
+Thing is, most RL environments are much more complex than are needed to capture the basic behaviours you're looking
+for in an agent. By simplifying things down to a 2D flatland, megastep keeps *just* enough complexity in its simulation
+to capture interesting behaviours, while keeping the engine code short enough that one fool can bolt it together in 
+CUDA without breaking a sweat.
+
+Where might this go in future?
+------------------------------
+There are many directions that I could plausibly take this project in, but the combination of `The Bitter
+Lesson <http://incompleteideas.net/IncIdeas/BitterLesson.html>`_, `Scaling Laws for Natural Language
+Models <https://arxiv.org/pdf/2001.08361.pdf>`_ and `GPT-3 <https://arxiv.org/abs/2005.14165>`_ have convinced me that I
+should aim my efforts elsewhere.
+
+That's me though! If you're interested in taking megastep forward, here are some research directions I had queued up:
+ * Add better physics. Right now the physics is that there are dynamic circles and static lines, and if two objects
+   collide they stop moving. With better physics, you could plausibly recreate `OpenAI's Hide & Seek <https://openai.com/blog/emergent-tool-use/>`_
+   work. 
+ * Demonstrate transfer learning across sims. Can behaviour learned in a fast, cheap simulation like this one
+   be transferred to an expensive sim like `AirSim <https://microsoft.github.io/AirSim/>`_?
+ * Generative geometric modelling. Deepmind have a cool paper on learning priors about the world `from egomotion alone <https://deepmind.com/blog/article/neural-scene-representation-and-rendering>`_. 
+   Again, can this be demonstrated on far cheaper hardware if you work in a faster simulator? 
+ * megastep focuses on geometric simulations - but there's no reason that finite state machine and gridworld envs
+   shouldn't be GPU accelerated too.
+ * 1D observations are small enough to stick your replay buffer on the GPU. With 64-pixel 3-color
+   half-precision observations, you can fit 2.5m obs per GB. Can this be used to eke extra performance out of
+   off-policy algorithms?
+
+I consider megastep to be feature complete, but I'm happy to provide pointers and my own thoughts on these topics to
+anyone who's interested in forking it to build something greater.
+
+What are some alternatives to megastep?
+---------------------------------------
+ * `Sample Factory <https://github.com/alex-petrenko/sample-factory>`_
+ * `Multiagent Particle Env <https://github.com/openai/multiagent-particle-envs>`_
+ * `VizDoom <https://github.com/mwydmuch/ViZDoom>`_
+ * `dmlab30 <https://github.com/deepmind/lab>`_
+ * `CuLE <https://github.com/NVlabs/cule>`_
+ * `AirSim <https://microsoft.github.io/AirSim/>`_
+
+.. _cubicasa-license:
+
+What's with the cubicasa license?
+---------------------------------
+The cubicasa dataset - the dataset of 5000 home layouts - is derived from the `Cubicasa5k <https://github.com/CubiCasa/CubiCasa5k>`_ 
+dataset. This dataset was released under a CreativeCommons Non-Commercial License, while megastep as a whole is under a 
+MIT license. Since the cubicasa dataset in this project is a heavily-modified version of the original dataset, I think
+it could be plausibly considered `transformative use <https://www.copyright.gov/fair-use/more-info.html#:~:text=Transformative%20uses%20are%20those%20that,purpose%20of%20encouraging%20creative%20expression.>`_
+and so be re-released under an MIT license. But as an independent researcher with no legal team, I can't risk claiming 
+that. Rather I've emailed Cubicasa and asked for their blessing on this interpretation.
+
+In the meantime though, downloading the cubicasa dataset is hidden behind a is-this-commercial-use prompt. Not ideal,
+but the best I could come up with.
+
+If you would like to use megastep for commercial purposes, you are absolutely welcome to - just use a different geometry
+sampler to the default one. There are the :mod:`~megastep.toys` geometries already available, and writing a maze 
+generator should be fairly simple - just output a dict conforming :ref:`to the spec <geometry>`.
+
+.. _why:
+
+How should I cite this?
+-----------------------
+.. code-block:: bib
+
+    @software{megastep,
+      author = {{Andy L Jones}},
+      title = {megastep},
+      url = {https://andyljones.com/megastep},
+      version = {0.1},
+      date = {2020-07-07},
+    }
+   
+.. _inheritance:
+
+Why doesn't megastep use inheritance?
+-------------------------------------
+A general adage in software is to prefer `composition over inheritance <https://stackoverflow.com/questions/49002/prefer-composition-over-inheritance>`_.
+It's a good rule of thumb, but I feel that of the realities of research code make the preference even more extreme.
+
+Research code is a very unusual kind of code. It's `written many times and read once (if ever) <https://devblogs.microsoft.com/oldnewthing/20070406-00/?p=27343>`_,
+it's typically written by one person in a short period of time and it's typically only a few thousand lines of code
+that are understood inside and out. Because of this, researchers can happily trade off a lot of otherwise-good
+development practices in favour of iteration velocity - the ability to adapt your codebase to a new idea quickly and
+easily.
+
+Since megastep is explicitly intended to be a foundation for research, flexibility and iteration velocity feel far more 
+important than the robustness you get from inheritance. 
+
+.. _openai-gym:
+
+Why don't you use the OpenAI Gym interface?
+-------------------------------------------
+There are a couple of ways in which megastep departs from the `Gym interface <https://gym.openai.com/docs/#environments>`_.
+
+The first way is that all the observations, rewards, and resets are vectorized. This is necessary, as megastep is 
+naturally vectorized in a way that the Gym envs aren't. 
+
+The second, more debatable way is that the Gym returns observations, rewards and resets as a tuple, and takes actions. 
+megastep meanwhile :ref:`passes dicts of these things in both directions <decision-world>`. The advantage of this is
+opacity: if you want to pass some extra information between env and agent - the most common kind being when a reset 
+occurs so that the agent can clear its memory - it's just an extra key in the dict. The experience collection loop 
+that mediates between env and agent doesn't need to know anything about it. 
+
+Writing a shim that turns any megastep env into an Gym env should be easy enough if you're so inclined.

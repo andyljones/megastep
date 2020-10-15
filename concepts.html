@@ -1,0 +1,601 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concepts &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FAQ" href="faq.html" />
+    <link rel="prev" title="Custom Kernels (Incomplete)" href="tutorials/kernels/index.html" />
+
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dotdicts-and-arrdicts">dotdicts and arrdicts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#raggeds">Raggeds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geometries">Geometries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#agents">Agents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scenery">Scenery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rendering">Rendering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#physics">Physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decision-world">Decision &amp; World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spaces-heads">Spaces &amp; Heads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#env-patterns">Env Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tutorials/kernels/index.html" title="previous chapter">Custom Kernels (Incomplete)</a></li>
+      <li>Next: <a href="faq.html" title="next chapter">FAQ</a></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="concepts">
+<span id="id1"></span><h1>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h1>
+<p>There are some ideas that are referenced in many places in this documentation.</p>
+<div class="section" id="dotdicts-and-arrdicts">
+<span id="dotdicts"></span><h2>dotdicts and arrdicts<a class="headerlink" href="#dotdicts-and-arrdicts" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>dotdicts and arrdicts are used in many places in megastep in preference to custom classes.</dt><dd><ul class="simple">
+<li><p>A <a class="reference internal" href="reference.html#rebar.dotdict.dotdict" title="rebar.dotdict.dotdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">dotdict</span></code></a> is a dictionary with dot (attribute) access to its elements and a bunch of useful behaviours.</p></li>
+<li><p>A <a class="reference internal" href="reference.html#rebar.arrdict.arrdict" title="rebar.arrdict.arrdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">arrdict</span></code></a> does everything a dotdict does, but with extra support for array/tensor elements.</p></li>
+</ul>
+</dd>
+</dl>
+<p>There are several serious issues with giving up on static typing, but in a research workflow I believe the benefits
+outweigh those costs.</p>
+<p>Everything below applies to both dotdicts and arrdicts, except for the indexing and binary operation support. Those are
+implemented on arrdicts alone, as they don’t make much sense for general elements.</p>
+<p>Here’re some example dotdicts that’ll get exercised in the examples below</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">objs</span> <span class="o">=</span> <span class="n">dotdict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">=</span><span class="n">dotdict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">c</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">d</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tensors</span> <span class="o">=</span> <span class="n">arrdict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">a</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">b</span><span class="o">=</span><span class="n">arrdict</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">c</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">2</span><span class="p">])))</span>
+</pre></div>
+</div>
+<div class="section" id="attribute-access">
+<h3>Attribute access<a class="headerlink" href="#attribute-access" title="Permalink to this headline">¶</a></h3>
+<p>You can access elements with either <code class="docutils literal notranslate"><span class="pre">d[k]</span></code> or <code class="docutils literal notranslate"><span class="pre">d.k</span></code> notation, but you must assign new values with <code class="docutils literal notranslate"><span class="pre">d[k]</span> <span class="pre">=</span> <span class="pre">v</span></code> .</p>
+<p>TODO: Make setting with attributes illegal</p>
+<p>This convention is entirely taste, but it aligns well with the usual use-case of assigning values rarely and
+reading them regularly.</p>
+</div>
+<div class="section" id="forwarded-attributes">
+<h3>Forwarded Attributes<a class="headerlink" href="#forwarded-attributes" title="Permalink to this headline">¶</a></h3>
+<p>If you try to access an attribute that isn’t a method of <code class="docutils literal notranslate"><span class="pre">dict</span></code> or a key in the dotdict, then the attribute access
+instead be forwarded to every value in the dictionary. This means if you’ve got a dotdict full of CPU tensors, you
+can send them all to the GPU with a single call:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gpu_tensors</span> <span class="o">=</span> <span class="n">cpu_tensors</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>What’s happening here is that the <code class="docutils literal notranslate"><span class="pre">.cuda</span></code> access returns a dotdict full of <code class="docutils literal notranslate"><span class="pre">.cuda</span></code> attributes. Then the call
+itself is forwarded to each tensor, and the results are collected and returned in a tree with the same keys.</p>
+<p>Fair warning: be careful not to use keys in your dotdict that clash with the names of methods you’re likely to
+use.</p>
+</div>
+<div class="section" id="method-chaining">
+<h3>Method Chaining<a class="headerlink" href="#method-chaining" title="Permalink to this headline">¶</a></h3>
+<p>There are a couple of methods on the dotdict itself for making <a class="reference external" href="https://tomaugspurger.github.io/method-chaining.html">method-chaining</a> easier. Method chaining is nice because the computation
+flows left-to-right, top-to-bottom. For example, with <code class="xref py py-func docutils literal notranslate"><span class="pre">pipe()</span></code> you can act on the entire datastructure</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">objs</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="go">[&#39;a&#39;, &#39;d&#39;]</span>
+</pre></div>
+</div>
+<p>or with <code class="xref py py-func docutils literal notranslate"><span class="pre">map()</span></code> you can act on the leaves</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">objs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    dotdict:</span>
+<span class="go">    b    1.0</span>
+<span class="go">    c    2.0</span>
+<span class="go">d    3.0</span>
+</pre></div>
+</div>
+<p>or with <code class="xref py py-func docutils literal notranslate"><span class="pre">starmap()</span></code> you can combine it with another dotdict</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">objs</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="fm">__add__</span><span class="p">,</span> <span class="n">objs</span><span class="p">)</span>
+<span class="go">dotdict:</span>
+<span class="go">a    dotdict:</span>
+<span class="go">    b    2</span>
+<span class="go">    c    4</span>
+<span class="go">d    6</span>
+</pre></div>
+</div>
+<p>or you can do all these things in sequence</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">objs</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="nb">float</span><span class="o">.</span><span class="fm">__add__</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
+<span class="go">[&#39;a&#39;, &#39;d&#39;]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pretty-printing">
+<h3>Pretty-printing<a class="headerlink" href="#pretty-printing" title="Permalink to this headline">¶</a></h3>
+<p>As you’ve likely noticed, when you nest dotdicts inside themselves then they’re printed prettily:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">objs</span>
+<span class="go">dotdict:</span>
+<span class="go">a    dotdict:</span>
+<span class="go">    b    1</span>
+<span class="go">    c    2</span>
+<span class="go">d    3</span>
+</pre></div>
+</div>
+<p>It’s especially pretty when some of your elements are collections, possibly with shapes and dtypes:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tensors</span>
+<span class="go">arrdict:</span>
+<span class="go">a    Tensor((1,), torch.int64)</span>
+<span class="go">b    arrdict:</span>
+<span class="go">     c    Tensor((1,), torch.int64)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="indexing">
+<h3>Indexing<a class="headerlink" href="#indexing" title="Permalink to this headline">¶</a></h3>
+<p>Indexing is exclusive to arrdicts. On arrdicts, indexing operations are forwarded to the values:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">arrdict:</span>
+<span class="go">a    Tensor((), torch.int64)</span>
+<span class="go">b    arrdict:</span>
+<span class="go">     c    Tensor((), torch.int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># the .item() call is needed to get it to print nicely</span>
+<span class="go">arrdict:</span>
+<span class="go">a    1</span>
+<span class="go">b    arrdict:</span>
+<span class="go">     c    2</span>
+</pre></div>
+</div>
+<p>All the kinds of indexing that the underlying arrays/tensors support is supported by arrdict.</p>
+</div>
+<div class="section" id="binary-operations">
+<h3>Binary operations<a class="headerlink" href="#binary-operations" title="Permalink to this headline">¶</a></h3>
+<p>Binary operation support is also exclusive to arrdicts. You can combine two arrdicts in all the ways you’d combine
+the underlying items</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tensors</span> <span class="o">+</span> <span class="n">tensors</span>
+<span class="go">arrdict:</span>
+<span class="go">a    Tensor((1,), torch.int64)</span>
+<span class="go">b    arrdict:</span>
+<span class="go">     c    Tensor((1,), torch.int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">tensors</span> <span class="o">+</span> <span class="n">tensors</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="c1"># the [0].item() call is needed to get it to print nicely</span>
+<span class="go">arrdict:</span>
+<span class="go">a    2</span>
+<span class="go">b    arrdict:</span>
+<span class="go">     c    4</span>
+</pre></div>
+</div>
+<p>It works equally well with Python scalars, arrays, and tensors, and pretty much every binary op you’re likely to use
+is covered. Call <code class="docutils literal notranslate"><span class="pre">dir(arrdict)</span></code> to get a list of the supported magics.</p>
+</div>
+<div class="section" id="use-cases">
+<h3>Use cases<a class="headerlink" href="#use-cases" title="Permalink to this headline">¶</a></h3>
+<p>You generally use dotdict in places that <em>really</em> you should use a <code class="xref py py-class docutils literal notranslate"><span class="pre">namedtuple</span></code>, except that forcing explicit types on
+things would make it harder to change things as you go. Using a dictionary instead lets you keep things flexible. The
+principal costs are that you lose type-safety, and your keys might clash with method names.</p>
+</div>
+</div>
+<div class="section" id="raggeds">
+<span id="id3"></span><h2>Raggeds<a class="headerlink" href="#raggeds" title="Permalink to this headline">¶</a></h2>
+<p>Ragged arrays and tensors are basically arrays-of-arrays, with the values stored in a contiguous backing array to speed up
+operations. <strong>megastep</strong> has both numpy and torch Raggeds, and both are created using <a class="reference internal" href="reference.html#megastep.ragged.Ragged" title="megastep.ragged.Ragged"><code class="xref py py-func docutils literal notranslate"><span class="pre">Ragged()</span></code></a>.</p>
+<p>As an example, here’s a simple ragged array:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.ragged</span> <span class="kn">import</span> <span class="n">Ragged</span>
+
+<span class="c1"># Subarrays are [0., 1., 2.], [3.], [4., 5.]</span>
+<span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">])</span>
+<span class="n">widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">Ragged</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">widths</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">widths</span></code> array gives the widths of each subarray.</p>
+<div class="section" id="id4">
+<h3>Indexing<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Indexing with an integer retrieves the corresponding subarray:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">array([0, 1, 2])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">array([3])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">array([4, 5])</span>
+</pre></div>
+</div>
+<p>and it can also be sliced:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">RaggedNumpy([3 1])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conversion">
+<h3>Conversion<a class="headerlink" href="#conversion" title="Permalink to this headline">¶</a></h3>
+<p>Numpy raggeds can be turned back-and-forth into Torch raggeds:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">torchify</span><span class="p">()</span>
+<span class="go">&lt;megastepcuda.Ragged1D at 0x7fba25320d30&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">torchify</span><span class="p">()</span><span class="o">.</span><span class="n">numpyify</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Be warned that the torch side of things only supports backing tensors with at most 3 dimensions.</p>
+</div>
+<div class="section" id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this headline">¶</a></h3>
+<p>If you want to do bulk operations on a ragged, you’ll usually want to operate on the backing array directly. There
+are a couple of attributes to help with that:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">vals</span>   <span class="c1"># the backing array</span>
+<span class="go">array([0., 1., 2., 3., 4., 5.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">widths</span> <span class="c1"># the subarray widths</span>
+<span class="go">array([3, 1, 2])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">starts</span> <span class="c1"># indices of the start of each subarray</span>
+<span class="go">array([0, 3, 4])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">ends</span>   <span class="c1"># indices of the end of each subarray</span>
+<span class="go">array([3, 4, 6])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inversion">
+<h3>Inversion<a class="headerlink" href="#inversion" title="Permalink to this headline">¶</a></h3>
+<p>There is also an <code class="docutils literal notranslate"><span class="pre">.inverse</span></code> attribute that tells you which subarray every element of the backing array corresponds to:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">inverse</span>
+<span class="go">array([0, 0, 0, 1, 2, 2])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="geometries">
+<span id="geometry"></span><h2>Geometries<a class="headerlink" href="#geometries" title="Permalink to this headline">¶</a></h2>
+<p>A <em>geometry</em> describes the static environment that the agents move around in. They’re usually created by <a class="reference internal" href="reference.html#module-megastep.cubicasa" title="megastep.cubicasa"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cubicasa</span></code></a>
+or with the functions in <a class="reference internal" href="reference.html#module-megastep.toys" title="megastep.toys"><code class="xref py py-mod docutils literal notranslate"><span class="pre">toys</span></code></a> , and then passed en masse to an environment or <a class="reference internal" href="reference.html#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a> .</p>
+<p>You can visualize geometries with <a class="reference internal" href="reference.html#megastep.geometry.display" title="megastep.geometry.display"><code class="xref py py-mod docutils literal notranslate"><span class="pre">display</span></code></a> :</p>
+<a class="reference internal image-reference" href="_images/geometry.png"><img alt="A matplotlib visualization of a geometry" src="_images/geometry.png" style="width: 640px;" /></a>
+<p>Practically speaking, a geometry is a <a class="reference internal" href="#dotdicts"><span class="std std-ref">dotdict</span></a> with the following attributes:</p>
+<dl>
+<dt>id</dt><dd><p>An integer uniquely identifying this geometry</p>
+</dd>
+<dt>walls</dt><dd><p>An (M, 2, 2)-array of endpoints of the walls of the geometry, given as (x, y) coordinates in units of meters.</p>
+<p>One ‘weird’ restriction is that all the coordinates should be strictly positive. This is not a fundamental
+restriction, it just makes a bunch of code elsewhere in megastep simpler if the geometry can be assumed to be in
+the top-right quadrant.</p>
+</dd>
+<dt>lights</dt><dd><p>An (N, 2)-array of the locations of the lights in the geometry, again given as (x, y) coordinates</p>
+<p>As with the walls, the lights should all have strictly positive coordinates.</p>
+</dd>
+<dt>masks</dt><dd><p>An (H, W) masking array describing the rooms and free space in the geometry.</p>
+<p>The mask is aligned with its lower-left corner on (0, 0), and each cell is <strong>res</strong> wide and high. You can map
+between the (i, j) indices of the mask and the (x, y) coords of the walls and lights with
+<code class="xref py py-func docutils literal notranslate"><span class="pre">centers()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">indices()</span></code></p>
+<p>The mask is <code class="docutils literal notranslate"><span class="pre">-1</span></code> in cells touching a wall, and otherwise <code class="docutils literal notranslate"><span class="pre">0</span></code> in free space or positive integer if the cell is
+in a room. Each room gets its own positive integer.</p>
+</dd>
+<dt>res</dt><dd><p>A float giving the resolution of <strong>masks</strong> in meters.</p>
+</dd>
+</dl>
+<p>The geometry is a dotdict rather than a class because when writing your own environments, it’s common to want to nail
+extra bits of information onto the side of the default geometry. That <em>could</em> be handled by subclassing, but I have a
+personal <a class="reference internal" href="faq.html#inheritance"><span class="std std-ref">aversion to inheritance hierarchies in research code</span></a>.</p>
+</div>
+<div class="section" id="agents">
+<span id="id5"></span><h2>Agents<a class="headerlink" href="#agents" title="Permalink to this headline">¶</a></h2>
+<p>‘Agents’ can - confusingly - refer to a few different things in megastep. Which is meant is usually clear from context.</p>
+<p>For one, the agent is the thing that interacts with the environment. It receives observations and emits actions, and
+usually it’s controlled by a neural net of some sort. You’ll often see the Pytorch module that holds the policy network
+being called <code class="docutils literal notranslate"><span class="pre">agent</span></code>.</p>
+<p>For two, there’s also the agent-as-a-specific-model-and-camera-in-the-world. Confusingly though, the
+agent-as-a-neural-net can have more than one agent-as-a-model-and-camera that it receives observations from and emits
+actions for. For example, a drone swarm might have a single net that controls multiple drones.</p>
+<p>In terms of behaviour, agents-as-models-and-cameras are represented by the <a class="reference internal" href="reference.html#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a> datastructure.
+This datastructure holds the agents’ positions and velocities, and when you call <a class="reference internal" href="reference.html#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a>, the
+models in the world are updated to match the positions in the datastructure. The positions in the datastructure are
+also the ones used for <a class="reference internal" href="#rendering"><span class="std std-ref">rendering</span></a>.</p>
+</div>
+<div class="section" id="scenery">
+<span id="id6"></span><h2>Scenery<a class="headerlink" href="#scenery" title="Permalink to this headline">¶</a></h2>
+<p>Scenery is the information the <a class="reference internal" href="#rendering"><span class="std std-ref">renderer</span></a> uses to produce observations and the <a class="reference internal" href="#physics"><span class="std std-ref">physics</span></a> engine uses bounce agents off of things. It is usually - though not necessarily - created by feeding
+<a class="reference internal" href="#geometry"><span class="std std-ref">geometries</span></a> into <a class="reference internal" href="reference.html#megastep.scene.scenery" title="megastep.scene.scenery"><code class="xref py py-func docutils literal notranslate"><span class="pre">scenery()</span></code></a>, and it’s represented by the
+<a class="reference internal" href="reference.html#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a> object.</p>
+<div class="section" id="versus-geometry">
+<h3>Versus Geometry<a class="headerlink" href="#versus-geometry" title="Permalink to this headline">¶</a></h3>
+<p>There are a couple of things that separate scenery from geometry. First, scenery has texture and light intensity
+information that the source geometry is missing. This separation is because generating randomly-varying textures and
+lights is a lot easier than generating high-quality random geometries.</p>
+<p>Secondly, a geometry only represents a single environment, while scenery represents a multitude - typically thousands.
+The <a class="reference internal" href="reference.html#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a> object stores all this information in a dense format that the rendering and physics
+kernels can access efficiently.</p>
+<p>Finally, a geometry doesn’t specify how many agent-models there are. Scenery does.</p>
+</div>
+<div class="section" id="implementation-details">
+<h3>Implementation Details<a class="headerlink" href="#implementation-details" title="Permalink to this headline">¶</a></h3>
+<p>The most important - and most confusing - parts of the scenery object are the <a class="reference internal" href="reference.html#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lines</span></code></a>
+and the <a class="reference internal" href="reference.html#megastep.cuda.Scenery.textures" title="megastep.cuda.Scenery.textures"><code class="xref py py-attr docutils literal notranslate"><span class="pre">textures</span></code></a>.</p>
+<p>The lines are a <a class="reference internal" href="#raggeds"><span class="std std-ref">ragged</span></a> giving the, well, lines for each environment. If you index into it at position
+<code class="docutils literal notranslate"><span class="pre">i</span></code>, you’ll get back a (n_lines, 2, 2)-tensor giving the endpoints of all the lines in that environment. The first
+<code class="docutils literal notranslate"><span class="pre">n_agents</span> <span class="pre">*</span> <span class="pre">model_size</span></code> lines of each environment are the lines of that environment’s agents, with the first agent
+occupying the first <code class="docutils literal notranslate"><span class="pre">model_size</span></code> lines and so on.</p>
+<p>The textures are another <a class="reference internal" href="#raggeds"><span class="std std-ref">ragged</span></a> giving the texels for each line. The texels are a fixed-resolution (5cm
+default) texture for the lines. If line <code class="docutils literal notranslate"><span class="pre">j</span></code> is 1m long, then indexing into the textures at <code class="docutils literal notranslate"><span class="pre">j</span></code> will give you
+a 20-element array with the colour of the line in each 5cm interval.</p>
+<p>As well as the lines and textures, there’s also <a class="reference internal" href="reference.html#megastep.cuda.Scenery.baked" title="megastep.cuda.Scenery.baked"><code class="xref py py-attr docutils literal notranslate"><span class="pre">baked</span></code></a>, which the
+<a class="reference internal" href="reference.html#megastep.cuda.bake" title="megastep.cuda.bake"><code class="xref py py-func docutils literal notranslate"><span class="pre">bake()</span></code></a> call fills with precomputed illumination.</p>
+</div>
+</div>
+<div class="section" id="rendering">
+<span id="id7"></span><h2>Rendering<a class="headerlink" href="#rendering" title="Permalink to this headline">¶</a></h2>
+<p>Rendering in megastep is extremely simple.</p>
+<p>When the <a class="reference internal" href="#scenery"><span class="std std-ref">Scenery</span></a> is first created, <a class="reference internal" href="reference.html#megastep.cuda.bake" title="megastep.cuda.bake"><code class="xref py py-func docutils literal notranslate"><span class="pre">bake()</span></code></a> is called to pre-compute the lighting for
+all wall texels. Wall texels are the colours and patterns that are applied to the walls. They make up the vast
+majority of the texels in the world, so this baking step saves a lot of runtime. The downside is it means that
+megastep does not have any dynamic shadows.</p>
+<p>Then, each timestep <a class="reference internal" href="reference.html#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a> gets called.</p>
+<p>The first thing it does is update the positions of the agent-model’s <a class="reference internal" href="reference.html#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lines</span></code></a> to match the
+positions given in <a class="reference internal" href="reference.html#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a>.</p>
+<p>Next, it computes dynamic lighting for the agent texels of the world. Agent texels are the colours and patterns that
+are applied to the agent-models. There aren’t many agent texels, so although this has to be done every timestep
+(unlike the wall’s baked lighting) it’s fast. The results of the dynamic lighting are used to update the
+<a class="reference internal" href="reference.html#megastep.cuda.Scenery.baked" title="megastep.cuda.Scenery.baked"><code class="xref py py-attr docutils literal notranslate"><span class="pre">baked</span></code></a> tensor, because I am bad at naming things.</p>
+<p>Then, each agent has a camera of a specified horizontal resolution and field of vision, and rays are cast from the camera
+through each pixel out into the world. These rays are compared against the scenery
+<a class="reference internal" href="reference.html#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lines</span></code></a>, and whichever line is closest to the camera along the ray is recorded. These
+‘hits’ give the <a class="reference internal" href="reference.html#megastep.cuda.Render.indices" title="megastep.cuda.Render.indices"><code class="xref py py-attr docutils literal notranslate"><span class="pre">indices</span></code></a> and <a class="reference internal" href="reference.html#megastep.cuda.Render.locations" title="megastep.cuda.Render.locations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">locations</span></code></a> tensors.</p>
+<p>Finally, these line indices and locations are used to index into the <a class="reference internal" href="reference.html#megastep.cuda.Scenery.textures" title="megastep.cuda.Scenery.textures"><code class="xref py py-attr docutils literal notranslate"><span class="pre">textures</span></code></a> tensor
+and lookup what the colour should be at that pixel. Linear interpolation is used when a hit falls between two texels,
+and after multiplying by the light intensity the result is returned in the <a class="reference internal" href="reference.html#megastep.cuda.Render.screen" title="megastep.cuda.Render.screen"><code class="xref py py-attr docutils literal notranslate"><span class="pre">screen</span></code></a> tensor.</p>
+<p>When you visualize the screen tensor yourself, make sure to <a class="reference internal" href="reference.html#megastep.core.gamma_encode" title="megastep.core.gamma_encode"><code class="xref py py-func docutils literal notranslate"><span class="pre">gamma_encode()</span></code></a> it, else the world
+will look suspiciously dark.</p>
+<p>You can see the exact implementation in the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/kernels.cu">render definition of the kernels file</a>.</p>
+</div>
+<div class="section" id="physics">
+<span id="id8"></span><h2>Physics<a class="headerlink" href="#physics" title="Permalink to this headline">¶</a></h2>
+<p>Physics in megastep is extremely simple.</p>
+<p>Typically an environment will set the <a class="reference internal" href="reference.html#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a> velocity tensors at each timestep. Then when
+<a class="reference internal" href="reference.html#megastep.cuda.physics" title="megastep.cuda.physics"><code class="xref py py-func docutils literal notranslate"><span class="pre">physics()</span></code></a> is called, the agent’s position tensors are updated based on their velocities and
+any collisions that happen.</p>
+<p>As far as collisions go, agents are modelled as discs slightly larger than their <a class="reference internal" href="#models"><span class="std std-ref">Models</span></a>. When a disc looks
+like its current velocity will take it through a wall - or another disc - in the current timestep, the point is found
+where the collision would happen, and the the agent’s position is set to be a little short of that point.</p>
+<p>As well as setting the position, when any sort of collision happens the velocity of the agent is set to zero. Not very
+physical, but simple!</p>
+<p>The <a class="reference internal" href="reference.html#megastep.cuda.physics" title="megastep.cuda.physics"><code class="xref py py-func docutils literal notranslate"><span class="pre">physics()</span></code></a> call returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">Physics</span></code> object that can tell you whether a
+collision occured.</p>
+<p>You can see the exact implementation in the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/src/kernels.cu">physics definition of the kernels file</a>.</p>
+</div>
+<div class="section" id="plotting">
+<span id="id9"></span><h2>Plotting<a class="headerlink" href="#plotting" title="Permalink to this headline">¶</a></h2>
+<p>megastep itself isn’t prescriptive about how environments are visualized, but here are some suggestions.</p>
+<p>Implementing plotting megastep-style means implementing two methods.</p>
+<p>First, there’s a <code class="xref py py-meth docutils literal notranslate"><span class="pre">state()</span></code> method that returns one sub-environment’s current
+state as a <a class="reference internal" href="#dotdicts"><span class="std std-ref">dotdict</span></a> of tensors. Then, there’s a
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_state()</span></code> classmethod that takes a <a class="reference internal" href="reference.html#rebar.arrdict.numpyify" title="rebar.arrdict.numpyify"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpyify()</span></code></a>’d
+version of that state and returns a <a class="reference external" href="http://matplotlib.org/">matplotlib</a> figure.</p>
+<p>The various <code class="xref py py-mod docutils literal notranslate"><span class="pre">modules</span></code> that are commonly used in constructing megastep environments often have their own
+<code class="docutils literal notranslate"><span class="pre">state</span></code> and <code class="docutils literal notranslate"><span class="pre">plot_state</span></code> methods, which can make implementing the methods for your library as simple as calling the
+module methods. See the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs">the demo envs</a> for examples.</p>
+<p>The reason for separating things into get-state and plot-state is that frequently getting the state is much, much faster
+than actually plotting it. By separating the two, the get-state can be done in the main process, and the plot-state
+can be done in a pool of background processes. This makes recording videos of environments much faster, and there
+are tools like <a class="reference internal" href="reference.html#rebar.recording.ParallelEncoder" title="rebar.recording.ParallelEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelEncoder</span></code></a> to help out with this.</p>
+<p>The reason for getting torch state but passing numpy state is because the state method turns out to be useful for
+lots of other small tasks, and if it returned numpy state directly it’d get in the way of those other things. It’s also
+because initializing Pytorch in a process is pretty expensive and <a class="reference external" href="https://github.com/pytorch/pytorch/issues/20532">burns about a gigabyte of GPU memory per process</a>. This can be lethal if you’ve got some memory-intensive training
+going on in the background.</p>
+<p>The reason for making the plot-state method a classmethod is so that the function can be passed to another process
+without dragging the large, complex object it’s hanging off of with it.</p>
+</div>
+<div class="section" id="models">
+<span id="id10"></span><h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<p>Models are the set of lines that are used to represent agents in the world. Right now there can only be one model
+that’s shared by all agents, though each agent’s texture can be different. The model is defined by the
+<a class="reference internal" href="reference.html#megastep.cuda.Scenery.model" title="megastep.cuda.Scenery.model"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code></a> tensor, and when you call <a class="reference internal" href="reference.html#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a> the model is translated
+and rotated into the <a class="reference internal" href="reference.html#megastep.cuda.Scenery.lines" title="megastep.cuda.Scenery.lines"><code class="xref py py-attr docutils literal notranslate"><span class="pre">lines</span></code></a>.</p>
+<p>Right now there’s a bit of bad coding where the radius of the disc used for physics calculations and for the near
+clipping plane is hard-coded as <code class="xref py py-attr docutils literal notranslate"><span class="pre">AGENT_RADIUS</span></code>. If you decide to alter the model, make sure to
+alter this too.</p>
+<p>TODO: Derive the AGENT_RADIUS from the model as necessary</p>
+</div>
+<div class="section" id="subpackages">
+<span id="id11"></span><h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<p>There are several roughly independent pieces of code in megastep.</p>
+<p>Firstly there’s megastep itself. This is the environment development library, with its CUDA kernels and modules
+and raggeds.</p>
+<p>Then there’s <a class="reference internal" href="reference.html#module-megastep.cubicasa" title="megastep.cubicasa"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cubicasa</span></code></a>, which is a database of 5000 floorplans. The cubicasa module while small in
+and of itself, requires some hefty geospatial dependencies. It uses these to cut the original floorplan SVGs into
+pieces and reassemble them as arrays that are useful for reinforcement learning research. It’s offered as an extra
+install because many users might want to avoid installing all those dependencies.</p>
+<p>Finally there’s <a class="reference internal" href="reference.html#module-rebar" title="rebar"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rebar</span></code></a>. rebar is my - Andy Jones’s - personal reinforcement learning toolbox. While the bits
+of it that megastep depend on are stable and well-documented, the rest of it is not. That it’s still in the megastep
+repo is a bit of a historical artefact. One of my next tasks after getting megastep sorted is to get rebar equally
+well documented and tested, and then probably carve the unstable bits out into their own repo and package.</p>
+</div>
+<div class="section" id="decision-world">
+<span id="id12"></span><h2>Decision &amp; World<a class="headerlink" href="#decision-world" title="Permalink to this headline">¶</a></h2>
+<p>megastep isn’t prescriptive about how you hook your agent up to your environment, but here are some ideas that
+influence how the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/__init__.py">demo envs</a> were written.</p>
+<p>The demo envs’s step methods depart from the <a class="reference internal" href="faq.html#openai-gym"><span class="std std-ref">OpenAI Gym API</span></a> in that they all take <code class="docutils literal notranslate"><span class="pre">decision</span></code>
+objects and return <code class="docutils literal notranslate"><span class="pre">world</span></code> objects.</p>
+<p><code class="docutils literal notranslate"><span class="pre">decision</span></code> objects are <a class="reference internal" href="#dotdicts"><span class="std std-ref">arrdicts</span></a> with an <code class="docutils literal notranslate"><span class="pre">actions</span></code> key. The <code class="docutils literal notranslate"><span class="pre">actions</span></code> value should correspond
+to the environment’s <a class="reference internal" href="#spaces"><span class="std std-ref">action space</span></a>. For example, suppose the environment has one sub-environment and
+this action space:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">spaces</span>
+<span class="kn">from</span> <span class="nn">rebar</span> <span class="kn">import</span> <span class="n">dotdict</span>
+<span class="n">action_space</span> <span class="o">=</span> <span class="n">dotdict</span><span class="o">.</span><span class="n">dotdict</span><span class="p">(</span>
+    <span class="n">movement</span><span class="o">=</span><span class="n">spaces</span><span class="o">.</span><span class="n">MultiDiscrete</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+    <span class="n">fire</span><span class="o">=</span><span class="n">spaces</span><span class="o">.</span><span class="n">MultiDiscrete</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Then the corresponding decision object might be</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rebar</span> <span class="kn">import</span> <span class="n">arrdict</span>
+<span class="n">decision</span> <span class="o">=</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span>
+    <span class="n">actions</span><span class="o">=</span><span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span>
+        <span class="n">movement</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">([[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]]),</span>
+        <span class="n">fire</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])))</span>
+</pre></div>
+</div>
+<p>The advantage of passing the <code class="docutils literal notranslate"><span class="pre">actions</span></code> inside a dict is that you’ll often find you want return extra information
+from your agent (like logits), and this lets the environment decide which bits of the agent’s output it wants to use.
+The alternative is to return the actions and the other information separately, but then the experience collection
+loop would need to be aware of the details of the agent and environment.</p>
+<p>Similarly, <code class="docutils literal notranslate"><span class="pre">world</span></code> objects are <a class="reference internal" href="#dotdicts"><span class="std std-ref">arrdicts</span></a> with an <code class="docutils literal notranslate"><span class="pre">obs</span></code> key. The <code class="docutils literal notranslate"><span class="pre">obs</span></code> value should correspond to
+the environment’s <a class="reference internal" href="#spaces"><span class="std std-ref">observation space</span></a>. As with <code class="docutils literal notranslate"><span class="pre">decision</span></code>, the advantage of this is that the
+environment can return much more than just <code class="docutils literal notranslate"><span class="pre">obs</span></code>, and the agent can pull out what it wants without the experience
+collection loop being any the wiser.</p>
+<p>All together, the experience collection loop will typically look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">):</span>
+    <span class="n">decision</span> <span class="o">=</span> <span class="n">agent</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+    <span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you’re still confused, take a look at the <a class="reference internal" href="tutorials/minimal-env/index.html#minimal-env"><span class="std std-ref">minimal env tutorial</span></a> or the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/__init__.py">demo envs</a>.</p>
+</div>
+<div class="section" id="spaces-heads">
+<span id="spaces"></span><h2>Spaces &amp; Heads<a class="headerlink" href="#spaces-heads" title="Permalink to this headline">¶</a></h2>
+<p>megastep isn’t prescriptive about how you hook your agent up to your environment, but here are some ideas that
+influence how the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/__init__.py">demo envs</a> were written.</p>
+<p>Often when you’re playing with environments, you’re not interested in the environment in isolation. Instead, you’re
+interested in how changing bits of the environment changes how agents train on that environment. Two of the most
+common ways to change the environment are changing the observations and changing the actions.</p>
+<p>Something you’ll find frequently frustrating if you do this regularly is that every time you change the observations
+or actions, you have to change the architecture of your agent. Thing is, how you change the agent is pretty mechanical:
+when you change the observations, you change the input layers, and when you change the actions, you change the output
+layers.</p>
+<p>As such, the demo envs declare their observations and actions using dicts of <a class="reference internal" href="reference.html#module-megastep.spaces" title="megastep.spaces"><code class="xref py py-mod docutils literal notranslate"><span class="pre">spaces</span></code></a>. The spaces are
+little more than containers for the expected shape of the observations or actions. Most of their actual value comes
+from <a class="reference internal" href="reference.html#module-megastep.demo.heads" title="megastep.demo.heads"><code class="xref py py-mod docutils literal notranslate"><span class="pre">heads</span></code></a>.</p>
+<p><em>Intake heads</em> like <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiImage</span></code> take some sort of input described by an input space and
+output a vector of a fixed <em>width</em>. In particular, there is a <a class="reference internal" href="reference.html#megastep.demo.heads.ConcatIntake" title="megastep.demo.heads.ConcatIntake"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConcatIntake</span></code></a> that
+concatenates the vectors of multiple other heads and outputs a vector of a fixed width. Together these mean you can
+offer up a <a class="reference internal" href="#dotdicts"><span class="std std-ref">dotdict</span></a> of spaces as your observation space on your environment, and by writing your
+input layer in your agent as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intake</span> <span class="o">=</span> <span class="n">spaces</span><span class="o">.</span><span class="n">intake</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>you get a <code class="docutils literal notranslate"><span class="pre">intake</span></code> module that will take observations from the environment - whatever those observations turn out
+to be - and outputs a vector of fixed width that’s suitable for passing into some fully-connected or LSTM or
+transformer core.</p>
+<p><em>Output heads</em> like <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiDiscrete</span></code> do the converse: they take a vector of a fixed width
+and output something that conforms to what the action space describes. Again, there’s a
+<a class="reference internal" href="reference.html#megastep.demo.heads.DictOutput" title="megastep.demo.heads.DictOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">DictOutput</span></code></a> that takes a vector of fixed width and outputs a vector of fixed width for
+each subsidiary action space. Writing your output layer as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">spaces</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>you get a <code class="docutils literal notranslate"><span class="pre">output</span></code> module that will take a vector from your fully-connected/LSTM/transformer core and outputs
+things suitable for your environment to consume.</p>
+<p>Exactly how you convert spaces into network layers is up to you. The setup in <a class="reference internal" href="reference.html#module-megastep.demo.heads" title="megastep.demo.heads"><code class="xref py py-mod docutils literal notranslate"><span class="pre">heads</span></code></a>  suggests
+one layout, but it’s entirely personal taste.</p>
+</div>
+<div class="section" id="env-patterns">
+<span id="patterns"></span><h2>Env Patterns<a class="headerlink" href="#env-patterns" title="Permalink to this headline">¶</a></h2>
+<p>TODO-DOCS Env patterns concept</p>
+<ul class="simple">
+<li><p>Use modules where possible</p></li>
+<li><p>Get your plotter working first</p></li>
+<li><p>A display method</p></li>
+<li><p>A _reset method</p></li>
+<li><p>A _observe method</p></li>
+<li><p>n_envs and device</p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/concepts.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Kernels (Incomplete) &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Concepts" href="../../concepts.html" />
+    <link rel="prev" title="Custom Scenery (Incomplete)" href="../scenery.html" />
+
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../playing.html">Playing With Megastep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../minimal-env/index.html">A Minimal Env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../explorer-env.html">An Explorer Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../deathmatch-env.html">A Deathmatch Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../geometry/index.html">Custom Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scenery.html">Custom Scenery (Incomplete)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Custom Kernels (Incomplete)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Tutorials</a><ul>
+      <li>Previous: <a href="../scenery.html" title="previous chapter">Custom Scenery (Incomplete)</a></li>
+      <li>Next: <a href="../../concepts.html" title="next chapter">Concepts</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <bold><span style="color: red">This tutorial is incomplete</span></bold><div class="section" id="custom-kernels-incomplete">
+<span id="tutorial-kernels"></span><h1>Custom Kernels (Incomplete)<a class="headerlink" href="#custom-kernels-incomplete" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial is first going to discuss compiling C++ into a Python module. Then we’re going to talk about using C++
+to do PyTorch computations, and then we’re going to discuss using CUDA to do PyTorch computations.</p>
+<p>In most any program you care to write, a small part of the code will make up the overwhelming majority of the runtime.
+The idea behind megastep is that you can write <em>almost</em> all of your environment in PyTorch, and then write the small,
+majority-of-the-runtime bit in CUDA.</p>
+<p>While megastep’s <a class="reference internal" href="../../reference.html#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a> and <a class="reference internal" href="../../reference.html#megastep.cuda.physics" title="megastep.cuda.physics"><code class="xref py py-func docutils literal notranslate"><span class="pre">physics()</span></code></a> calls make up the slow bits of the
+environments I’ve been prone to write, it’s not likely they cover all of your use-cases. In fact, if you’re reading
+this it probably means you’ve decided that they <em>don’t</em> cover your use cases. So this tutorial is about writing your
+own.</p>
+<p>There is not much in this tutorial that isn’t in <a class="reference external" href="https://pytorch.org/tutorials/advanced/cpp_extension.html#writing-the-c-op">the official PyTorch extension tutorial</a>. If you find yourself confused about
+something written here, you can get another perspective on it there. However that tutorial spends a lot of time
+discussing things like gradients that aren’t as interesting to us.</p>
+<div class="section" id="prerequesites">
+<h2>Prerequesites<a class="headerlink" href="#prerequesites" title="Permalink to this headline">¶</a></h2>
+<p>TODO-DOCS Explain the prerequesites</p>
+<p>While I usually do my Python development in a Jupyter notebook, when messing with C++ I’d recommend running most
+of your tests from the terminal. In a notebook, a failed compilation can sometimes be silently ‘covered’ by torch
+loading an old version of your module, and that way madness lies. Better to run things in a terminal a la</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python -c <span class="s2">&quot;print(&#39;hello world&#39;)&quot;</span>
+</pre></div>
+</div>
+<p>and never have to worry about restarting the kernel after every compilation cycle.</p>
+</div>
+<div class="section" id="turning-c-into-python">
+<h2>Turning C++ into Python<a class="headerlink" href="#turning-c-into-python" title="Permalink to this headline">¶</a></h2>
+<p>For our first trick, we’re going to send data from Python to C++, we’re going to do some computation in C++, and then
+we’re going to get the result back in Python.</p>
+<p>Now make yourself a <code class="docutils literal notranslate"><span class="pre">wrappers.cpp</span></code> file in your working directory with the following strange incantations:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;torch/extension.h&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">addone</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="n">PYBIND11_MODULE</span><span class="p">(</span><span class="n">TORCH_EXTENSION_NAME</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">m</span><span class="p">.</span><span class="n">def</span><span class="p">(</span><span class="s">&quot;addone&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">addone</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Let’s work through this.</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">#include</span></code>: This header pulls in a lot of PyTorch’s <a class="reference external" href="https://pytorch.org/cppdocs/">C++ API</a>,
+but more importantly it pulls in <a class="reference external" href="https://pybind11.readthedocs.io/en/stable/intro.html">pybind</a>.
+Pybind is, in a word, magic. It lets you package C++ code up into Python modules, and goes a long way to automating
+the conversion of Python objects into C++ types and vice versa.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">addone</span></code>: Next we define a function that we’d like to call from Python.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PYBIND11_MODULE</span></code>: Then we invoke <a class="reference external" href="https://pybind11.readthedocs.io/en/master/reference.html?highlight=PYBIND11_MODULE#c.PYBIND11_MODULE">pybind’s module creation macro</a>.
+It takes the name of the module (<code class="docutils literal notranslate"><span class="pre">TORCH_EXTENSION_NAME</span></code>, which evaluates to a specific torch-provided name) and which provides
+a variable - <code class="docutils literal notranslate"><span class="pre">m</span></code> - that’ll be used to identify which bits of C++ need to be hooked up to Python.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">m.def</span></code>: Finally, we specify the address of the thing we want to call from Python - <code class="docutils literal notranslate"><span class="pre">&amp;addone</span></code> - and we
+give specify the name that thing should be known by on the Python side - <code class="docutils literal notranslate"><span class="pre">&quot;addone&quot;</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Now, the Python side. Make an <code class="docutils literal notranslate"><span class="pre">compiler.py</span></code> file in the same directory containing</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch.utils.cpp_extension</span>
+<span class="kn">import</span> <span class="nn">sysconfig</span>
+
+<span class="p">[</span><span class="n">torch_libdir</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cpp_extension</span><span class="o">.</span><span class="n">library_paths</span><span class="p">()</span>
+<span class="n">python_libdir</span> <span class="o">=</span> <span class="n">sysconfig</span><span class="o">.</span><span class="n">get_config_var</span><span class="p">(</span><span class="s1">&#39;LIBDIR&#39;</span><span class="p">)</span>
+<span class="n">libpython_ver</span> <span class="o">=</span> <span class="n">sysconfig</span><span class="o">.</span><span class="n">get_config_var</span><span class="p">(</span><span class="s1">&#39;LDVERSION&#39;</span><span class="p">)</span>
+
+<span class="n">cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cpp_extension</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;testkernels&#39;</span><span class="p">,</span>
+    <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;wrappers.cpp&#39;</span><span class="p">],</span>
+    <span class="n">extra_cflags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-std=c++17&#39;</span><span class="p">],</span>
+    <span class="n">extra_cuda_cflags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-std=c++14&#39;</span><span class="p">,</span> <span class="s1">&#39;-lineinfo&#39;</span><span class="p">],</span>
+    <span class="n">extra_ldflags</span><span class="o">=</span><span class="p">[</span>
+        <span class="sa">f</span><span class="s1">&#39;-lpython</span><span class="si">{</span><span class="n">libpython_ver</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;-ltorch&#39;</span><span class="p">,</span> <span class="s1">&#39;-ltorch_python&#39;</span><span class="p">,</span> <span class="s1">&#39;-lc10_cuda&#39;</span><span class="p">,</span> <span class="s1">&#39;-lc10&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;-L</span><span class="si">{</span><span class="n">torch_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-Wl,-rpath,</span><span class="si">{</span><span class="n">torch_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;-L</span><span class="si">{</span><span class="n">python_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-Wl,-rpath,</span><span class="si">{</span><span class="n">python_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Almost all of this is boilerplate C++ compilation voodoo; the only really important bits to note are the name - which is
+what our new C++ module will be added to the import system under - and the list of source files. I explain the rest of
+the options <a class="reference internal" href="#switches"><span class="std std-ref">below</span></a> if you’re interested, but frankly you can skip reading it until such time as compilation is
+giving you trouble.</p>
+<p>With this file defined, we can test things out! Find yourself a terminal and run</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">compiler</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">two</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">addone</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">two</span><span class="p">)</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+<p>It should hang for a while while it compiles in the background, then print 2! If it does, congrats - you’re sending data
+over to Python, doing some computation, and getting it back!</p>
+<p>If for some reason it <em>doesn’t</em> work, the first thing to do is to add a <code class="docutils literal notranslate"><span class="pre">verbose=True</span></code> arg to the <code class="docutils literal notranslate"><span class="pre">load()</span></code> call.
+That’ll give you much more detailed debugging information, and hopefully let you ID the problem.</p>
+</div>
+<div class="section" id="adding-in-pytorch">
+<h2>Adding In PyTorch<a class="headerlink" href="#adding-in-pytorch" title="Permalink to this headline">¶</a></h2>
+<p>For our next trick, let’s do the same again with a pytorch tensor rather than a simple integer. All we need to do is to
+update our <code class="docutils literal notranslate"><span class="pre">addone</span></code> function to take and return tensors rather than ints:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span> <span class="n">TT</span> <span class="o">=</span> <span class="n">at</span><span class="o">::</span><span class="n">Tensor</span><span class="p">;</span>
+
+<span class="n">TT</span> <span class="nf">addone</span><span class="p">(</span><span class="n">TT</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">at::Tensor</span></code> type we’re defining here is pytorch’s basic tensor type. It’s going to show up all over the place in
+our code, which is why we’re aliasing it as <code class="docutils literal notranslate"><span class="pre">TT</span></code>.</p>
+<p>This time, test it with</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">compiler</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">one</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">two</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">addone</span><span class="p">(</span><span class="n">one</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">two</span><span class="p">)</span>
+<span class="go">tensor(2)</span>
+</pre></div>
+</div>
+<p>If that works, hooray again - you’re sending a tensor to C++, doing some computation, and getting it back in Python!</p>
+</div>
+<div class="section" id="all-the-way-to-cuda">
+<h2>All the Way to CUDA<a class="headerlink" href="#all-the-way-to-cuda" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="compilation-switches">
+<span id="switches"></span><h2>Compilation Switches<a class="headerlink" href="#compilation-switches" title="Permalink to this headline">¶</a></h2>
+<p>TODO: Check how minimal these compilation switches actually are.</p>
+<p>To save some scrolling, here’s the compilation snippet from earlier:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch.utils.cpp_extension</span>
+<span class="kn">import</span> <span class="nn">sysconfig</span>
+
+<span class="p">[</span><span class="n">torch_libdir</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cpp_extension</span><span class="o">.</span><span class="n">library_paths</span><span class="p">()</span>
+<span class="n">python_libdir</span> <span class="o">=</span> <span class="n">sysconfig</span><span class="o">.</span><span class="n">get_config_var</span><span class="p">(</span><span class="s1">&#39;LIBDIR&#39;</span><span class="p">)</span>
+<span class="n">libpython_ver</span> <span class="o">=</span> <span class="n">sysconfig</span><span class="o">.</span><span class="n">get_config_var</span><span class="p">(</span><span class="s1">&#39;LDVERSION&#39;</span><span class="p">)</span>
+
+<span class="n">cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">cpp_extension</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;testkernels&#39;</span><span class="p">,</span>
+    <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;wrappers.cpp&#39;</span><span class="p">],</span>
+    <span class="n">extra_cflags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-std=c++17&#39;</span><span class="p">],</span>
+    <span class="n">extra_cuda_cflags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;-std=c++14&#39;</span><span class="p">,</span> <span class="s1">&#39;-lineinfo&#39;</span><span class="p">,</span> <span class="s1">&#39;--use_fast_math&#39;</span><span class="p">],</span>
+    <span class="n">extra_ldflags</span><span class="o">=</span><span class="p">[</span>
+        <span class="sa">f</span><span class="s1">&#39;-lpython</span><span class="si">{</span><span class="n">libpython_ver</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;-ltorch&#39;</span><span class="p">,</span> <span class="s1">&#39;-ltorch_python&#39;</span><span class="p">,</span> <span class="s1">&#39;-lc10_cuda&#39;</span><span class="p">,</span> <span class="s1">&#39;-lc10&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;-L</span><span class="si">{</span><span class="n">torch_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-Wl,-rpath,</span><span class="si">{</span><span class="n">torch_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;-L</span><span class="si">{</span><span class="n">python_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-Wl,-rpath,</span><span class="si">{</span><span class="n">python_libdir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>And the notes:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">[torch_libdir]</span></code>: Find the path to the directory of Torch C++ libraries we need to link against.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python_libdir</span></code>: Find the path to the directory of Python C libraries we need to link against.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">libpython_ver</span></code>: We specifically want the Python C library corresponding to the version of Python we’re running right now.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cuda</span> <span class="pre">=</span> <span class="pre">torch</span></code>: We’re going to get torch to compile our C++ code for us, link it against a bunch of libraries and then
+stuff it into the <code class="docutils literal notranslate"><span class="pre">cuda</span></code> variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name='testkernels</span></code>: Our library is going to be loaded into Python as the ‘testkernels’ library. That is, as well as
+it being the <code class="docutils literal notranslate"><span class="pre">cuda</span></code> variable, we can also access our C++ code through <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">testkernels</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sources</span></code>: This is the list of files to compile; in our case, just our <code class="docutils literal notranslate"><span class="pre">wrappers.cpp</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extra_cflags</span></code>: Here we say we want the C++ side of things compiled as C++17 code. C++ has come a long way in the last few
+years, and compiling a modern version makes for a much more pleasant time writing C++.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extra_cuda_cflags</span></code>: And here we say we want the CUDA side of things compiled as C++14 code. Not quite as nice as C++17 code,
+but the best the CUDA compiler could support as of the time I wrote this. We also chuck in the <code class="docutils literal notranslate"><span class="pre">-lineinfo</span></code> switch, which
+will give us more useful debugging information when things go wrong, and the <code class="docutils literal notranslate"><span class="pre">--use_fast_math</span></code> switch, which lets the
+CUDA compiler user faster - but slightly less accurate - maths.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extra_ldflags</span></code>: And finally, we list off all the libraries that need to be included when linking the compiled code.
+The <code class="docutils literal notranslate"><span class="pre">-l</span></code> switches name specific libraries; the <code class="docutils literal notranslate"><span class="pre">-L</span></code> switches give the directories to look in for dynamic linking,
+and the <code class="docutils literal notranslate"><span class="pre">-Wl,-rpath</span></code> switches give the directories to look in for static linking. I think I have that right.</p></li>
+</ul>
+</dd>
+</dl>
+<p>TODO-DOCS finish the kernels tutorial</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/tutorials/kernels/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

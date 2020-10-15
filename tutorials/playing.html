@@ -1,0 +1,342 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playing With Megastep &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="A Minimal Env" href="minimal-env/index.html" />
+    <link rel="prev" title="Tutorials" href="index.html" />
+
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Playing With Megastep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="minimal-env/index.html">A Minimal Env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explorer-env.html">An Explorer Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deathmatch-env.html">A Deathmatch Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry/index.html">Custom Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenery.html">Custom Scenery (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernels/index.html">Custom Kernels (Incomplete)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Tutorials</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Tutorials</a></li>
+      <li>Next: <a href="minimal-env/index.html" title="next chapter">A Minimal Env</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="playing-with-megastep">
+<span id="playing"></span><h1>Playing With Megastep<a class="headerlink" href="#playing-with-megastep" title="Permalink to this headline">¶</a></h1>
+<p>While the <a class="reference internal" href="minimal-env/index.html#minimal-env"><span class="std std-ref">Minimal Environment</span></a> tutorial is extremely detailed, it’s not particularly <em>fun</em>. This
+tutorial instead takes an existing interesting environment and tasks you to adapt it in specific ways. In solving
+these tasks, you’ll learn how megastep is structured while hopefully keeping the problem-solving part of your brain
+from losing interest.</p>
+<p>The best way to do these experiments is in a <a class="reference external" href="https://jupyter.org/">notebook</a> of some sort. In a pinch, you can
+also use <a class="reference external" href="https://colab.research.google.com/drive/16X2fgapozFAgnkDCS1o-UzR7Gcg6vIrg?usp=sharing">this Google Colab</a>.
+The main problem is the font rendering is a bit weird.</p>
+<p>At the bottom of the page are some links to <a class="reference internal" href="#playing-resources"><span class="std std-ref">resources</span></a> you might find helpful with these.</p>
+<div class="section" id="run-the-demo">
+<h2>Run the Demo<a class="headerlink" href="#run-the-demo" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="../index.html#install"><span class="std std-ref">Install megastep</span></a> and record an untrained <a class="reference internal" href="../reference.html#module-megastep.demo" title="megastep.demo"><code class="xref py py-mod docutils literal notranslate"><span class="pre">demo</span></code></a> agent:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">explorer</span><span class="o">.</span><span class="n">Explorer</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="swap-out-the-geometry">
+<h2>Swap Out The Geometry<a class="headerlink" href="#swap-out-the-geometry" title="Permalink to this headline">¶</a></h2>
+<p>Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env and replace the default toy geometry
+<a class="reference internal" href="../concepts.html#geometry"><span class="std std-ref">geometry</span></a> with <a class="reference internal" href="../reference.html#module-megastep.cubicasa" title="megastep.cubicasa"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cubicasa</span></code></a> geometry. Plot it to check that it works:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="triangular-geometry">
+<h2>Triangular Geometry<a class="headerlink" href="#triangular-geometry" title="Permalink to this headline">¶</a></h2>
+<p>Read the <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/toys.py">toy geometry code</a> and alter it to write your own triangular-box geometry. Try
+it out with <a class="reference internal" href="../reference.html#megastep.geometry.display" title="megastep.geometry.display"><code class="xref py py-func docutils literal notranslate"><span class="pre">display()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">geometry</span>
+<span class="n">geometry</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">tri</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-the-lights">
+<h2>Change the Lights<a class="headerlink" href="#change-the-lights" title="Permalink to this headline">¶</a></h2>
+<p>Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env, and replace the <a class="reference internal" href="../reference.html#megastep.scene.scenery" title="megastep.scene.scenery"><code class="xref py py-func docutils literal notranslate"><span class="pre">scenery()</span></code></a>
+call with your own function. Have this function first call the original scene function, but then modify its baked
+lighting to be all 1s. Check that it works with <a class="reference internal" href="../reference.html#megastep.scene.display" title="megastep.scene.display"><code class="xref py py-func docutils literal notranslate"><span class="pre">display()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">scene</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">bright</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-the-colours">
+<h2>Change the Colours<a class="headerlink" href="#change-the-colours" title="Permalink to this headline">¶</a></h2>
+<p>Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env, and replace the <a class="reference internal" href="../reference.html#megastep.scene.scenery" title="megastep.scene.scenery"><code class="xref py py-func docutils literal notranslate"><span class="pre">scenery()</span></code></a>
+call with your own function. Have this function first call the original scene function, but then modify its
+textures to be all white. Check that it works with <a class="reference internal" href="../reference.html#megastep.scene.display" title="megastep.scene.display"><code class="xref py py-func docutils literal notranslate"><span class="pre">display()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">scene</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">white</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="change-the-observations">
+<span id="changeobs"></span><h2>Change the Observations<a class="headerlink" href="#change-the-observations" title="Permalink to this headline">¶</a></h2>
+<p>Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env, and replace the RGB observations
+with a <a class="reference internal" href="../reference.html#megastep.modules.Depth" title="megastep.modules.Depth"><code class="xref py py-class docutils literal notranslate"><span class="pre">Depth</span></code></a> observation. Alter the <code class="docutils literal notranslate"><span class="pre">plot_state</span></code> method so you can see your change in
+action:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-observations">
+<h2>Custom Observations<a class="headerlink" href="#custom-observations" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickier</strong>. Write a module like <a class="reference internal" href="../reference.html#megastep.modules.Depth" title="megastep.modules.Depth"><code class="xref py py-class docutils literal notranslate"><span class="pre">Depth</span></code></a> that returns a visualization of <em>indices</em>
+of the lines it’s looking at. You’ll want to read the <a class="reference internal" href="../reference.html#megastep.cuda.Render" title="megastep.cuda.Render"><code class="xref py py-class docutils literal notranslate"><span class="pre">Render</span></code></a> documentation.</p>
+<p>Check it works by copying and pasting the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env,
+then running it through the demo recorder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To get this to work, you’ll need to update the <code class="docutils literal notranslate"><span class="pre">plot_state</span></code> and the observation space too.</p>
+</div>
+<div class="section" id="change-the-movement">
+<h2>Change the Movement<a class="headerlink" href="#change-the-movement" title="Permalink to this headline">¶</a></h2>
+<p>Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env, and replace the jump-y simple-motion
+actions with <a class="reference internal" href="../reference.html#megastep.modules.MomentumMovement" title="megastep.modules.MomentumMovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentumMovement</span></code></a>. Check that it works with the demo recorder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-movement">
+<h2>Custom Movement<a class="headerlink" href="#custom-movement" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickier</strong>. Write a module like <a class="reference internal" href="../reference.html#megastep.modules.MomentumMovement" title="megastep.modules.MomentumMovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentumMovement</span></code></a> that teleports the agent in a different
+direction depending on which action is chosen.</p>
+<p>Check it works by copying and pasting the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env,
+then running it through the demo recorder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-spawning">
+<h2>Custom Spawning<a class="headerlink" href="#custom-spawning" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickier</strong>. Write a module like <a class="reference internal" href="../reference.html#megastep.modules.RandomSpawns" title="megastep.modules.RandomSpawns"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSpawns</span></code></a> that spawns the even-numbered agents facing
+right and the odd-numbered agents facing left.</p>
+<p>Check it works by copying and pasting the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env,
+increasing the number of agents, then resetting and displaying it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="multiple-actions">
+<h2>Multiple Actions<a class="headerlink" href="#multiple-actions" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickier</strong>. Copy and paste the code for the <a class="reference internal" href="../reference.html#megastep.demo.envs.minimal.Minimal" title="megastep.demo.envs.minimal.Minimal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code></a> env, and add a second set
+of actions in parallel to the movement actions that cause the agent to respawn at a random location. Multiple actions
+are not used in either of the examples, so to point you in the right direction, you want your action space to look
+like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">action_space</span> <span class="o">=</span> <span class="n">dotdict</span><span class="o">.</span><span class="n">dotdict</span><span class="p">(</span>
+    <span class="n">movement</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">movement</span><span class="o">.</span><span class="n">space</span><span class="p">,</span>
+    <span class="n">respawn</span><span class="o">=</span><span class="n">spaces</span><span class="o">.</span><span class="n">MultiDiscrete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_agents</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Check it works by running it through the demo recorder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">AlteredMinimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-agents">
+<h2>Custom Agents<a class="headerlink" href="#custom-agents" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickier</strong>. The default <a class="reference internal" href="../reference.html#megastep.demo.Agent" title="megastep.demo.Agent"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agent</span></code></a> in the demo class uses a neural net to control things. Rewrite
+it to go forward while it’s more than 2m away from the nearest object in its field of vision, and to go backward when
+it’s less than 1m away.</p>
+<p>Test it out on <code class="xref py py-class docutils literal notranslate"><span class="pre">Explorer</span></code> env, which has a depth observation by default. You
+may want to have a look through the source for the <a class="reference internal" href="../reference.html#megastep.modules.Depth" title="megastep.modules.Depth"><code class="xref py py-class docutils literal notranslate"><span class="pre">Depth</span></code></a> module to understand how depth is
+perceived.</p>
+<p>Check it works by running it through the demo recorder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">Explorer</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">agent</span><span class="o">=</span><span class="n">agent</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="watch-it-learn">
+<h2>Watch It Learn<a class="headerlink" href="#watch-it-learn" title="Permalink to this headline">¶</a></h2>
+<p><strong>Trickiest</strong>. The default demo has a <a class="reference internal" href="../reference.html#megastep.demo.train" title="megastep.demo.train"><code class="xref py py-func docutils literal notranslate"><span class="pre">train()</span></code></a> func that’ll train an exploration agent in ~ten
+minutes on a RTX 2080 TI. Check that it works. You can view how training is progressing by opening a second notebook
+and, after training has begun, running</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rebar</span> <span class="kn">import</span> <span class="n">plots</span><span class="p">;</span>
+<span class="n">plots</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This is using my entirely undocumented <code class="xref py py-mod docutils literal notranslate"><span class="pre">rebar</span></code> toolkit, which is why I’ve marked it as trickiest. You
+can watch demos as the agent learns by running</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">demo</span><span class="p">(</span><span class="n">run</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It’ll start off moving randomly, but as the reward improves it’ll get obviously better.</p>
+</div>
+<div class="section" id="resources">
+<span id="playing-resources"></span><h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
+<p>Here are some tools that might help with these tasks.</p>
+<dl>
+<dt><a class="reference internal" href="../reference.html#api"><span class="std std-ref">API reference</span></a></dt><dd><p>The API reference describes the details of megastep in one place. If you decide you want to alter the <a class="reference external" href="https://en.wikipedia.org/wiki/Field_of_view">FOV</a> of the agents for example, a good way to go about it would be
+to go to the API reference and Ctrl+F for ‘FOV’.</p>
+<p>The API reference also links to the source of the code it’s documenting; if you don’t find the detail you want
+in the docs themselves, clicking through to the source code will often give you an answer.</p>
+</dd>
+<dt><a class="reference internal" href="../concepts.html#concepts"><span class="std std-ref">Concepts</span></a></dt><dd><p>There are some ideas in megastep - like ‘agents’ - which turn up in too many places to document them again and
+again every time they’re used. Instead, there’s a Concepts page which gives a brief overview of each of these ideas.</p>
+</dd>
+<dt><a class="reference internal" href="../faq.html#faq"><span class="std std-ref">FAQ</span></a></dt><dd><p>The FAQ tries to preempt some common questions. It remains to be seen how good of a job I’ve done with it.</p>
+</dd>
+<dt><a class="reference internal" href="index.html#tutorials"><span class="std std-ref">Tutorials</span></a></dt><dd><p>If you’re reading this you probably don’t want to read the more in-depth tutorials, but they may still be useful
+as something to Ctrl+F through when you’re after a specific bit of code.</p>
+</dd>
+<dt>IPython Help</dt><dd><p>You can follow any object in an IPython session <a class="reference external" href="https://ipython.readthedocs.io/en/stable/interactive/python-ipython-diff.html#accessing-help">with ? to get the docs for that object, or ?? to get
+the source code for that object</a>.</p>
+<p>?? will also give you the filepath of the code underlying the object, which is useful for the next bit.</p>
+</dd>
+<dt>Library Breakpoints</dt><dd><p>If you’re curious how a library is doing a specific thing and just looking at the code isn’t helpful, you can
+use ?? to find the path to the code on your system and open that path in an editor. Then you can <a class="reference external" href="https://docs.python.org/3/library/pdb.html#pdb.set_trace">set a breakpoint
+anywhere you want</a>! This can be done with <code class="docutils literal notranslate"><span class="pre">breakpoint()</span></code>
+in Python 3.7, or <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">pdb;</span> <span class="pre">pdb.set_trace()</span></code> in earlier versions.</p>
+<p>If you’re using <a class="reference external" href="https://ipython.org/ipython-doc/3/config/extensions/autoreload.html">autoreload</a> then next time
+you run the code, you’ll hit the breakpoint. If you’re not using autoreload, you’ll either have to use importlib
+to manually reload things, or just restart your IPython session.</p>
+<p>On top of pdb’s built-in capabilities, I’d also recommend having a look at <a class="reference external" href="https://andyljones.com/posts/post-mortem-plotting.html">extract</a>.</p>
+</dd>
+<dt>Demos</dt><dd><p>The <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/__init__.py">demo module</a> has examples of two environments and an example of how to
+train them.</p>
+</dd>
+</dl>
+<p>TODO-DOCS Add demos of all of these</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tutorials/playing.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

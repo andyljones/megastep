@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Minimal Env &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="An Explorer Env (Incomplete)" href="../explorer-env.html" />
+    <link rel="prev" title="Playing With Megastep" href="../playing.html" />
+
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../playing.html">Playing With Megastep</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">A Minimal Env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../explorer-env.html">An Explorer Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../deathmatch-env.html">A Deathmatch Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../geometry/index.html">Custom Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scenery.html">Custom Scenery (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernels/index.html">Custom Kernels (Incomplete)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Tutorials</a><ul>
+      <li>Previous: <a href="../playing.html" title="previous chapter">Playing With Megastep</a></li>
+      <li>Next: <a href="../explorer-env.html" title="next chapter">An Explorer Env (Incomplete)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="a-minimal-env">
+<span id="minimal-env"></span><h1>A Minimal Env<a class="headerlink" href="#a-minimal-env" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we’re going to write the simplest possible environment. We’re going to make something that has an
+agent moving around and getting visual observations of the world around it. We’re going to be able to record animations
+of that agent’s exploration, and we’re going to generate a neural net that can control it.</p>
+<video controls src="../../_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video><p>It might not look like much, but this is the basis off which we’ll later build an <a class="reference internal" href="../explorer-env.html#explorer-env"><span class="std std-ref">exploration env</span></a> and an <a class="reference internal" href="../deathmatch-env.html#deathmatch-env"><span class="std std-ref">deathmatch env</span></a>. Getting this boring little environment working
+first will let us discuss a lot of the fundamentals of megastep without getting caught up in the details of a
+specific task.</p>
+<p>This is a very detailed tutorial. It’s 2,500 words to discuss <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/minimal.py">fifty lines of code</a>. If you’d prefer to explore the libary on your own, take a look at <a class="reference internal" href="../playing.html#playing"><span class="std std-ref">Playing With
+Megastep</span></a>.</p>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>It’d a good idea to open yourself a <a class="reference external" href="https://jupyter.org/install">Jupyter notebook</a> or <a class="reference external" href="https://colab.research.google.com/">colab</a> and copy-paste the code as you go, experimenting with anything you don’t quite
+understand.</p>
+<p>In a pinch, you can also <a class="reference external" href="https://colab.research.google.com/drive/16X2fgapozFAgnkDCS1o-UzR7Gcg6vIrg?usp=sharing">try things out in this Google Colab</a>.
+The main problem is the font rendering is a bit weird.</p>
+<p>Once you’ve got your notebook up and running, the first thing to do is to <a class="reference internal" href="../../index.html#install"><span class="std std-ref">install megastep</span></a>,
+and the extra demo dependencies, which should be as simple as running</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>!pip install git+https://github.com/andyljones/megastep[cubicasa,rebar] --yes
+</pre></div>
+</div>
+<p>in a cell.</p>
+</div>
+<div class="section" id="geometry">
+<h2>Geometry<a class="headerlink" href="#geometry" title="Permalink to this headline">¶</a></h2>
+<p>The place to start is with the <a class="reference internal" href="../../concepts.html#geometry"><span class="std std-ref">geometry</span></a>. The geometry describes the walls, rooms and lights of
+an environment. In later tutorials we’re going to generate thousands of unique geometries, but here for our
+simplest-possible env, a single geometry will do. A single, simple geometry:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">toys</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">toys</span><span class="o">.</span><span class="n">box</span><span class="p">()</span>
+<span class="n">geometry</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/geometry1.png"><img alt="A visualization of a box geometry" src="../../_images/geometry1.png" style="width: 640px;" /></a>
+<p>Yup, it’s a box. Four walls and one room. There’s <a class="reference internal" href="../geometry/index.html#custom-geometry"><span class="std std-ref">more below about how the geometry is made</span></a>,
+and also a <a class="reference internal" href="../../concepts.html#geometry"><span class="std std-ref">brief discussion of its place in megastep</span></a>.</p>
+</div>
+<div class="section" id="scenery">
+<h2>Scenery<a class="headerlink" href="#scenery" title="Permalink to this headline">¶</a></h2>
+<p>A geometry on its own is not enough for the renderer to go on though. For one it’s missing texture, and for two it only
+describes a single environment, when megastep’s key advantage is the simulation of thousands of environments in parallel.
+To turn the geometry into something the renderer can use, we turn it into a <a class="reference internal" href="../../reference.html#megastep.cuda.Scenery" title="megastep.cuda.Scenery"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scenery</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">scene</span>
+<span class="n">geometries</span> <span class="o">=</span> <span class="mi">128</span><span class="o">*</span><span class="p">[</span><span class="n">toys</span><span class="o">.</span><span class="n">box</span><span class="p">()]</span>
+<span class="n">scenery</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">scenery</span><span class="p">(</span><span class="n">geometries</span><span class="p">,</span> <span class="n">n_agents</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">scenery</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="mi">126</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/scenery.png"><img alt="A visualization of a box scenery" src="../../_images/scenery.png" style="width: 640px;" /></a>
+<p>This code creates scenery for 128 copies of our box geometry, each with a randomly-chosen colourscheme and texture.
+One copy - copy #126 - is shown. You’ll also notice a <a class="reference internal" href="../../concepts.html#models"><span class="std std-ref">model of an agent has also been created and placed at the
+origin</span></a>. If you want to know more about what’s going on here, there’s <a class="reference internal" href="../../concepts.html#scenery"><span class="std std-ref">another brief discussion about
+scenery</span></a> and <a class="reference internal" href="../scenery.html#tutorial-scenery"><span class="std std-ref">a tutorial on writing your own scenery generator</span></a>.</p>
+</div>
+<div class="section" id="rendering">
+<h2>Rendering<a class="headerlink" href="#rendering" title="Permalink to this headline">¶</a></h2>
+<p>With the scenery in hand, the next thing to do is create a <a class="reference internal" href="../../reference.html#megastep.core.Core" title="megastep.core.Core"><code class="xref py py-class docutils literal notranslate"><span class="pre">Core</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">core</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">Core</span><span class="p">(</span><span class="n">scenery</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Core doesn’t actually do very much; there’re little code in it and all its variables are public. It does do some
+setup for you, but after that it’s just a bag of useful attributes that you’re going to pass to the physics and rendering
+engines.</p>
+<p>One of things the core sets up is the <a class="reference internal" href="../../reference.html#megastep.cuda.Agents" title="megastep.cuda.Agents"><code class="xref py py-class docutils literal notranslate"><span class="pre">Agents</span></code></a> datastructure, which stores where the agents are.
+You can take a look with</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">positions</span>
+<span class="go">tensor([[[0., 0.]],</span>
+<span class="go">        ...</span>
+<span class="go">        [[0., 0.]]], device=&#39;cuda:0&#39;)</span>
+</pre></div>
+</div>
+<p>but all it’s going to tell you is that they’re at the origin. megastep stores all its state in PyTorch tensors like
+these, and it’s a-okay to update them on the fly. By default the origin is outside the box we’ve built, so as a
+first step let’s put them inside the box</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">positions</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">([</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And now we can render the agents’ view</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">cuda</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This <code class="docutils literal notranslate"><span class="pre">r</span></code> is a <a class="reference internal" href="../../reference.html#megastep.cuda.Render" title="megastep.cuda.Render"><code class="xref py py-class docutils literal notranslate"><span class="pre">Render</span></code></a> object, which contains a lot of useful information that you can exploit
+when desiging environments. Principally, it contains what the agents see</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">plotting</span>
+<span class="n">im</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">screen</span>
+        <span class="p">[[</span><span class="mi">0</span><span class="p">]]</span>            <span class="c1"># get the screen for agents in env #0</span>
+        <span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>  <span class="c1"># move them to cpu &amp; numpy</span>
+<span class="n">plotting</span><span class="o">.</span><span class="n">plot_images</span><span class="p">({</span><span class="s1">&#39;rgb&#39;</span><span class="p">:</span> <span class="n">im</span><span class="p">},</span> <span class="n">transpose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/render.png"><img alt="A visualization of the agent's viewpoint" src="../../_images/render.png" style="width: 640px;" /></a>
+<p>This is a 1-pixel-high image out from the front of the agent. You can read more about the rendering system in <a class="reference internal" href="../../concepts.html#rendering"><span class="std std-ref">this
+section</span></a>. As well as filling up the Render object, calling render does something else: it updates the
+agents’ models to match their positions. Having moved all the agents to (3, 3) earlier by assigning to
+<code class="docutils literal notranslate"><span class="pre">c.agents.positions</span></code>, plotting the scenery again shows that the agents’ models have moved from the origin to (3, 3):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">scenery</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/moved.png"><img alt="A visualization of how the agent has moved after the render call" src="../../_images/moved.png" style="width: 640px;" /></a>
+</div>
+<div class="section" id="physics">
+<h2>Physics<a class="headerlink" href="#physics" title="Permalink to this headline">¶</a></h2>
+<p>Along with <a class="reference internal" href="../../reference.html#megastep.cuda.render" title="megastep.cuda.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a>, the other important call in megastep is <a class="reference internal" href="../../reference.html#megastep.cuda.physics" title="megastep.cuda.physics"><code class="xref py py-func docutils literal notranslate"><span class="pre">physics()</span></code></a>. This
+call handles moving agents based on their velocities, and deals with any collisions that happen. If we set the agents’
+velocities to some obscene value, then make the physics call:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">velocity</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">([</span><span class="mf">1000.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">physics</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">positions</span>
+<span class="go">tensor([[[5.8649, 3.0000]],</span>
+<span class="go">        ...</span>
+<span class="go">        [[5.8649, 3.0000]]], device=&#39;cuda:0&#39;)</span>
+</pre></div>
+</div>
+<p>we see that afterwards, the agents positions have been updated to where the right wall is. If we check the
+scenery right now though, the agents’ models will still be at (3, 3) however. To update them, we need to call render
+again:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/collided.png"><img alt="A visualization of how the agent has collided with the right wall" src="../../_images/collided.png" style="width: 640px;" /></a>
+</div>
+<div class="section" id="a-skeleton">
+<h2>A Skeleton<a class="headerlink" href="#a-skeleton" title="Permalink to this headline">¶</a></h2>
+<p>We’ve now illustrated the basic loop in megastep:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">toys</span><span class="o">.</span><span class="n">box</span><span class="p">()</span>
+<span class="n">scenery</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">scenery</span><span class="p">(</span><span class="n">n_envs</span><span class="o">*</span><span class="p">[</span><span class="n">g</span><span class="p">],</span> <span class="n">n_agents</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">Core</span><span class="p">(</span><span class="n">scenery</span><span class="p">)</span>
+
+<span class="c1"># set agent location</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+<span class="c1"># generate an observation and send it to the agent</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="c1"># process decisions from the agent</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">physics</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+    <span class="c1"># post-collision alterations</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+    <span class="c1"># generate an observation and send it to the agent</span>
+</pre></div>
+</div>
+<p>This loop will be hiding at the bottom of any environment you write. For the purposes of actually <em>using</em> the environment
+though, that ‘while’ loop needs to be abstracted away. The typical way to do this follows from the <a class="reference external" href="http://gym.openai.com/docs/#environments">OpenAI Gym</a>, and while we’re <a class="reference internal" href="../../faq.html#openai-gym"><span class="std std-ref">not going to follow their interface exactly</span></a> we are going to steal the ideas of a ‘reset’ method and a ‘step’ method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Minimal</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_envs</span><span class="p">):</span>
+        <span class="n">geometries</span> <span class="o">=</span> <span class="n">n_envs</span><span class="o">*</span><span class="p">[</span><span class="n">toys</span><span class="o">.</span><span class="n">box</span><span class="p">()]</span>
+        <span class="n">scenery</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">scenery</span><span class="p">(</span><span class="n">geometries</span><span class="p">,</span> <span class="n">n_agents</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">Core</span><span class="p">(</span><span class="n">scenery</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># set agent location</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+        <span class="c1"># generate an observation and send it to the agent</span>
+        <span class="k">return</span> <span class="n">world</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decision</span><span class="p">):</span>
+        <span class="c1"># process decisions from the agent</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">physics</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+        <span class="c1"># post-collision alterations</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+        <span class="c1"># generate an observation and send it to the agent</span>
+        <span class="k">return</span> <span class="n">world</span>
+</pre></div>
+</div>
+<p>This is exactly the same code as was in the loop, just with the interation with the agent made explicit through
+<a class="reference internal" href="../../concepts.html#decision-world"><span class="std std-ref">‘decision’ and ‘world’ variables</span></a>. This is very my syntactic sugar for agent-env interactions,
+and while I think it works well, you’re free to replace with your own. With this sugar though, the loop becomes much
+more flexible:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">Minimal</span><span class="p">()</span>
+<span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">decision</span> <span class="o">=</span> <span class="n">agent</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+    <span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now all that’s left to be done is to fill out those comment lines.</p>
+</div>
+<div class="section" id="an-aside">
+<h2>An Aside<a class="headerlink" href="#an-aside" title="Permalink to this headline">¶</a></h2>
+<p>Now that we’re building up a class, it’s going to be impractical for me to copy-paste the source every time I discuss
+a change. Instead, you should grab the completed <code class="xref py py-class docutils literal notranslate"><span class="pre">Minimal</span></code> class from megastep’s demo module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep.demo.envs.minimal</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="bp">self</span> <span class="o">=</span> <span class="n">Minimal</span><span class="p">()</span>
+<span class="n">world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The remainder of the code segments will be small ‘experiments’ - for want of a better word - you can run on this env
+to understand what’s happening and why it’s set up the way it is. If you want to play with the class’s definition,
+then open an editor at <code class="docutils literal notranslate"><span class="pre">self.__file__</span></code> and copy-paste the contents into your notebook.</p>
+<p>(You could alternatively edit it in-place, or copy it into a file ofyour own. Both of those however either require
+restarting the kernel after each edit, or setting <a class="reference external" href="https://ipython.org/ipython-doc/3/config/extensions/autoreload.html">autoreload</a> up. Autoreload is magical and absolutely
+worth your time, but it is a tangent from this tutorial)</p>
+</div>
+<div class="section" id="spawning">
+<h2>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h2>
+<p>Back to those comment lines! It’s a good idea to work through them in order, since that means you can validate that
+things are working as expected as you go. The first comment line is to ‘set agent location’. We’re going to want to
+do this on the first reset, and then every time the agent collides with something and needs to be respawned at a new
+location.</p>
+<p>This is a pretty common task when building an environment, and so there’s a <a class="reference internal" href="../../reference.html#megastep.modules.RandomSpawns" title="megastep.modules.RandomSpawns"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSpawns</span></code></a>
+module to do it for you. It gets added to the env in <code class="docutils literal notranslate"><span class="pre">__init__</span></code>,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">megastep</span> <span class="kn">import</span> <span class="n">modules</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">spawner</span> <span class="o">=</span> <span class="n">modules</span><span class="o">.</span><span class="n">RandomSpawns</span><span class="p">(</span><span class="n">geometries</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and then you can call it with a mask of the agents you’d like to be respawned:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">reset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">agent_full</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">spawner</span><span class="p">(</span><span class="n">reset</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As an aside, the <a class="reference internal" href="../../reference.html#megastep.core.Core.agent_full" title="megastep.core.Core.agent_full"><code class="xref py py-meth docutils literal notranslate"><span class="pre">agent_full()</span></code></a> and <a class="reference internal" href="../../reference.html#megastep.core.Core.env_full" title="megastep.core.Core.env_full"><code class="xref py py-meth docutils literal notranslate"><span class="pre">env_full()</span></code></a> methods will create
+on-device tensors for you of shape (n_env, n</p>
+<p>This will move each agent to a random position in the room. You can see this directly by inspecting <code class="docutils literal notranslate"><span class="pre">self.core.agents.positions</span></code>,
+or you can render and display it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">scenery</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">scenery</span><span class="p">)</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../../_images/respawned.png"><img alt="A visualization of how the agent has collided with the right wall" src="../../_images/respawned.png" style="width: 640px;" /></a>
+<p>You can read more about how the respawning module works in the <a class="reference internal" href="../../reference.html#megastep.modules.RandomSpawns" title="megastep.modules.RandomSpawns"><code class="xref py py-class docutils literal notranslate"><span class="pre">RandomSpawns</span></code></a> documentation.</p>
+</div>
+<div class="section" id="observations">
+<h2>Observations<a class="headerlink" href="#observations" title="Permalink to this headline">¶</a></h2>
+<p>The next comment is ‘generate an observation and send it to the agent’. For our minimal environment, the
+observation will be a ye olde fashioned RGB (red-green-blue) camera, and again there’s a module for that:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">rgb</span> <span class="o">=</span> <span class="n">modules</span><span class="o">.</span><span class="n">RGB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This time, calling it gives you back a (n_env, n_agent, 3, 1, res)-tensor, suitable for passing to a PyTorch convnet:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgb</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The render method is called internally by <code class="docutils literal notranslate"><span class="pre">rgb</span></code>, saving us from having to do it explicitly ourselves. The class
+documentation for <a class="reference internal" href="../../reference.html#megastep.modules.RGB" title="megastep.modules.RGB"><code class="xref py py-class docutils literal notranslate"><span class="pre">RGB</span></code></a> has more details on how it works.</p>
+<p>Following the <a class="reference internal" href="../../concepts.html#decision-world"><span class="std std-ref">decision-and-world</span></a> setup, this obs gets wrapped in a
+<a class="reference internal" href="../../reference.html#rebar.arrdict.arrdict" title="rebar.arrdict.arrdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">arrdict</span></code></a> so that if we decide to nail any other information onto the side of our observations,
+it’s easy to do so. That means our <code class="docutils literal notranslate"><span class="pre">reset</span></code> method in all its glory is</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">spawner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">agent_full</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="go">arrdict:</span>
+<span class="go">obs    Tensor((128, 1, 1, 1, 64), torch.float32)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="actions">
+<h2>Actions<a class="headerlink" href="#actions" title="Permalink to this headline">¶</a></h2>
+<p>The third comment is ‘process decisions from the agent’. In our environment the action is simply whether to move
+forward/backward, left/right, or turn left/right. Once again, there’s a module for this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">movement</span> <span class="o">=</span> <span class="n">modules</span><span class="o">.</span><span class="n">SimpleMovement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the <a class="reference internal" href="../../concepts.html#decision-world"><span class="std std-ref">decision-and-world</span></a> setup, the agent produces a <code class="docutils literal notranslate"><span class="pre">decision</span></code> arrdict with an
+<code class="docutils literal notranslate"><span class="pre">&quot;actions&quot;</span></code> key. The <a class="reference internal" href="../../reference.html#megastep.modules.SimpleMovement" title="megastep.modules.SimpleMovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleMovement</span></code></a> module expects the actions to be an integer tensor,
+with values between 0 and 7. Each integer corresponds to a different movement. We can mock a decisions dict easily
+enough:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">decision</span> <span class="o">=</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span><span class="n">actions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">agent_full</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>and calling the movement module will shift the agents forward:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">movement</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As with the <code class="docutils literal notranslate"><span class="pre">depth</span></code> module, the <code class="docutils literal notranslate"><span class="pre">movement</span></code> module makes the <code class="docutils literal notranslate"><span class="pre">physics</span></code> call internally, again saving us from having
+to do it ourselves. Like before, the class documentation for <a class="reference internal" href="../../reference.html#megastep.modules.SimpleMovement" title="megastep.modules.SimpleMovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleMovement</span></code></a> has more details
+on how it’s implemented.</p>
+<p>Having implemented both actions and observations, we can now assemble our <code class="docutils literal notranslate"><span class="pre">step</span></code> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decision</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">movement</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">arrdict</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="agent">
+<h2>Agent<a class="headerlink" href="#agent" title="Permalink to this headline">¶</a></h2>
+<p>That’s it. That’s the functional part of the environment done. All that’s left is to wire up an agent to it, and
+then watch it run.</p>
+<p>When you’re doing reinforcement learning research, it helps if when you change the observations your environment emits,
+or the action spaces your environment takes, the network you’re using to run your agent adapts automatically. The
+megastep way to do this is to set <code class="docutils literal notranslate"><span class="pre">.obs_space</span></code> and <code class="docutils literal notranslate"><span class="pre">.action_space</span></code> on your environment, and then use a library of
+<a class="reference internal" href="../../reference.html#module-megastep.demo.heads" title="megastep.demo.heads"><code class="xref py py-mod docutils literal notranslate"><span class="pre">heads</span></code></a> to automatically pick the inputs and outputs of your network.</p>
+<p>Using heads to create a network looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intake</span> <span class="o">=</span> <span class="n">heads</span><span class="o">.</span><span class="n">intake</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">obs_space</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">heads</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You ask for an intake that conforms to the observation space, and outputs a vector of a specified width. Similarly,
+you ask for an output that takes a vector of a specified width and conforms to the action space. Then all that’s left
+to do is to nail one onto the other:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">policy</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">intake</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This network will spit out log-probabilities though, when our environment is expecting actions sampled from the
+distribution given by the log-probabilities. Fortunately the output space knows exactly how to do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">logits</span> <span class="o">=</span> <span class="n">policy</span><span class="p">(</span><span class="n">world</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span>
+<span class="n">actions</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+<span class="n">decision</span> <span class="o">=</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span> <span class="n">actions</span><span class="o">=</span><span class="n">actions</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or, all together:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Agent</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intake</span> <span class="o">=</span> <span class="n">heads</span><span class="o">.</span><span class="n">intake</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">obs_space</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">heads</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intake</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">world</span><span class="p">):</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="p">(</span><span class="n">world</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span> <span class="n">actions</span><span class="o">=</span><span class="n">actions</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trying-it-out">
+<h2>Trying It Out<a class="headerlink" href="#trying-it-out" title="Permalink to this headline">¶</a></h2>
+<p>We’ve now got enough to exercise everything together:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">Minimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+<span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">decision</span> <span class="o">=</span> <span class="n">agent</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+
+<span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Hooray! When you’re writing your own environments, you’ll likely find yourself running this chunk of code more often
+than any other. It’s about the smallest snippet possible that sets everything up and runs through <code class="docutils literal notranslate"><span class="pre">reset</span></code>,
+<code class="docutils literal notranslate"><span class="pre">forward</span></code>, and <code class="docutils literal notranslate"><span class="pre">step</span></code>. If you’ve got a bug somewhere, most of the time this snippet will tell you about it.</p>
+</div>
+<div class="section" id="recording">
+<h2>Recording<a class="headerlink" href="#recording" title="Permalink to this headline">¶</a></h2>
+<p>Having the code run isn’t the same as watching it run however. To watch it run, we need to repeatedly step and plot the
+environment, then string all the plots together into a video.</p>
+<p>In megastep, the recommended way to plot your environment is a two-part process: first, write a method that
+captures all the state of the environment in a single dict. Then, write another method that takes this state dict
+and generates the plot. You can read more about why this is a good idea <a class="reference internal" href="../../concepts.html#plotting"><span class="std std-ref">here</span></a>, but the short of it is
+that plotting is frequently much slower than stepping the environment, and putting the slow part in it’s own method
+means we can do it in parallel.</p>
+<p>First up, the state method. It simply combines the states of the relevant modules:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">arrdict</span><span class="o">.</span><span class="n">arrdict</span><span class="p">(</span>
+        <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="n">rgb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">e</span></code> is because we’re typically only interested in plotting a single env at a time, and so we only need to extract
+the state for one env - in this case, env #0.</p>
+<p>Next, the plotting method. This can be any combination of matplotlib calls you like, as long as it returns a figure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, we can record a video:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rebar</span> <span class="kn">import</span> <span class="n">recording</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">Minimal</span><span class="p">()</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">recording</span><span class="o">.</span><span class="n">ParallelEncoder</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">plot_state</span><span class="p">)</span> <span class="k">as</span> <span class="n">encoder</span><span class="p">:</span>
+    <span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">):</span>
+        <span class="n">decision</span> <span class="o">=</span> <span class="n">agent</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+        <span class="n">world</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">decision</span><span class="p">)</span>
+
+        <span class="n">encoder</span><span class="p">(</span><span class="n">arrdict</span><span class="o">.</span><span class="n">numpyify</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">state</span><span class="p">()))</span>
+
+<span class="n">encoder</span><span class="o">.</span><span class="n">notebook</span><span class="p">()</span>
+</pre></div>
+</div>
+<video controls src="../../_static/minimal.mp4" autoplay loop muted type="video/mp4" width=640></video><p>Here we’re executing the same loop as before, just at the bottom of it we’re pulling out the state and feeding it to
+the <a class="reference internal" href="../../reference.html#rebar.recording.ParallelEncoder" title="rebar.recording.ParallelEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParallelEncoder</span></code></a>.</p>
+</div>
+<div class="section" id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline">¶</a></h2>
+<p>That’s it! We’ve got a basic environment and an agent that can interact with it. The next step is to actually define
+a task of some sort and then train the agent to solve the task. To learn how to do that, move on to the
+<a class="reference internal" href="../explorer-env.html#explorer-env"><span class="std std-ref">exploration env tutorial</span></a> or the <a class="reference internal" href="../deathmatch-env.html#deathmatch-env"><span class="std std-ref">deathmatch env tutorial</span></a>.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/tutorials/minimal-env/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

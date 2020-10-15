@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Explorer Env (Incomplete) &#8212; megastep 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="A Deathmatch Env (Incomplete)" href="deathmatch-env.html" />
+    <link rel="prev" title="A Minimal Env" href="minimal-env/index.html" />
+
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+    <!-- Monitoring pageviews is really useful to me to see what kind of stuff I've done is useful to everyone else.
+    But I'm keen to not to track any more than that, and so this is a minimal, self-hosted solution. It records
+    nothing more than'd be in the server logs. -->
+    <script>
+        url = "https://live.andyljones.com/mat/mat.php";
+        xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  
+        params = 'idsite=1&rec=1'
+        params += '&url=' + encodeURIComponent(window.location.href);
+        params += '&urlref=' + encodeURIComponent(document.referrer);
+        params += '&rand=' + Math.floor(16384*Math.random())
+        xhr.send(params)
+      </script>
+      <noscript>
+        <img src="https://live.andyljones.com/mat/mat.php?idsite=1&amp;rec=1" style="border:0" alt=""/>
+      </noscript>
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">megastep</a></h1>
+
+
+
+<p class="blurb">RL at 1m FPS</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=andyljones&repo=megastep&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="playing.html">Playing With Megastep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="minimal-env/index.html">A Minimal Env</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">An Explorer Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deathmatch-env.html">A Deathmatch Env (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometry/index.html">Custom Geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenery.html">Custom Scenery (Incomplete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernels/index.html">Custom Kernels (Incomplete)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Tutorials</a><ul>
+      <li>Previous: <a href="minimal-env/index.html" title="previous chapter">A Minimal Env</a></li>
+      <li>Next: <a href="deathmatch-env.html" title="next chapter">A Deathmatch Env (Incomplete)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <bold><span style="color: red">This tutorial is incomplete</span></bold><div class="section" id="an-explorer-env-incomplete">
+<span id="explorer-env"></span><h1>An Explorer Env (Incomplete)<a class="headerlink" href="#an-explorer-env-incomplete" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we’re going to take <a class="reference internal" href="minimal-env/index.html#minimal-env"><span class="std std-ref">the minimal environment we studied earlier</span></a> and build it into
+the <code class="xref py py-class docutils literal notranslate"><span class="pre">Explorer</span></code> environment.</p>
+<video controls src="../_static/explorer.mp4" autoplay loop muted type="video/mp4" width=640></video><dl class="simple">
+<dt>Compared to the minimal env, the explorer env</dt><dd><ul class="simple">
+<li><p>Has compound RGB-depth-<a class="reference external" href="https://en.wikipedia.org/wiki/Inertial_measurement_unit">IMU</a> observations.</p></li>
+<li><p>Has movement with momentum.</p></li>
+<li><p>Outputs rewards for exploring.</p></li>
+<li><p>Resets agents when they’ve lived too long.</p></li>
+</ul>
+</dd>
+</dl>
+<p>You can see the final explorer code <a class="reference external" href="https://github.com/andyljones/megastep/tree/master/megastep/demo/envs/explorer.py">here</a>.</p>
+<p>Like in the second half of the minimal environment tutorial, when discussing the construction of a large class it
+isn’t feasible to copy-paste the entire definition every time. Instead, the snippets here are going to be small
+‘experiments’ that demonstrate how a particular part of the class works.</p>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>The first thing to do is to make sure you can actually run the complete explorer environment. Open up a notebook or
+IPython console and</p>
+<p>TODO-DOCS Rest of the explorer tutorial</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, Andy L. Jones.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tutorials/explorer-env.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
