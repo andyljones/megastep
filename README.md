@@ -1,6 +1,6 @@
 # megastep
 [![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](https://andyljones.com/megastep)
-[![Gitter](https://img.shields.io/gitter/room/andyljones/megastep)](https://gitter.im/megastep-rl/community)
+[![Discord](https://img.shields.io/discord/765294874832273419)](https://www.reddit.com/r/reinforcementlearning/comments/jawm37/official_reinforcement_learning_discord/)
 
 **megastep** helps you build 1-million FPS reinforcement learning environments with a single consumer GPU.
 

@@ -69,7 +69,7 @@ Support
 *******
 I am an independent researcher, so just how much support I can give is limited. But you're absolutely welcome to `open
 a GitHub issue <https://github.com/andyljones/megastep/issues>`_ or `see if I'm around on
-Gitter <https://gitter.im/megastep-rl/community>`_. At the very least I'll try to point you in the right direction.
+the RL Discord <https://www.reddit.com/r/reinforcementlearning/comments/jawm37/official_reinforcement_learning_discord/>`_. At the very least I'll try to point you in the right direction.
 
 You can also find me `on Twitter <https://twitter.com/andy_l_jones>`_ or you can `email me <andyjones.ed@gmail.com>`_. 
 
