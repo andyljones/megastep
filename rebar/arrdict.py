@@ -25,7 +25,23 @@ def _arrdict_factory():
         def __getitem__(self, x):
             if isinstance(x, str):
                 return super().__getitem__(x)
-            return type(self)({k: v[x] for k, v in self.items()})
+            else:
+                return type(self)({k: v[x] for k, v in self.items()})
+
+        def __setitem__(self, x, y):
+            # Valid keys to stick in an arrdict are strings and tuples of strings.
+            # Anything else could plausibly be a tensor index.
+            if (isinstance(x, str) or 
+                    (isinstance(x, tuple) and all(isinstance(xx, str) for xx in x))):
+                super().__setitem__(x, y)
+            elif isinstance(y, type(self)):
+                for k in self:
+                    self[k][x] = y[k]
+            else:
+                raise ValueError('Setting items must be done with a string key or by passing an arrdict')
+
+        def __setattr__(self, key, value):
+            raise ValueError('Setting by attribute is not allowed; set by key instead')
 
         def __binary_op__(self, name, rhs):
             if isinstance(rhs, dict):
