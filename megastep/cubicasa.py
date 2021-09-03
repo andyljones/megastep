@@ -174,7 +174,7 @@ def geometry_data(regenerate=False):
     return unflatten(flat)
 
 _cache = None
-def sample(n_geometries, split='training', rng=np.random.default_rng()):
+def sample(n_geometries, split='training', rng=np.random.default_rng(), **kwargs):
     """Returns a random sample of cubicasa :ref:`geometries <geometry>`. 
 
     If you pass the same arguments, you'll get the same sample every time.

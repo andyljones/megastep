@@ -32,7 +32,7 @@ def _init_agents(n_envs, n_agents, device='cuda'):
 
 class Core: 
 
-    def __init__(self, scenery, res=64, fov=130, fps=10, rng=np.random.default_rng()):
+    def __init__(self, scenery, res=64, fov=130, fps=10, rng=np.random.default_rng(), **kwargs):
         """The core rendering and physics interface. 
 
         To create the Core, you pass a :class:`~megastep.cuda.Scenery` that describes the environment. Once created, 
