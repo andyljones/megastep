@@ -79,7 +79,7 @@ def scenery(geometries, n_agents=1, device='cuda', rng=np.random.default_rng()):
 
     data = []
     for g in geometries:
-        lights = random_lights(g.lights)
+        lights = random_lights(g.lights, rng)
         lines = np.concatenate([agentlines, g.walls])
         textures, texwidths = init_textures(agentlines, agentcolors, g.walls, rng)
         data.append(arrdict.arrdict(
