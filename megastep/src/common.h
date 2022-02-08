@@ -89,7 +89,7 @@ struct RaggedPackedTensorAccessor {
 TT inverses(const TT& widths);
 #else
 TT inverses(const TT& widths) {
-    at::AutoNonVariableTypeMode nonvar{true};
+    c10::InferenceMode nonvar{true};
     const auto starts = widths.cumsum(0) - widths.to(at::kLong);
     const auto flags = at::ones(starts.size(0), at::dtype(at::kInt).device(widths.device()));
     auto indices = at::zeros(widths.sum(0).item<int64_t>(), at::dtype(at::kInt).device(widths.device()));

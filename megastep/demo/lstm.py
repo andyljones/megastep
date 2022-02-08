@@ -54,7 +54,7 @@ class Packer:
     def unpack_state(self, hp):
         T, B = self._reset.shape
         mask = (self._order % T == T-1)
-        left_idxs = (self._order//T)[mask]
+        left_idxs = (torch.div(self._order,T,rounding_mode='floor'))[mask]
         right_idxs = self._b[self._order][mask]
 
         h = hp.new_zeros((1, B, *hp.shape[2:]))
