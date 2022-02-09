@@ -220,7 +220,7 @@ __host__ Physics physics(const Scenery& scenery, const Agents& agents) {
         A*F, agents.positions.pta(), agents.velocity.pta(), scenery.lines.pta(), progress.pta());
 
     //TODO: Collisions should only kill the normal component of momentum
-    at::AutoNonVariableTypeMode nonvar{true};
+    c10::InferenceMode nonvar{true};
     agents.positions.t.set_(agents.positions.t + progress.t.unsqueeze(-1)*agents.velocity.t/FPS);
     agents.velocity.t.masked_fill_(progress.t.unsqueeze(-1) < 1, 0.f);
     agents.angles.t.set_(normalize_degrees(agents.angles.t + progress.t*agents.angvelocity.t/FPS));
