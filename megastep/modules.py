@@ -269,7 +269,7 @@ class IMU:
             self.core.agents.angvelocity[..., None]/self.ang_scale,
             to_local_frame(self.core.agents.angles, self.core.agents.velocity)/self.speed_scale], -1)
 
-def random_empty_positions(geometries, n_agents, n_points):
+def random_empty_positions(geometries, n_agents, n_points, rng=np.random.default_rng()):
     """Returns a tensor of randomly-selected empty points in each :ref:`geometry <geometry>`.
     
     The returned tensor is a (n_geometries, n_agents, n_points, 2)-float tensor, with the coordinates given in meters.
@@ -284,11 +284,11 @@ def random_empty_positions(geometries, n_agents, n_points):
 
         # There might be fewer open points than we're asking for
         n_possible = min(len(sample)//n_agents, n_points)
-        sample = sample[np.random.choice(np.arange(len(sample)), (n_possible, n_agents), replace=True)]
+        sample = sample[rng.choice(np.arange(len(sample)), (n_possible, n_agents), replace=True)]
 
         # So repeat the sample until we've got enough
         sample = np.concatenate([sample]*int(n_points/len(sample)+1))[-n_points:]
-        sample = np.random.permutation(sample)
+        sample = rng.permutation(sample)
         points.append(geometry.centers(sample, g.masks.shape, g.res).transpose(1, 0, 2))
     return arrdict.stack(points)
         
@@ -305,8 +305,8 @@ class RandomSpawns:
         """
         self.core = core
 
-        positions = random_empty_positions(geometries, core.n_agents, n_spawns)
-        angles = core.random.uniform(-180, +180, (len(geometries), core.n_agents, n_spawns))
+        positions = random_empty_positions(geometries, core.n_agents, n_spawns, rng=core.rng)
+        angles = core.rng.uniform(-180, +180, (len(geometries), core.n_agents, n_spawns))
         self._spawns = arrdict.torchify(arrdict.arrdict(positions=positions, angles=angles)).to(core.device)
 
     def __call__(self, reset):

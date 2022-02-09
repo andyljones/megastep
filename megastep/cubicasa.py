@@ -174,7 +174,7 @@ def geometry_data(regenerate=False):
     return unflatten(flat)
 
 _cache = None
-def sample(n_geometries, split='training', seed=1):
+def sample(n_geometries, split='training', rng=np.random.default_rng(), **kwargs):
     """Returns a random sample of cubicasa :ref:`geometries <geometry>`. 
 
     If you pass the same arguments, you'll get the same sample every time.
@@ -199,7 +199,7 @@ def sample(n_geometries, split='training', seed=1):
     :param split: Whether to return a sample from the ``training`` set, the ``test`` set, or ``all`` . The split is
         90/10 in favour of the training set. Defaults to ``training`` . 
     :type split: str
-    :param seed: The seed to use when allocating the training and test sets.
+    :param rng: The random number generator to use when allocating the training and test sets.
 
     :return: A list of geometries.
     """
@@ -211,7 +211,7 @@ def sample(n_geometries, split='training', seed=1):
         _cache = type(_cache)({k: type(v)({'id': k, **v}) for k, v in _cache.items()})
     
     cutoff = int(.9*len(_cache))
-    order = np.random.RandomState(seed).permutation(sorted(_cache))
+    order = rng.permutation(sorted(_cache))
     if split == 'training':
         order = order[:cutoff]
     elif split == 'test':

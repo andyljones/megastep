@@ -274,17 +274,16 @@ def MatchCoin():
         .build())
 
 @fsm
-def RandomChain(n=2, seed=0):
+def RandomChain(n=2, rng=np.random.default_rng()):
     assert n >= 2, 'Need the radius to be at least 2'
     b = Builder()
-    random = np.random.RandomState(seed)
-    actions = random.permutation([0, 1])
+    actions = rng.permutation([0, 1])
     (b.state(0, obs=0., start=1.)
         .to(0, action=actions[0])
         .to(1, action=actions[1]))
     for i in range(1, n):
         reward = (i == n-1)
-        actions = random.permutation([0, 1])
+        actions = rng.permutation([0, 1])
         (b.state(+i, obs=+i/n)
             .to(0, action=actions[0])
             .to(i+1, action=actions[1], reward=+reward))

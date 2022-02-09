@@ -32,7 +32,7 @@ def _init_agents(n_envs, n_agents, device='cuda'):
 
 class Core: 
 
-    def __init__(self, scenery, res=64, fov=130, fps=10):
+    def __init__(self, scenery, res=64, fov=130, fps=10, rng=np.random.default_rng(), **kwargs):
         """The core rendering and physics interface. 
 
         To create the Core, you pass a :class:`~megastep.cuda.Scenery` that describes the environment. Once created, 
@@ -50,7 +50,7 @@ class Core:
         :var fov: The field of view in degrees.
         :var agent_radius: The radius of a disc containing the agent, in meters.
         :var fps: The framerate.
-        :var random: The seeded :class:`numpy.random.RandomState` used to initialize the environment. By reusing this
+        :var rng: The seeded :func:`numpy.random.default_rng` used to initialize the environment. By reusing this generator
             in any extra random decisions made when generating the environments, it can be guaranteed you'll get the same
             environments every time.
 
@@ -76,7 +76,7 @@ class Core:
         # TODO: Make this adjustable
         self.agent_radius = AGENT_RADIUS
         self.fps = fps
-        self.random = np.random.RandomState(1)
+        self.rng = rng
 
         # TODO: This needs to be propagated to the C++ side
         self.device = scenery.model.device

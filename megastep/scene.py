@@ -40,14 +40,14 @@ def agent_colors():
 def resolutions(lines):
     return np.ceil(lengths(lines)/core.TEXTURE_RES).astype(int)
 
-def wall_pattern(n, l=.5, random=np.random):
+def wall_pattern(n, l=.5, rng=np.random.default_rng()):
     p = core.TEXTURE_RES/l
-    jumps = random.choice(np.array([0., 1.]), p=np.array([1-p, p]), size=n)
-    jumps = jumps*random.normal(size=n)
+    jumps = rng.choice(np.array([0., 1.]), p=np.array([1-p, p]), size=n)
+    jumps = jumps*rng.normal(size=n)
     value = .5 + .5*(jumps.cumsum() % 1)
     return value
 
-def init_textures(agentlines, agentcolors, walls, random=np.random):
+def init_textures(agentlines, agentcolors, walls, rng=np.random.default_rng()):
     colormap = np.array([mpl.colors.to_rgb(c) for c in COLORS])
     wallcolors = colormap[np.arange(len(walls)) % len(colormap)]
     colors = np.concatenate([agentcolors, wallcolors])
@@ -61,27 +61,27 @@ def init_textures(agentlines, agentcolors, walls, random=np.random):
     textures = core.gamma_decode(colors[indices])
 
     # Gives walls an even pattern that makes depth perception easy
-    pattern = wall_pattern(textures.shape[0], random=random)
+    pattern = wall_pattern(textures.shape[0], rng=rng)
     pattern[:sum(texwidths[:len(agentlines)])] = 1.
     textures = textures*pattern[:, None]
 
     return textures, texwidths
 
-def random_lights(lights, random=np.random):
+def random_lights(lights, rng=np.random.default_rng()):
     return np.concatenate([
         lights,
-        random.uniform(.5, 2., (len(lights), 1))], -1)
+        rng.uniform(.5, 2., (len(lights), 1))], -1)
 
 @torch.no_grad()
-def scenery(geometries, n_agents=1, device='cuda', random=np.random): 
+def scenery(geometries, n_agents=1, device='cuda', rng=np.random.default_rng()):
     agentlines = np.tile(agent_model(), (n_agents, 1, 1))
     agentcolors = np.tile(agent_colors(), (n_agents, 1))
 
     data = []
     for g in geometries:
-        lights = random_lights(g.lights)
+        lights = random_lights(g.lights, rng)
         lines = np.concatenate([agentlines, g.walls])
-        textures, texwidths = init_textures(agentlines, agentcolors, g.walls, random) 
+        textures, texwidths = init_textures(agentlines, agentcolors, g.walls, rng)
         data.append(arrdict.arrdict(
             lights=arrdict.arrdict(vals=lights, widths=len(lights)),
             lines=arrdict.arrdict(vals=lines, widths=len(lines)),
